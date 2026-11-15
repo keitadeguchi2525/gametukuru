@@ -73,6 +73,7 @@ h1{font-weight:900;font-size:30px;letter-spacing:.06em;text-align:center;color:#
 #result h2{font-size:30px;font-weight:900;margin-bottom:10px}
 #result .row{justify-content:center;margin:8px 0 16px}
 .rarebanner{font-weight:900;color:#fff0a0;text-shadow:0 0 12px #ffb020;margin-bottom:4px}
+#ver{position:fixed;left:4px;bottom:3px;font-size:10px;color:rgba(232,212,180,0.7);background:rgba(0,0,0,0.55);padding:1px 6px;border-radius:6px;pointer-events:none;z-index:50;font-family:"M PLUS 1p",sans-serif;letter-spacing:.05em}
 #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#3a2814;border:1px solid #c98a3a;color:#ffe2ad;padding:10px 18px;border-radius:12px;font-weight:700;font-size:14px;transition:opacity .3s;pointer-events:none;opacity:0;z-index:9}
 </style>
 </head>
@@ -99,8 +100,12 @@ h1{font-weight:900;font-size:30px;letter-spacing:.06em;text-align:center;color:#
   <div id="result" class="hidden"><div class="box" id="resultBox"></div></div>
 </div>
 <div id="toast"></div>
+<div id="ver"></div>
 
 <script>
+// バージョン表記（画面左下）。仕様メモ（docs/仕様メモ.md）の見出しの番号と合わせて上げる
+const VERSION='v16';
+document.getElementById('ver').textContent=`パリィ・ハンター ${VERSION}`;
 // ===================== 素材 =====================
 const MATS={
   bone:{n:'獣骨',c:'#f4ead2',c2:'#a8977a',sh:'bone'},
@@ -1419,8 +1424,8 @@ function drawHUD(){
   if(RUN){ctx.textAlign='left';ctx.font="700 12px 'M PLUS 1p'";ctx.fillStyle='#e8d4b4';ctx.fillText(`${RUN.D.name}`,10,52);
     ctx.fillStyle=isBossFloor()?'#ff8a6a':'#ffd58a';ctx.font="900 15px 'M PLUS 1p'";ctx.fillText(`${RUN.floor+1}F / ${RUN.D.floors.length}F${isBossFloor()?' BOSS':''}`,10,70);
     const n=Object.values(RUN.loot).reduce((a,b)=>a+b,0)+Object.values(B.loot).reduce((a,b)=>a+b,0);ctx.fillStyle='#ffb0a0';ctx.font="700 11px 'M PLUS 1p'";ctx.fillText(`未確定の戦利品 ${n}個`,10,86)}
-  const pw=Math.min(W*0.4,240);ctx.textAlign='left';ctx.fillStyle='#e8d4b4';ctx.font="700 12px 'M PLUS 1p'";ctx.fillText(`HP ${Math.ceil(B.php)} / ${B.pmax}`,12,H-26);
-  bar(12,H-18,pw,8,B.php/B.pmax,B.php/B.pmax<0.3?'#ff5a4a':'#5ad06a');
+  const pw=Math.min(W*0.4,240);ctx.textAlign='left';ctx.fillStyle='#e8d4b4';ctx.font="700 12px 'M PLUS 1p'";ctx.fillText(`HP ${Math.ceil(B.php)} / ${B.pmax}`,12,H-34);
+  bar(12,H-26,pw,8,B.php/B.pmax,B.php/B.pmax<0.3?'#ff5a4a':'#5ad06a');
 }
 
 function drawFX(dt){
