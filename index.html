@@ -859,7 +859,7 @@ function renderHub(){
     <li>防具は<b>頭・胴・手・足</b>の4部位。シリーズごとに作って組み合わせられる（レアシリーズは特定の部位に特殊効果）。</li>
     <li>ボスを倒すと25%で<b>討伐の証</b>が手に入る。拠点の<b>ガチャ</b>で、そのボスのレア素材か<b>ボス武器</b>（特殊効果つき・ガチャ限定）が当たる。</li>
     <li>倒すと討伐素材と、確率で<b>レア素材</b>がドロップ。レア素材で特殊効果つきの装備が作れる。</li>
-    <li><b>ダンジョン</b>は階層制。HPは階をまたいで持ち越し（次の階へ進むとき最大HPの5%だけ回復）。各階の後に<b>帰還</b>すれば戦利品を持ち帰れるが、<b>倒れると全ロスト</b>。最奥のボスを倒すと踏破＆全部持ち帰り。<b>倒れると装備中の武器・防具5つのうちランダムに1〜3つも失う</b>（1つ33%・2つ33%・3つ34%。工房で作り直せる）。</li>
+    <li><b>ダンジョン</b>は階層制。HPは階をまたいで持ち越し（次の階へ進むとき最大HPの20%回復）。各階の後に<b>帰還</b>すれば戦利品を持ち帰れるが、<b>倒れると全ロスト</b>。最奥のボスを倒すと踏破＆全部持ち帰り。<b>倒れると装備中の武器・防具5つのうちランダムに1〜3つも失う</b>（1つ33%・2つ33%・3つ34%。工房で作り直せる）。</li>
     <li>PC：パリィはマウスでスワイプ（ドラッグ）。回避は <b>A＝左</b>／<b>D＝右</b>。</li></ul></div>`;
     // 隠しコマンドを使ったあとだけ出る：ボスに直接挑む（テスト用）
     if(S.debug)h+=`<div class="card" style="border-color:#7a4a9a"><h3>🔧 ボスに直接挑む（テスト用）</h3><p style="font-size:12px;color:#a89478">ダンジョンの最奥の階から始まる。HPは満タン。</p>
@@ -1123,7 +1123,7 @@ function floorCleared(rares){
       <div class="row"><button class="btn" id="home">拠点へ戻る</button></div>`);
     $('#home').onclick=endToHub;return;
   }
-  sfx('clear');const heal=Math.round(RUN.pmax*0.05);
+  sfx('clear');const heal=Math.round(RUN.pmax*FLOOR_HEAL);
   showBox(`<h2 style="color:#ffd58a">${RUN.floor+1}F 突破！</h2>${rareHtml}
     <div style="font-size:13px;color:#bba78a">この階の戦利品</div><div class="row">${lootChips(B.loot)}</div>
     <div style="font-size:13px;color:#ffb0a0">未確定の戦利品（倒れると失う）</div><div class="row">${lootChips(RUN.loot)}</div>
@@ -1132,6 +1132,7 @@ function floorCleared(rares){
   $('#goHome').onclick=()=>{bankRun();showBox(`<h2 style="color:#bdf0a8">無事に帰還した</h2><div style="font-size:13px;color:#bba78a">持ち帰った戦利品</div><div class="row">${lootChips(RUN.loot)}</div><div class="row"><button class="btn" id="home">拠点へ戻る</button></div>`);$('#home').onclick=endToHub};
   $('#goNext').onclick=()=>{RUN.php=Math.min(RUN.pmax,RUN.php+heal);RUN.floor++;startFloor()};
 }
+const FLOOR_HEAL=0.2;   // 次の階へ進むときに回復する割合（最大HPの20%）
 const isLast2=()=>RUN.floor+1===RUN.D.floors.length-1;
 // 倒れたとき：装備中の5つ（武器＋防具4部位）からランダムに1〜3つを失う（1つ33%／2つ33%／3つ34%）
 const LOSE_ODDS=[[1,0.33],[2,0.33],[3,0.34]];
