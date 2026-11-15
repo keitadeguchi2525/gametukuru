@@ -406,7 +406,8 @@ const ARMOR_SETS=[
 const MULPERK=['parry','part','dodge','parryPts','atk'];   // 掛け算で効く効果（それ以外は足し算）
 function mergePerk(a,b){const o={...(a||{})};for(const[k,v]of Object.entries(b||{}))o[k]=k in o?(MULPERK.includes(k)?o[k]*v:o[k]+v):v;return o}
 const ARMORS=[];
-for(const st of ARMOR_SETS){let dl=st.def,hl=st.hp;
+const ARMOR_DEF_MUL=1.05;   // 防具の防御力（一式）に一律でかける倍率（v16で5%上げた）
+for(const st of ARMOR_SETS){st.def=Math.round(st.def*ARMOR_DEF_MUL);let dl=st.def,hl=st.hp;
   const ps=SLOTS.map((sl,i)=>{const d=sl.k==='body'?0:Math.floor(st.def*sl.r),h=sl.k==='body'?0:Math.floor(st.hp*sl.r);dl-=d;hl-=h;
     const cost=recipe(st.d,st.mats,ARMOR_SET_CLEARS,sl.r);
     const isPerk=st.perkSlot===sl.k;Object.assign(cost,isPerk?st.perkCost:(st.rare||{}));
