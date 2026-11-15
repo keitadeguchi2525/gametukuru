@@ -20,6 +20,8 @@ h1{font-weight:900;font-size:30px;letter-spacing:.06em;text-align:center;color:#
 .equip b{color:#ffd58a}
 .tabs{display:flex;gap:6px;margin-bottom:14px}
 .tabs button{flex:1;padding:11px 0;font:700 15px 'M PLUS 1p';color:#c9b597;background:#24190f;border:1px solid #47331f;border-radius:10px;cursor:pointer}
+.subtabs{display:flex;gap:6px;margin:0 0 10px}.subtabs button{flex:1;padding:8px 0;font:700 14px 'M PLUS 1p';color:#c9b597;background:#1c140d;border:1px solid #47331f;border-radius:20px;cursor:pointer}
+.subtabs button.on{background:#5a3a18;color:#fff0d0;border-color:#c98a3a}.hint{font-size:12px;color:#a89478;text-align:center;margin:6px 0 14px}
 .tabs button.on{background:linear-gradient(#b9772a,#8a4f15);color:#fff6e0;border-color:#e0a050}
 .card{background:linear-gradient(#2b1f15,#211710);border:1px solid #4a3522;border-radius:14px;padding:14px 16px;margin-bottom:12px}
 .card h3{font-size:18px;font-weight:900;color:#ffe2ad;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -198,9 +200,10 @@ function mixHex(a,b,t){const p=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));co
 // 既存の敵の体つきを借りて、色・部位の名前・素材・飾りを差し替える（o.names / o.mats / o.decos は部位id→値）
 function reskin(b,o,mix){return b.parts.map(p=>({...p,c:mixHex(p.c,o.tint,mix),name:(o.names||{})[p.id]||p.name,mat:(o.mats||{})[p.id]||p.mat,
   deco:(o.decos||{})[p.id]!==undefined?o.decos[p.id]:p.deco,ice:o.ice||p.ice,hp:p.hp?Math.round(p.hp*(o.partMul||1)):undefined}))}
+// o.parts があれば、その体つき（専用の見た目）をそのまま使う。部位の体力は後で ENEMY_HP から決まるので hp:1 でよい
 function variant(baseId,o){const b=ENEMIES.find(e=>e.id===baseId);
-  return {...b,gimmick:null,gdesc:'',...o,minion:true,parts:reskin(b,o,0.45)}}
-function makeBoss(baseId,o){const b=ENEMIES.find(e=>e.id===baseId);return {...b,...o,parts:reskin(b,o,0.62)}}
+  return {...b,gimmick:null,gdesc:'',...o,minion:true,parts:o.parts?o.parts.map(p=>({...p})):reskin(b,o,0.45)}}
+function makeBoss(baseId,o){const b=ENEMIES.find(e=>e.id===baseId);return {...b,...o,parts:o.parts?o.parts.map(p=>({...p})):reskin(b,o,0.62)}}
 ENEMIES.push(
   makeBoss('volga',{id:'lumina',name:'妖蛾ルミナス',stars:2,tint:'#8a4ac8',gimmick:'orbs',
     gdesc:'【鱗粉の玉】ときどき攻撃をやめて、画面のあちこちに光る鱗粉の玉を7個まき散らす。玉はすぐ破裂するので、タップかスワイプで素早く撃ち落とそう。破裂した玉の数だけダメージ。全部撃ち落とすと体勢+25。',
@@ -210,8 +213,14 @@ ENEMIES.push(
     eye:'#e8ff60',glow:'#c8ff70',
     drops:[['dust',3,5],['silk',1,2],['antenna',1,1],['mothwing',1,1]],
     rares:[['moonsilk',0.2],['fairyeye',0.04],['lunarcrown',0.004]],
-    names:{wingR:'右翅',wingL:'左翅',tail:'鱗粉嚢',head:'触角'},decos:{wingR:'wing2',wingL:'wing2',tail:null,head:'antenna'},
-    mats:{wingR:[['mothwing',2]],wingL:[['mothwing',2]],tail:[['dust',2],['silk',1]],head:[['antenna',2]]}}),
+    // 蛾の体：大きな前翅＋後翅、ふさふさの胸、縞模様の腹、羽根のような触角
+    parts:[
+     {id:'wingR',name:'右翅',x:-0.62,y:-0.12,rx:0.52,ry:0.42,c:'#7a4ab0',hp:1,mat:[['mothwing',2]],shape:'mothWing',deco:'mothWing',limb:1},
+     {id:'wingL',name:'左翅',x:0.62,y:-0.12,rx:0.52,ry:0.42,c:'#7a4ab0',hp:1,mat:[['mothwing',2]],shape:'mothWing',deco:'mothWing',limb:1},
+     {id:'tail',name:'鱗粉嚢',x:0,y:0.52,rx:0.16,ry:0.34,c:'#c8d870',hp:1,mat:[['dust',2],['silk',1]],deco:'segments'},
+     {id:'body',body:true,x:0,y:0.06,rx:0.22,ry:0.27,c:'#efe6ff',deco:'fuzz'},
+     {id:'head',name:'触角',x:0,y:-0.3,rx:0.15,ry:0.13,c:'#e8dcf8',hp:1,mat:[['antenna',2]],deco:'featherAntenna',eyes:true},
+    ]}),
   makeBoss('golm',{id:'glacier',name:'氷霊獣グラシエル',stars:4,tint:'#b8e4ff',gimmick:'icicle',ice:1,
     gdesc:'【落氷】ボスの攻撃とは別に、天井からつららが降ってくる。当たると大ダメージで、パリィはできない。頭上のつららが震えて影が濃くなったら、落ちる瞬間に回避（Shift）！ HP50%を切ると、つららが2本続けて落ちてくることも。',
     desc:'霊廟を守る氷の獣。霧の中から襲いかかる。',
@@ -220,8 +229,14 @@ ENEMIES.push(
     eye:'#ffffff',glow:'#cff4ff',
     drops:[['frost',3,5],['icecrys',1,2],['icefang',1,1],['mstone',2,3]],
     rares:[['permafrost',0.15],['iceheart',0.02],['timeice',0.002]],
-    names:{back:'氷殻',legR:'右氷爪',legL:'左氷爪',head:'氷角'},decos:{head:'crystalHorn',back:'iceSpikes'},
-    mats:{back:[['mstone',2],['icecrys',1]],legR:[['icefang',2]],legL:[['icefang',2]],head:[['icecrys',2]]}}),
+    // 氷の結晶でできた巨体：角ばった胴、宙に浮く氷の腕と爪、肩の氷柱、結晶の角。まわりを氷片がただよう
+    parts:[
+     {id:'legR',name:'右氷爪',x:-0.72,y:0.18,rx:0.2,ry:0.34,c:'#9fd2f0',hp:1,mat:[['icefang',2]],shape:'crystal',deco:'iceClaw',limb:1},
+     {id:'legL',name:'左氷爪',x:0.72,y:0.18,rx:0.2,ry:0.34,c:'#9fd2f0',hp:1,mat:[['icefang',2]],shape:'crystal',deco:'iceClaw',limb:1},
+     {id:'body',body:true,x:0,y:0.14,rx:0.48,ry:0.56,c:'#bfe6fb',shape:'crystal',deco:'facets'},
+     {id:'back',name:'氷殻',x:0,y:-0.22,rx:0.56,ry:0.18,c:'#d8f2ff',hp:1,mat:[['mstone',2],['icecrys',1]],shape:'crystal',deco:'iceSpikes'},
+     {id:'head',name:'氷角',x:0,y:-0.5,rx:0.19,ry:0.17,c:'#e6f8ff',hp:1,mat:[['icecrys',2]],shape:'crystal',deco:'crystalHorn',eyes:true},
+    ]}),
 );
 const MINIONS=[
   variant('golm',{id:'pebble',name:'石ころ獣',tint:'#b0b098',size:0.72,hp:260,need:[2,3],needEvery:25,windup:1.15,dmg:10,combo:1,partMul:0.35,
@@ -236,12 +251,37 @@ const MINIONS=[
     moves:[['slash',6],['heavy',1],['delay',1],['breath',1]],breath:{type:'fire',name:'鱗粉',c:'#e8ff90'},drops:[['dust',2,3],['mothwing',0,1]],rares:[['moonsilk',0.03]]}),
   variant('golm',{id:'beetle',name:'森の甲虫',tint:'#2f6a3a',size:0.8,need:[3,4],needEvery:24,windup:1.05,combo:2,partMul:0.5,
     moves:[['slash',6],['heavy',2],['delay',1],['breath',1]],breath:{type:'rock',name:'木の実投げ',c:'#a0c070'},drops:[['dust',2,3],['silk',1,1],['antenna',0,1]],rares:[['fairyeye',0.01]],
-    names:{back:'甲羅',legR:'右前脚',legL:'左前脚',head:'大顎'},mats:{back:[['silk',2]],legR:[['antenna',1]],legL:[['antenna',1]],head:[['dust',2]]}}),
-  variant('glacier',{id:'frostwolf',name:'霜狼',tint:'#d8eef8',size:0.75,need:[3,5],needEvery:21,windup:0.85,combo:2,partMul:0.4,
-    moves:[['slash',5],['heavy',2],['delay',2],['breath',1]],breath:{type:'fire',name:'霜の息',c:'#e0f6ff'},drops:[['frost',2,3],['icefang',0,1]],rares:[['permafrost',0.02]]}),
+    eye:'#ff6a3a',glow:'#a8ff70',
+    // カブトムシ型：つやのある甲羅、節のある6本脚、大きな角
+    parts:[
+     {id:'legR',name:'右前脚',x:-0.52,y:0.36,rx:0.13,ry:0.2,c:'#2a3a20',hp:1,mat:[['antenna',1]],deco:'insectLegs',limb:1},
+     {id:'legL',name:'左前脚',x:0.52,y:0.36,rx:0.13,ry:0.2,c:'#2a3a20',hp:1,mat:[['antenna',1]],deco:'insectLegs',limb:1},
+     {id:'body',body:true,x:0,y:0.22,rx:0.46,ry:0.4,c:'#1e2a18'},
+     {id:'back',name:'甲羅',x:0,y:0.1,rx:0.52,ry:0.48,c:'#3a6a2a',hp:1,mat:[['silk',2]],deco:'elytra'},
+     {id:'head',name:'大角',x:0,y:-0.4,rx:0.22,ry:0.15,c:'#2e4a22',hp:1,mat:[['dust',2]],deco:'beetleHorn',eyes:true},
+    ]}),
+  variant('glacier',{id:'frostwolf',name:'霜狼',size:0.78,need:[3,5],needEvery:21,windup:0.85,combo:2,
+    moves:[['slash',5],['heavy',2],['delay',2],['breath',1]],breath:{type:'fire',name:'霜の息',c:'#e0f6ff'},drops:[['frost',2,3],['icefang',0,1]],rares:[['permafrost',0.02]],
+    eye:'#7af0ff',glow:'#cff4ff',
+    // 狼型：毛並みの胴、首まわりの霜の毛、とがった耳と長い鼻先、牙
+    parts:[
+     {id:'legR',name:'右前脚',x:-0.42,y:0.5,rx:0.12,ry:0.3,c:'#a8bccc',hp:1,mat:[['icefang',1]],deco:'paw',limb:1},
+     {id:'legL',name:'左前脚',x:0.42,y:0.5,rx:0.12,ry:0.3,c:'#a8bccc',hp:1,mat:[['icefang',1]],deco:'paw',limb:1},
+     {id:'body',body:true,x:0,y:0.16,rx:0.5,ry:0.38,c:'#c4d6e2',deco:'fur'},
+     {id:'back',name:'霜の毛',x:0,y:-0.12,rx:0.4,ry:0.22,c:'#eef8ff',hp:1,mat:[['frost',2]],deco:'ruff'},
+     {id:'head',name:'鼻先',x:0,y:-0.4,rx:0.22,ry:0.19,c:'#d6e4ee',hp:1,mat:[['icefang',1],['frost',1]],deco:'wolfHead',eyes:true},
+    ]}),
   variant('necros',{id:'icewraith',name:'氷の亡霊',tint:'#9fd8f0',size:0.82,need:[4,5],needEvery:21,windup:0.82,combo:2,partMul:0.5,ice:1,
     moves:[['slash',5],['heavy',2],['delay',2],['breath',2]],breath:{type:'fire',name:'氷霧',c:'#d8f4ff'},drops:[['frost',2,3],['mstone',1,1],['icecrys',0,1]],rares:[['iceheart',0.004]],
-    names:{armR:'右の氷腕',armL:'左の氷腕',core:'氷核',head:'氷冠'},mats:{armR:[['frost',1]],armL:[['frost',1]],core:[['icecrys',1]],head:[['mstone',2]]}}),
+    eye:'#9ff8ff',glow:'#bff4ff',
+    // 氷の幽霊：すそがつららになった半透明の衣、フード、つららの刃の腕、胸の雪の結晶
+    parts:[
+     {id:'body',body:true,x:0,y:0.1,rx:0.4,ry:0.55,c:'#a8d4ec',shape:'ghost',deco:'veil'},
+     {id:'armR',name:'右の氷腕',x:-0.56,y:0.02,rx:0.14,ry:0.36,c:'#cfeefe',hp:1,mat:[['frost',1]],shape:'crystal',deco:'iceBlade',limb:1},
+     {id:'armL',name:'左の氷腕',x:0.56,y:0.02,rx:0.14,ry:0.36,c:'#cfeefe',hp:1,mat:[['frost',1]],shape:'crystal',deco:'iceBlade',limb:1},
+     {id:'core',name:'氷核',x:0,y:0.05,rx:0.14,ry:0.14,c:'#e8fbff',hp:1,mat:[['icecrys',1]],deco:'snowflake',weak:1.4},
+     {id:'head',name:'氷のフード',x:0,y:-0.58,rx:0.22,ry:0.22,c:'#7aa8c8',hp:1,mat:[['mstone',2]],deco:'hood',eyes:true},
+    ]}),
   variant('necros',{id:'wraith',name:'亡霊騎士',tint:'#3a7a7a',size:0.8,hp:1600,need:[3,5],needEvery:20,windup:0.8,dmg:30,combo:2,partMul:0.4,
     moves:[['slash',5],['heavy',2],['delay',2],['breath',2]],breath:{type:'fire',name:'怨念の炎',c:'#70e0d0'},drops:[['shade',2,3],['soul',1,1]],rares:[['soulstone',0.02]]}),
   variant('necros',{id:'lich',name:'骸骨魔導士',tint:'#b0a880',size:0.85,hp:2300,need:[4,6],needEvery:20,windup:0.75,dmg:36,combo:3,partMul:0.5,
@@ -385,6 +425,9 @@ const has=c=>Object.entries(c).every(([k,q])=>(S.mats[k]||0)>=q);
 function pay(c){for(const[k,q]of Object.entries(c))S.mats[k]-=q}
 function addMat(k,q){S.mats[k]=(S.mats[k]||0)+q}
 const OPEN_DETAIL={};   // 拠点の「詳細を表示」を開いているダンジョン
+let forgeTab='w';       // 工房の小タブ：w=武器 / a=防具
+// 作成に使う素材を1つでも持っているか（持っていない装備は工房に出さない）
+const hasAnyMat=c=>Object.keys(c).length===0||Object.keys(c).some(k=>(S.mats[k]||0)>0);   // 拠点の「詳細を表示」を開いているダンジョン
 const unlocked=i=>i===0||!!S.cleared[DUNGEONS[i].id]||!!S.cleared[DUNGEONS[i-1].id]||!!S.cleared[DUNGEONS[i-1].floors.slice(-1)[0]];
 
 // ===================== 汎用描画 =====================
@@ -661,8 +704,9 @@ function renderHub(){
   if(tab==='hunt'){
     h+=`<div class="card" style="border-color:#7a2a20"><p style="color:#ffb0a0;margin:0">⚠ ダンジョンで手に入れた素材は<b>帰還するまで未確定</b>。倒れると<b>その探索の戦利品と、装備中の武器・防具（5つ）のうちランダムに1〜3つを失う</b>（初期装備は強化が+0に戻る）。階の合間に「帰還」か戦闘中の「脱出」なら装備は守れる。</p></div>`;
     DUNGEONS.forEach((D,i)=>{const lock=!unlocked(i),open=OPEN_DETAIL[D.id]&&!lock;
-      h+=`<div class="card ${lock?'locked':''}"><h3>${'★'.repeat(D.stars)} ${D.name}（全${D.floors.length}階） ${S.cleared[D.id]?'<span class="tag ok">踏破済</span>':''}</h3>
-      <p>${lock?'🔒 前のダンジョンを踏破すると解放':D.desc}</p>`;
+      // 前のダンジョンを踏破していないうちは、星の数だけ見せて名前・説明は「???」
+      h+=`<div class="card ${lock?'locked':''}"><h3>${'★'.repeat(D.stars)} ${lock?'???':`${D.name}（全${D.floors.length}階）`} ${S.cleared[D.id]?'<span class="tag ok">踏破済</span>':''}</h3>
+      <p>${lock?'🔒 ???':D.desc}</p>`;
       if(open){const y=YIELD[D.id];
         // レア素材：1回踏破で1個以上出る確率（全階の討伐ぶんを合算）
         const rp={};for(const id of D.floors)for(const[k,pr]of EN(id).rares)rp[k]=1-(1-(rp[k]||0))*(1-pr);
@@ -686,9 +730,15 @@ function renderHub(){
         h+='</div></div></div>'})};
     h+=`<div class="buildbox"><b>いまのビルド</b>　攻撃 ${atkStat()}　／　パリィ1回で体勢 +${parryGain(false)}pt（強撃 +${parryGain(true)}）　／　回避で体勢 ${dodgeGain()>0?'+'+dodgeGain()+'pt':'なし'}<br>
       会心率 ${Math.round(critRate()*100)}%（×${critMul().toFixed(1)}）　／　パリィ受付 ×${perk('parry').toFixed(2)}　／　回避受付 ×${perk('dodge').toFixed(2)}${perk('heal')?`　／　パリィでHP+${+perk('heal').toFixed(1)}`:''}</div>`;
-    sec(`— 武器 —（素材の目安：そのダンジョン約${WEAPON_CLEARS}回踏破分）`,WEAPONS,'w');
+    h+=`<div class="subtabs"><button class="${forgeTab==='w'?'on':''}" data-act="ftab" data-v="w">武器</button><button class="${forgeTab==='a'?'on':''}" data-act="ftab" data-v="a">防具</button></div>`;
+    if(forgeTab==='w'){
+      const ws=WEAPONS.filter(w=>S.weapons[w.id]!==undefined||hasAnyMat(w.cost));
+      sec(`— 武器 —（素材の目安：そのダンジョン約${WEAPON_CLEARS}回踏破分）`,ws,'w');
+      if(ws.length<WEAPONS.length)h+=`<p class="hint">ほかにも武器がある。素材を1つでも手に入れると表示される。</p>`;
+    }else{
+    const sets=ARMOR_SETS.filter(st=>ARMORS.some(p=>p.set===st&&(S.armors[p.id]!==undefined||hasAnyMat(p.cost))));
     h+=`<div class="sect">— 防具（頭・胴・手・足） —</div><p style="font-size:12px;color:#a89478;margin:-4px 0 10px">シリーズの部位を全部そろえると合計：防御／体力。強化は1段ごとに 防御+1・体力+1。素材の目安：防具一式＝そのダンジョン約${ARMOR_SET_CLEARS}回踏破分</p>`;
-    ARMOR_SETS.forEach(st=>{const ps=ARMORS.filter(p=>p.set===st);const rare=!!st.rare||Object.keys(st.perkCost||{}).length>0;
+    sets.forEach(st=>{const ps=ARMORS.filter(p=>p.set===st);const rare=!!st.rare||Object.keys(st.perkCost||{}).length>0;
       h+=`<div class="card ${rare?'rare':''}"><h3>${st.title}シリーズ <span style="font-size:12px;color:#bba78a;font-weight:700">一式 防御${st.def} / 体力+${st.hp}</span> ${buildTag(st.build)}${st.setPerk?` <span class="tag perk">✦ 一式：${perkText(st.setPerk)}</span>`:''}${st.perk?` <span class="tag perk">✦ ${SLOTS.find(x=>x.k===st.perkSlot).n}：${perkText(st.perk)}</span>`:''}</h3>`;
       ps.forEach(it=>{const lv=S.armors[it.id],owned=lv!==undefined,eq=S.eq[it.slot]===it.id,sn=SLOTS.find(x=>x.k===it.slot).n,stt=aStat(it,lv||0);
         h+=`<div class="prow"><div class="ico"><img src="${armorIcon(it)}"></div><div class="body">
@@ -697,6 +747,8 @@ function renderHub(){
         else{const c=upgCost(it,lv);h+=`<div class="row">${eq?'':`<button class="btn sub2 mini" data-act="equip" data-k="a" data-id="${it.id}">装備</button>`}${lv<MAXLV?costChips(c)+`<button class="btn mini" data-act="upg" data-k="a" data-id="${it.id}" ${has(c)?'':'disabled'}>強化 +${lv+1}</button>`:'<span class="chip" style="padding:3px 8px">強化MAX</span>'}</div>`}
         h+='</div></div>'});
       h+='</div>'});
+    if(sets.length<ARMOR_SETS.length)h+=`<p class="hint">ほかにも防具がある。素材を1つでも手に入れると表示される。</p>`;
+    }
   }else if(tab==='mats'){
     const e=Object.entries(S.mats).filter(([k,q])=>q>0).sort((a,b)=>(MATS[a[0]].rare||0)-(MATS[b[0]].rare||0));
     h+=e.length?`<div class="mats">${e.map(([k,q])=>`<div class="mat ${MATS[k].rare?'r'+MATS[k].rare:''}"><img src="${ICON[k]}"><div>${MATS[k].n}${MATS[k].rare?`<div style="font-size:10px;color:#e0c0ff">${RARE_NAME[MATS[k].rare]}</div>`:''}</div><b>×${q}</b></div>`).join('')}</div>`:'<div class="card"><p>まだ素材がありません。狩りに出て部位破壊・討伐で集めよう！</p></div>';
@@ -724,6 +776,7 @@ function renderHub(){
 document.querySelector('.tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b){tab=b.dataset.tab;renderHub()}});
 $('#panel').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled)return;const act=b.dataset.act;
   if(act==='hunt')startDungeon(+b.dataset.i);
+  else if(act==='ftab'){forgeTab=b.dataset.v;renderHub()}
   else if(act==='detail'){OPEN_DETAIL[b.dataset.id]=!OPEN_DETAIL[b.dataset.id];sfx('click');renderHub()}
   else if(act==='craft'){const it=(b.dataset.k==='w'?W_:A_)(b.dataset.id);if(!has(it.cost))return;pay(it.cost);sfx('craft');(b.dataset.k==='w'?S.weapons:S.armors)[it.id]=0;
     if(b.dataset.k==='w')S.eqW=it.id;else S.eq[it.slot]=it.id;save();toast(`${it.name} を作成して装備した！`);renderHub()}
@@ -1257,6 +1310,19 @@ function drawEnemy(){
 }
 function drawStar(x,y,r,c){ctx.fillStyle=c;ctx.beginPath();for(let i=0;i<10;i++){const a=i*Math.PI/5-Math.PI/2,rr=i%2?r*0.45:r;ctx.lineTo(x+Math.cos(a)*rr,y+Math.sin(a)*rr)}ctx.closePath();ctx.fill()}
 
+// 部位の形：ふつうは楕円。shape で 結晶（角ばった多角形）／幽霊（すそがつらら）／蛾の翅 に変えられる
+const CRYSTAL_PTS=[[0,-1],[0.72,-0.6],[1,0.1],[0.62,0.86],[0,1],[-0.62,0.86],[-1,0.1],[-0.72,-0.6]];
+function partPath(p,cx,cy,rx,ry){
+  if(p.shape==='crystal'){ctx.beginPath();CRYSTAL_PTS.forEach(([a,b],i)=>{const x=cx+a*rx*1.05,y=cy+b*ry*1.05;i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.closePath();return}
+  if(p.shape==='ghost'){ctx.beginPath();ctx.ellipse(cx,cy-ry*0.2,rx,ry*0.8,0,Math.PI,0);ctx.lineTo(cx+rx*1.15,cy+ry*0.85);
+    const n=7;for(let i=0;i<=n;i++){const x=cx+rx*1.15-i*rx*2.3/n,dn=i%2?0.85:1.25+0.08*Math.sin(B.t*3+i);ctx.lineTo(x,cy+ry*dn)}ctx.closePath();return}
+  if(p.shape==='mothWing'){const s=p.x<0?-1:1,f=1+0.1*Math.sin(B.t*6+(s>0?0:0.4));ry*=f;ctx.beginPath();
+    ctx.moveTo(cx-s*rx*0.9,cy);
+    ctx.bezierCurveTo(cx-s*rx*0.4,cy-ry*1.5,cx+s*rx*0.9,cy-ry*1.55,cx+s*rx*1.08,cy-ry*0.55);
+    ctx.quadraticCurveTo(cx+s*rx*0.95,cy+ry*0.05,cx+s*rx*0.25,cy+ry*0.12);
+    ctx.bezierCurveTo(cx+s*rx*0.85,cy+ry*0.45,cx+s*rx*0.6,cy+ry*1.35,cx-s*rx*0.1,cy+ry*1.1);
+    ctx.quadraticCurveTo(cx-s*rx*0.65,cy+ry*0.8,cx-s*rx*0.9,cy);ctx.closePath();return}
+  ell(cx,cy,rx,ry)}
 function drawPart(p,u,glow){
   const E=B.E,k=p.broken?0.85:1,cx=p.x*u,cy=p.y*u,rx=p.rx*u*k,ry=p.ry*u*k;
   const base=p.broken?shade(p.c,-0.35):p.c;
@@ -1281,8 +1347,68 @@ function drawPart(p,u,glow){
   if(p.deco==='blade'&&!p.broken){const s=p.x<0?-1:1;ctx.fillStyle='#d8ccf0';ctx.beginPath();ctx.moveTo(cx+s*rx*0.3,cy+ry*0.7);ctx.lineTo(cx+s*rx*1.6,cy+ry*1.5);ctx.lineTo(cx+s*rx*0.7,cy+ry*0.55);ctx.closePath();ctx.fill()}
   const g=ctx.createRadialGradient(cx-rx*0.35,cy-ry*0.45,0,cx,cy,Math.max(rx,ry)*1.1);
   g.addColorStop(0,shade(base,0.28));g.addColorStop(0.6,base);g.addColorStop(1,shade(base,-0.45));
-  ctx.fillStyle=g;ell(cx,cy,rx,ry);ctx.fill();ctx.lineWidth=2;ctx.strokeStyle=shade(base,-0.6);ctx.stroke();
+  ctx.fillStyle=g;partPath(p,cx,cy,rx,ry);ctx.fill();ctx.lineWidth=2;ctx.strokeStyle=shade(base,-0.6);ctx.stroke();
   const sb=ctx.shadowBlur;ctx.shadowBlur=0;
+  if(p.deco==='mothWing'){const s=p.x<0?-1:1,f=1+0.1*Math.sin(B.t*6+(s>0?0:0.4)),r2=ry*f;
+    ctx.save();partPath(p,cx,cy,rx,ry);ctx.clip();
+    ctx.strokeStyle=rgba('#ffffff',0.25);ctx.lineWidth=1.5;for(let i=0;i<5;i++){ctx.beginPath();ctx.moveTo(cx-s*rx*0.85,cy);ctx.quadraticCurveTo(cx+s*rx*(0.1+i*0.15),cy-r2*(0.9-i*0.35),cx+s*rx*(0.6+i*0.1),cy-r2*(1.1-i*0.5));ctx.stroke()}
+    ctx.fillStyle=shade(base,0.35);ell(cx+s*rx*0.75,cy-r2*0.55,rx*0.12,r2*0.35);ctx.fill();
+    if(!p.broken)for(const[ex,ey,er]of[[0.45,-0.6,0.2],[0.3,0.7,0.15]]){const X=cx+s*rx*ex,Y=cy+r2*ey;ctx.fillStyle='#1a1030';ell(X,Y,rx*er,rx*er);ctx.fill();
+      ctx.fillStyle=E.glow;ell(X,Y,rx*er*0.6,rx*er*0.6);ctx.fill();ctx.fillStyle='#fff';ell(X-rx*er*0.2,Y-rx*er*0.2,rx*er*0.18,rx*er*0.18);ctx.fill()}
+    ctx.fillStyle=rgba('#000000',0.25);ctx.fillRect(cx-rx*2,cy+r2*0.12-1,rx*4,2);
+    if(p.broken){ctx.strokeStyle='rgba(0,0,0,0.6)';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(cx+s*rx*0.2,cy-r2);ctx.lineTo(cx+s*rx*0.5,cy);ctx.lineTo(cx+s*rx*0.3,cy+r2);ctx.stroke()}
+    ctx.restore()}
+  if(p.deco==='segments'){ctx.save();ell(cx,cy,rx,ry);ctx.clip();ctx.fillStyle=rgba('#3a2a10',0.35);for(let i=-3;i<=3;i++)ctx.fillRect(cx-rx,cy+i*ry*0.28-2,rx*2,4);ctx.restore();
+    if(!p.broken&&Math.random()<0.3){const ang=Math.random()*Math.PI*2;fx.parts.push({x:B.tf.x+cx*B.tf.sc+Math.cos(ang)*rx,y:B.tf.y+(cy+ry)*B.tf.sc,vx:rand(-30,30),vy:rand(20,60),life:0.9,max:0.9,c:'#e8ff90',r:rand(1.5,3),add:true,grav:20,drag:0.98})}}
+  if(p.deco==='fuzz'){ctx.strokeStyle=shade(base,-0.15);ctx.lineWidth=2;for(let i=0;i<22;i++){const an=i/22*Math.PI*2,x0=cx+Math.cos(an)*rx*0.85,y0=cy+Math.sin(an)*ry*0.85;ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(x0+Math.cos(an)*rx*0.3,y0+Math.sin(an)*ry*0.3);ctx.stroke()}}
+  if(p.deco==='featherAntenna'){const L=p.broken?0.4:1;ctx.strokeStyle=p.broken?'#6a6050':'#f0e8c8';ctx.lineWidth=2.5;
+    for(const s of[-1,1]){const ex=cx+s*rx*1.9,ey=cy-ry*(1+2.6*L)+Math.sin(B.t*3+s)*4;ctx.beginPath();ctx.moveTo(cx+s*rx*0.3,cy-ry*0.7);ctx.quadraticCurveTo(cx+s*rx*0.5,cy-ry*2.5*L,ex,ey);ctx.stroke();
+      if(!p.broken){ctx.lineWidth=1.2;for(let i=1;i<8;i++){const t=i/8,x=lerp(cx+s*rx*0.4,ex,t),y=lerp(cy-ry*1.2,ey,t);ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+s*rx*0.28*(1-t*0.5),y+ry*0.2);ctx.moveTo(x,y);ctx.lineTo(x-s*rx*0.12,y-ry*0.3*(1-t));ctx.stroke()}ctx.lineWidth=2.5}}}
+  if(p.deco==='insectLegs'){const s=p.x<0?-1:1;ctx.strokeStyle=shade(base,-0.2);ctx.lineWidth=5;ctx.lineCap='round';
+    for(let i=0;i<3;i++){const y0=cy-ry*0.6+i*ry*0.7,kn=cx+s*rx*(1.6+i*0.2),w=Math.sin(B.t*5+i*2)*ry*0.12;ctx.beginPath();ctx.moveTo(cx,y0);ctx.lineTo(kn,y0-ry*0.8+w);ctx.lineTo(kn+s*rx*0.6,y0+ry*1.2+w);ctx.stroke();
+      if(!p.broken){ctx.fillStyle='#d8e0c0';ell(kn+s*rx*0.6,y0+ry*1.2+w,3,3);ctx.fill()}}ctx.lineCap='butt'}
+  if(p.deco==='elytra'){ctx.save();ell(cx,cy,rx,ry);ctx.clip();ctx.strokeStyle=shade(base,-0.55);ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(cx,cy-ry);ctx.lineTo(cx,cy+ry);ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,0.28)';for(const s of[-1,1]){ctx.beginPath();ctx.ellipse(cx+s*rx*0.45,cy-ry*0.45,rx*0.18,ry*0.09,s*0.5,0,Math.PI*2);ctx.fill()}
+    ctx.fillStyle=rgba('#c8ff80',0.25);for(let i=0;i<6;i++){const s=i%2?1:-1;ell(cx+s*rx*(0.3+0.12*(i>>1)),cy+ry*(-0.1+0.25*(i>>1)),rx*0.05,ry*0.04);ctx.fill()}
+    if(p.broken){ctx.strokeStyle='rgba(0,0,0,0.7)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(cx-rx*0.6,cy-ry*0.2);ctx.lineTo(cx-rx*0.2,cy+ry*0.1);ctx.lineTo(cx-rx*0.4,cy+ry*0.6);ctx.stroke()}ctx.restore()}
+  if(p.deco==='beetleHorn'){const L=p.broken?0.35:1;ctx.fillStyle=p.broken?'#3a3020':'#4a3a24';const sb2=ctx.shadowBlur;
+    const hg=ctx.createLinearGradient(cx-rx*0.6,0,cx+rx*0.6,0);hg.addColorStop(0,p.broken?'#2a2418':'#3a2c1a');hg.addColorStop(0.5,p.broken?'#4a4030':'#7a5a34');hg.addColorStop(1,p.broken?'#2a2418':'#3a2c1a');ctx.fillStyle=hg;
+    ctx.beginPath();ctx.moveTo(cx-rx*0.6,cy-ry*0.3);ctx.quadraticCurveTo(cx-rx*0.7,cy-ry*2.4*L,cx-rx*0.1,cy-ry*3.4*L);ctx.lineTo(cx+rx*0.15,cy-ry*3.1*L);ctx.quadraticCurveTo(cx+rx*0.05,cy-ry*1.9*L,cx+rx*0.6,cy-ry*0.3);ctx.closePath();ctx.fill();
+    if(!p.broken){ctx.beginPath();ctx.moveTo(cx-rx*0.1,cy-ry*3.4);ctx.lineTo(cx-rx*0.55,cy-ry*3.9);ctx.lineTo(cx-rx*0.05,cy-ry*3.7);ctx.lineTo(cx+rx*0.3,cy-ry*4.1);ctx.lineTo(cx+rx*0.15,cy-ry*3.1);ctx.closePath();ctx.fill();
+      ctx.strokeStyle='rgba(255,230,180,0.35)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(cx-rx*0.35,cy-ry*0.6);ctx.quadraticCurveTo(cx-rx*0.4,cy-ry*2.3,cx-rx*0.05,cy-ry*3.2);ctx.stroke()}
+    ctx.fillStyle='#2a2014';for(const s of[-1,1]){ctx.beginPath();ctx.moveTo(cx+s*rx*0.5,cy+ry*0.6);ctx.quadraticCurveTo(cx+s*rx*0.9,cy+ry*1.6,cx+s*rx*0.25,cy+ry*1.7);ctx.lineTo(cx+s*rx*0.35,cy+ry*0.8);ctx.fill()}ctx.shadowBlur=sb2}
+  if(p.deco==='iceClaw'){ctx.fillStyle=p.broken?'#7890a0':'rgba(235,250,255,0.95)';const L=p.broken?0.4:1;
+    for(let i=-1;i<=1;i++){ctx.beginPath();ctx.moveTo(cx+i*rx*0.5-rx*0.15,cy+ry*0.8);ctx.lineTo(cx+i*rx*0.65,cy+ry*(0.8+0.9*L));ctx.lineTo(cx+i*rx*0.5+rx*0.15,cy+ry*0.8);ctx.fill()}
+    ctx.strokeStyle='rgba(255,255,255,0.5)';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(cx,cy-ry);ctx.lineTo(cx-rx*0.3,cy);ctx.lineTo(cx,cy+ry);ctx.stroke()}
+  if(p.deco==='facets'){ctx.save();partPath(p,cx,cy,rx,ry);ctx.clip();ctx.strokeStyle='rgba(255,255,255,0.35)';ctx.lineWidth=1.5;
+    for(const[a,b]of CRYSTAL_PTS){ctx.beginPath();ctx.moveTo(cx,cy+ry*0.1);ctx.lineTo(cx+a*rx,cy+b*ry);ctx.stroke()}
+    const pl=0.5+0.5*Math.sin(B.t*2.5),cg=ctx.createRadialGradient(cx,cy+ry*0.1,0,cx,cy+ry*0.1,rx*0.55);cg.addColorStop(0,`rgba(255,255,255,${0.6+0.3*pl})`);cg.addColorStop(0.4,rgba(E.glow,0.5));cg.addColorStop(1,'rgba(150,220,255,0)');
+    ctx.fillStyle=cg;ctx.fillRect(cx-rx,cy-ry,rx*2,ry*2);ctx.restore();
+    for(let i=0;i<6;i++){const an=B.t*0.8+i*Math.PI/3,X=cx+Math.cos(an)*rx*1.5,Y=cy+Math.sin(an)*ry*0.5-ry*0.2,z=Math.sin(an);ctx.globalAlpha*=0.55+0.4*(z+1)/2;ctx.fillStyle='#eafaff';
+      ctx.beginPath();ctx.moveTo(X,Y-9);ctx.lineTo(X+5,Y);ctx.lineTo(X,Y+9);ctx.lineTo(X-5,Y);ctx.closePath();ctx.fill();ctx.globalAlpha/=0.55+0.4*(z+1)/2}}
+  if(p.deco==='paw'&&!p.broken){ctx.fillStyle='#f4fbff';for(let i=-1;i<=1;i++){ctx.beginPath();ctx.moveTo(cx+i*rx*0.5-4,cy+ry*0.85);ctx.lineTo(cx+i*rx*0.55,cy+ry*1.15);ctx.lineTo(cx+i*rx*0.5+4,cy+ry*0.85);ctx.fill()}}
+  if(p.deco==='fur'||p.deco==='ruff'){const n=p.deco==='ruff'?16:22;ctx.fillStyle=p.deco==='ruff'?shade(base,0.1):shade(base,-0.08);
+    for(let i=0;i<n;i++){const an=i/n*Math.PI*2+(p.deco==='ruff'?0:0.1),x0=cx+Math.cos(an)*rx*0.92,y0=cy+Math.sin(an)*ry*0.92,len=(p.deco==='ruff'?0.35:0.18)*(1+0.2*Math.sin(B.t*3+i));
+      ctx.beginPath();ctx.moveTo(x0+Math.cos(an+1.6)*6,y0+Math.sin(an+1.6)*6);ctx.lineTo(x0+Math.cos(an)*rx*len,y0+Math.sin(an)*ry*len*1.4);ctx.lineTo(x0+Math.cos(an-1.6)*6,y0+Math.sin(an-1.6)*6);ctx.fill()}
+    if(p.deco==='ruff'&&!p.broken){ctx.fillStyle='rgba(255,255,255,0.6)';for(let i=0;i<5;i++){ell(cx+(i-2)*rx*0.38,cy+ry*0.55,2.5,2.5);ctx.fill()}}}
+  if(p.deco==='wolfHead'){ctx.fillStyle=shade(base,-0.1);for(const s of[-1,1]){const L=p.broken&&s>0?0.4:1;ctx.beginPath();ctx.moveTo(cx+s*rx*0.35,cy-ry*0.6);ctx.lineTo(cx+s*rx*0.75,cy-ry*(0.6+1.3*L));ctx.lineTo(cx+s*rx*0.95,cy-ry*0.3);ctx.closePath();ctx.fill();
+      ctx.fillStyle='#e8a8b8';ctx.beginPath();ctx.moveTo(cx+s*rx*0.5,cy-ry*0.6);ctx.lineTo(cx+s*rx*0.74,cy-ry*(0.6+0.9*L));ctx.lineTo(cx+s*rx*0.82,cy-ry*0.45);ctx.closePath();ctx.fill();ctx.fillStyle=shade(base,-0.1)}
+    const open=B.state==='windup'&&B.atk&&B.atk.kind==='breath'?Math.min(1,B.atk.t/B.atk.w):0;
+    ctx.fillStyle=shade(base,0.15);ell(cx,cy+ry*0.75,rx*0.42,ry*0.42);ctx.fill();ctx.strokeStyle=shade(base,-0.5);ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle='#1a2028';ell(cx,cy+ry*0.48,rx*0.13,ry*0.09);ctx.fill();
+    ctx.fillStyle='#3a1420';ell(cx,cy+ry*(1.05+0.1*open),rx*0.3,ry*(0.08+0.22*open));ctx.fill();
+    if(!p.broken){ctx.fillStyle='#ffffff';for(const s of[-1,1]){ctx.beginPath();ctx.moveTo(cx+s*rx*0.22,cy+ry*0.98);ctx.lineTo(cx+s*rx*0.16,cy+ry*1.3);ctx.lineTo(cx+s*rx*0.1,cy+ry*0.98);ctx.fill()}}}
+  if(p.deco==='veil'){ctx.save();partPath(p,cx,cy,rx,ry);ctx.clip();const vg=ctx.createLinearGradient(0,cy-ry,0,cy+ry*1.3);vg.addColorStop(0,'rgba(255,255,255,0)');vg.addColorStop(1,'rgba(235,250,255,0.55)');ctx.fillStyle=vg;ctx.fillRect(cx-rx*1.3,cy-ry,rx*2.6,ry*2.5);
+    ctx.strokeStyle='rgba(255,255,255,0.3)';ctx.lineWidth=2;for(let i=-2;i<=2;i++){ctx.beginPath();ctx.moveTo(cx+i*rx*0.3,cy-ry*0.4);ctx.quadraticCurveTo(cx+i*rx*0.4+Math.sin(B.t*2+i)*6,cy+ry*0.4,cx+i*rx*0.45,cy+ry*1.1);ctx.stroke()}ctx.restore();
+    if(Math.random()<0.25)fx.parts.push({x:B.tf.x+rand(-rx,rx)*B.tf.sc,y:B.tf.y+(cy+ry)*B.tf.sc,vx:rand(-20,20),vy:rand(30,70),life:1,max:1,c:'#eafaff',r:rand(1.5,3),grav:15,drag:0.98})}
+  if(p.deco==='iceBlade'){const s=p.x<0?-1:1,L=p.broken?0.35:1;ctx.fillStyle=p.broken?'#8aa0b0':'rgba(240,252,255,0.95)';const sb2=ctx.shadowBlur;ctx.shadowColor='#bff4ff';ctx.shadowBlur=p.broken?0:14;
+    ctx.beginPath();ctx.moveTo(cx-rx*0.4,cy+ry*0.7);ctx.lineTo(cx+s*rx*1.2,cy+ry*(0.9+1.4*L));ctx.lineTo(cx+rx*0.5,cy+ry*0.6);ctx.closePath();ctx.fill();ctx.shadowBlur=sb2}
+  if(p.deco==='snowflake'&&!p.broken){ctx.save();ctx.translate(cx,cy);ctx.rotate(B.t*0.6);ctx.strokeStyle='#ffffff';ctx.lineWidth=2.2;const r=rx*0.85;
+    for(let i=0;i<6;i++){ctx.rotate(Math.PI/3);ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(0,-r);ctx.moveTo(0,-r*0.55);ctx.lineTo(r*0.25,-r*0.78);ctx.moveTo(0,-r*0.55);ctx.lineTo(-r*0.25,-r*0.78);ctx.stroke()}ctx.restore()}
+  if(p.deco==='hood'){ctx.fillStyle=shade(base,-0.25);ctx.beginPath();ctx.moveTo(cx-rx*1.15,cy+ry*0.9);ctx.quadraticCurveTo(cx-rx*1.2,cy-ry*1.1,cx,cy-ry*1.45);ctx.quadraticCurveTo(cx+rx*1.2,cy-ry*1.1,cx+rx*1.15,cy+ry*0.9);
+    ctx.quadraticCurveTo(cx+rx*0.7,cy+ry*0.2,cx,cy+ry*0.15);ctx.quadraticCurveTo(cx-rx*0.7,cy+ry*0.2,cx-rx*1.15,cy+ry*0.9);ctx.fill();
+    ctx.fillStyle='#0a1420';ell(cx,cy+ry*0.05,rx*0.62,ry*0.55);ctx.fill();
+    if(!p.broken){ctx.fillStyle='rgba(235,250,255,0.9)';for(let i=-2;i<=2;i++){ctx.beginPath();ctx.moveTo(cx+i*rx*0.35-4,cy-ry*1.0+Math.abs(i)*ry*0.25);ctx.lineTo(cx+i*rx*0.35,cy-ry*(1.6-Math.abs(i)*0.2));ctx.lineTo(cx+i*rx*0.35+4,cy-ry*1.0+Math.abs(i)*ry*0.25);ctx.fill()}}}
   if(p.deco==='iceSpikes'){ctx.fillStyle=p.broken?'#7890a0':'rgba(225,248,255,0.95)';for(let i=0;i<6;i++){const t=(i-2.5)/3;ctx.beginPath();ctx.moveTo(cx+t*rx-rx*0.09,cy-ry*0.2);ctx.lineTo(cx+t*rx+rx*0.03,cy-ry*(p.broken?0.6:1.5+0.3*(i%2)));ctx.lineTo(cx+t*rx+rx*0.1,cy-ry*0.2);ctx.fill()}}
   if(p.ice&&!p.broken){ctx.fillStyle='rgba(255,255,255,0.25)';ell(cx-rx*0.3,cy-ry*0.35,rx*0.3,ry*0.15);ctx.fill()}
   if(p.deco==='rocks'){ctx.fillStyle=shade(base,-0.25);for(let i=0;i<5;i++){const t=(i-2)/2.5;ctx.beginPath();ctx.moveTo(cx+t*rx-rx*0.12,cy-ry*0.2);ctx.lineTo(cx+t*rx,cy-ry*(p.broken?0.6:1.25));ctx.lineTo(cx+t*rx+rx*0.12,cy-ry*0.2);ctx.fill()}}
