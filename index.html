@@ -20,7 +20,6 @@ h1{font-weight:900;font-size:30px;letter-spacing:.06em;text-align:center;color:#
 .equip b{color:#ffd58a}
 .tabs{display:flex;gap:6px;margin-bottom:14px}
 .tabs button{flex:1;padding:11px 0;font:700 15px 'M PLUS 1p';color:#c9b597;background:#24190f;border:1px solid #47331f;border-radius:10px;cursor:pointer}
-.card.equipped{border-color:#5a9a4a}.prow.equipped{background:rgba(90,154,74,0.08)}
 .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;align-items:start}.grid2>.card{margin:0}.grid2 .btn{white-space:normal}.grid2 .item{gap:10px}.grid2 .item .ico{width:56px;height:56px}.grid2 .item .ico img{width:50px;height:50px}.grid2 .card{padding:12px}.grid2 h3{font-size:15px}.grid2 .tag{white-space:nowrap}.grid2 .tag.perk{white-space:normal;display:inline-block;margin-top:3px}
 .inv2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.inv2 .card.prow{margin:0;border-top:1px solid #4a3522;padding:10px;gap:8px}.inv2 .prow .ico{width:44px;height:44px}.inv2 .prow .ico img{width:40px;height:40px}.inv2 .pst{display:block;margin:2px 0 0}.inv2 .tag{white-space:nowrap;display:inline-block}.inv2 .tag.perk{white-space:normal;margin-top:3px}.inv2 .row,.grid2 .row{flex-wrap:wrap}.inv2 .card.prow,.grid2>.card{min-width:0;overflow-wrap:anywhere}
 @media(max-width:480px){.grid2 .item,.inv2 .prow{flex-direction:column;gap:6px}.grid2 .item .ico,.inv2 .prow .ico{width:44px;height:44px}.grid2 .item .ico img,.inv2 .prow .ico img{width:40px;height:40px}.grid2 .card,.inv2 .card.prow{padding:10px}}
@@ -31,6 +30,10 @@ h1{font-weight:900;font-size:30px;letter-spacing:.06em;text-align:center;color:#
 .card h3{font-size:18px;font-weight:900;color:#ffe2ad;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .card p{font-size:13px;color:#bba78a;margin:6px 0}
 .card.rare{border-color:#9a6ad0;box-shadow:0 0 14px rgba(160,100,255,.18) inset}
+/* 装備中：緑に光る太枠＋上のふちに「✔ 装備中」のリボン */
+.card.equipped{position:relative;border:2px solid #6fd36a;background:linear-gradient(rgba(80,190,70,.16),rgba(80,190,70,.05)),linear-gradient(#2b1f15,#211710);box-shadow:0 0 0 1px rgba(111,211,106,.25),0 0 16px rgba(111,211,106,.35);margin-top:10px}
+.card.equipped::before{content:'✔ 装備中';position:absolute;top:-10px;right:10px;z-index:2;background:linear-gradient(#7fe07a,#3fa33a);color:#0d2a0b;font-size:11px;font-weight:900;padding:2px 9px;border-radius:999px;box-shadow:0 2px 6px rgba(0,0,0,.5);letter-spacing:.05em}
+.grid2>.card.equipped,.inv2>.card.equipped{margin:0}.grid2,.inv2{padding-top:10px}
 .item{display:flex;gap:14px;align-items:flex-start}
 .item .ico{width:84px;height:84px;flex:none;border-radius:12px;background:radial-gradient(circle at 50% 40%,#3d2c1e,#160f09);border:1px solid #4a3522;display:flex;align-items:center;justify-content:center}
 .item .ico img{width:76px;height:76px}
@@ -815,8 +818,8 @@ function renderHub(){
       list.forEach(it=>{const own=kind==='w'?S.weapons:S.armors;const lv=own[it.id];const owned=lv!==undefined;
         const eq=(kind==='w'?S.eqW:S.eqA)===it.id;const rare=Object.keys(it.cost).some(k=>MATS[k].rare);
         const st=kind==='w'?`攻撃 ${wStat(it,lv||0)}`:(()=>{const s=aStat(it,lv||0);return `防御 ${s.def} / 体力 +${s.hp}`})();
-        h+=`<div class="card ${rare?'rare':''}"><div class="item"><div class="ico"><img src="${kind==='w'?weaponIcon(it):armorIcon(it)}"></div><div class="body">
-        <h3>${it.name}${owned?' +'+lv:''} ${eq?'<span class="tag ok">装備中</span>':''}${!owned?'<span class="tag">未作成</span>':''}${it.gacha?'<span class="tag gacha">ガチャ限定</span>':''}</h3>
+        h+=`<div class="card ${rare?'rare':''} ${eq?'equipped':''}"><div class="item"><div class="ico"><img src="${kind==='w'?weaponIcon(it):armorIcon(it)}"></div><div class="body">
+        <h3>${it.name}${owned?' +'+lv:''} ${!owned?'<span class="tag">未作成</span>':''}${it.gacha?'<span class="tag gacha">ガチャ限定</span>':''}</h3>
         <p>${buildTag(it.build)} ${st} ${it.perk?`<span class="tag perk">✦ ${perkText(it.perk)}</span>`:''}</p>`;
         if(!owned){h+=`<div class="row">${costChips(it.cost)}</div><div class="row"><button class="btn" data-act="craft" data-k="${kind}" data-id="${it.id}" ${has(it.cost)?'':'disabled'}>作成する</button></div>`}
         else{const c=upgCost(it,lv);
@@ -839,7 +842,7 @@ function renderHub(){
       h+='<div class="inv2" style="margin-top:8px">';
       ps.forEach(it=>{const lv=S.armors[it.id],owned=lv!==undefined,eq=S.eq[it.slot]===it.id,sn=SLOTS.find(x=>x.k===it.slot).n,stt=aStat(it,lv||0);
         h+=`<div class="card prow ${eq?'equipped':''}"><div class="ico"><img src="${armorIcon(it)}"></div><div class="body">
-          <div class="pn"><span class="tag">${sn}</span> <b>${it.name}${owned?' +'+lv:''}</b> ${eq?'<span class="tag ok">装備中</span>':''} <span class="pst">防御 ${stt.def} / 体力 +${stt.hp}</span>${it.perk?` <span class="tag perk" style="opacity:.85">✦ ${perkText(it.perk)}</span>`:''}</div>`;
+          <div class="pn"><span class="tag">${sn}</span> <b>${it.name}${owned?' +'+lv:''}</b>  <span class="pst">防御 ${stt.def} / 体力 +${stt.hp}</span>${it.perk?` <span class="tag perk" style="opacity:.85">✦ ${perkText(it.perk)}</span>`:''}</div>`;
         if(!owned)h+=`<div class="row">${costChips(it.cost)}<button class="btn mini" data-act="craft" data-k="a" data-id="${it.id}" ${has(it.cost)?'':'disabled'}>作成</button></div>`;
         else{const c=upgCost(it,lv);h+=`<div class="row">${eq?'':`<button class="btn sub2 mini" data-act="equip" data-k="a" data-id="${it.id}">装備</button>`}${lv<MAXLV?costChips(c)+`<button class="btn mini" data-act="upg" data-k="a" data-id="${it.id}" ${has(c)?'':'disabled'}>強化 +${lv+1}</button>`:'<span class="chip" style="padding:3px 8px">強化MAX</span>'}</div>`}
         h+='</div></div>'});
@@ -864,18 +867,18 @@ function renderHub(){
     h+=`<div class="subtabs">${[['w','武器'],['a','防具'],['m','素材']].map(([k,n])=>`<button class="${invTab===k?'on':''}" data-act="itab" data-v="${k}">${n}</button>`).join('')}</div>`;
     if(invTab==='w'){
       h+=`<div class="buildbox"><b>いまのビルド</b>　攻撃 ${atkStat()}　／　パリィ1回で体勢 +${parryGain(false)}pt　／　回避で体勢 ${dodgeGain()>0?'+'+dodgeGain()+'pt':'なし'}　／　会心率 ${Math.round(critRate()*100)}%</div>`;
-      for(const w of WEAPONS){const lv=S.weapons[w.id];if(lv===undefined)continue;const eq=S.eqW===w.id;
+      for(const w of [...WEAPONS].sort((a,b)=>(b.id===S.eqW)-(a.id===S.eqW))){const lv=S.weapons[w.id];if(lv===undefined)continue;const eq=S.eqW===w.id;
         h+=`<div class="card ${eq?'equipped':''}"><div class="item"><div class="ico"><img src="${weaponIcon(w)}"></div><div class="body">
-          <h3>${w.name} +${lv} ${eq?'<span class="tag ok">装備中</span>':''}</h3>
+          <h3>${w.name} +${lv} </h3>
           <p>${buildTag(w.build)} 攻撃 ${wStat(w,lv)} ${w.perk?`<span class="tag perk">✦ ${perkText(w.perk)}</span>`:''}</p>
           ${eq?'':`<div class="row"><button class="btn sub2" data-act="equip" data-k="w" data-id="${w.id}">装備する</button></div>`}</div></div></div>`}
     }else if(invTab==='a'){
       const as=armStat();h+=`<div class="buildbox"><b>いまの防具</b>　防御 ${as.def}　／　体力 +${as.hp}</div>`;
       for(const sl of SLOTS){h+=`<div class="sect">— ${sl.n} —</div><div class="inv2">`;
-        const list=ARMORS.filter(p=>p.slot===sl.k&&S.armors[p.id]!==undefined);
+        const list=ARMORS.filter(p=>p.slot===sl.k&&S.armors[p.id]!==undefined).sort((a,b)=>(S.eq[sl.k]===b.id)-(S.eq[sl.k]===a.id));
         for(const it of list){const lv=S.armors[it.id],eq=S.eq[sl.k]===it.id,st=aStat(it,lv);
           h+=`<div class="card prow ${eq?'equipped':''}"><div class="ico"><img src="${armorIcon(it)}"></div><div class="body">
-            <div class="pn"><b>${it.name} +${lv}</b> ${eq?'<span class="tag ok">装備中</span>':''} ${buildTag(it.set.build)} <span class="pst">防御 ${st.def} / 体力 +${st.hp}</span>${it.perk?` <span class="tag perk" style="opacity:.85">✦ ${perkText(it.perk)}</span>`:''}</div>
+            <div class="pn"><b>${it.name} +${lv}</b>  ${buildTag(it.set.build)} <span class="pst">防御 ${st.def} / 体力 +${st.hp}</span>${it.perk?` <span class="tag perk" style="opacity:.85">✦ ${perkText(it.perk)}</span>`:''}</div>
             ${eq?'':`<div class="row"><button class="btn sub2 mini" data-act="equip" data-k="a" data-id="${it.id}">装備</button></div>`}</div></div>`}
         h+='</div>'}
     }else{
