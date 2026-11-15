@@ -221,7 +221,7 @@ function variant(baseId,o){const b=ENEMIES.find(e=>e.id===baseId);
 function makeBoss(baseId,o){const b=ENEMIES.find(e=>e.id===baseId);return {...b,...o,parts:o.parts?o.parts.map(p=>({...p})):reskin(b,o,0.62)}}
 ENEMIES.push(
   makeBoss('volga',{id:'lumina',name:'妖蛾ルミナス',stars:2,tint:'#8a4ac8',gimmick:'orbs',
-    gdesc:'【鱗粉の玉】ときどき攻撃をやめて、画面のあちこちに光る鱗粉の玉を7個まき散らす。玉はすぐ破裂するので、タップかスワイプで素早く撃ち落とそう。破裂した玉は毒になり、HPがじわじわ減る（3個破裂すると満タンからでも倒れる）。全部撃ち落とすと体勢+25。',
+    gdesc:'【鱗粉の玉】ときどき攻撃をやめて、画面のあちこちに光る鱗粉の玉を7個まき散らす。玉はすぐ破裂するので、タップかスワイプで素早く撃ち落とそう。破裂した玉は毒になり、HPがじわじわ減る（たくさん破裂させると危ない）。全部撃ち落とすと体勢+25。',
     desc:'月光に舞う巨大な蛾。まき散らす鱗粉の玉を撃ち落とせ。',
     hp:2000,need:[3,6],needEvery:24,breakTime:3.6,windup:0.95,idle:[0.8,1.4],combo:2,
     moves:[['slash',5],['heavy',2],['delay',2],['breath',2]],breath:{type:'fire',name:'鱗粉の嵐',c:'#d8ff70'},
@@ -1746,8 +1746,8 @@ function cancelBreak(msg){
 }
 // ===== 妖蛾ルミナス：鱗粉の玉 =====
 const ORB_CD=[7,9],ORB_FIRST=3;   // 鱗粉の玉が出る間隔（秒）／戦闘開始から最初の玉まで
-// 破裂した玉は毒：1個につき最大HPの POISON_PER 分を POISON_TIME 秒かけて削る（重ねがけ。3個破裂で満タンからでも倒れる）
-const POISON_PER=0.34,POISON_TIME=8;
+// 破裂した玉は毒：1個につき最大HPの POISON_PER 分を POISON_TIME 秒かけて削る（重ねがけ。7個全部破裂で最大HPの70%）
+const POISON_PER=0.1,POISON_TIME=8;
 const ORB_N=7,ORB_LIFE=1.6,ORB_GAP=0.14,ORB_R=26;   // 玉の数／1個が破裂するまでの秒数／出現の間隔／半径
 function spawnOrbs(){B.state='orbs';B.orbs=[];B.orbHit=0;B.orbPop=0;sfx('orbSpawn');
   float('鱗粉の玉！ タップ／スワイプで撃ち落とせ',W/2,H*0.3,'#e8ff90',24,1.6);
