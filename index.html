@@ -32,6 +32,8 @@ h1{font-weight:900;font-size:30px;letter-spacing:.06em;text-align:center;color:#
 .tag{font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:#3d2b1b;color:#e9c690}
 .tag.ok{background:#2c4a24;color:#bdf0a8}
 .tag.perk{background:#3a2458;color:#e0c0ff}
+.tag.build{background:#2a3a2a;color:#d0f0c0}.tag.b-parry{background:#1e3a52;color:#a8e0ff}.tag.b-crit{background:#5a2020;color:#ffb8a0}.tag.b-dodge{background:#1e4a32;color:#a8ffc8}.tag.b-balance{background:#4a3a20;color:#ffe0a0}
+.buildbox{background:#1c140d;border:1px solid #4a3826;border-radius:10px;padding:8px 12px;margin:0 0 12px;font-size:13px;line-height:1.7}.buildbox b{color:#ffe2ad}
 .row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 .chip{display:inline-flex;align-items:center;gap:4px;font-size:12px;background:#1a120c;border:1px solid #3c2b1c;border-radius:8px;padding:2px 8px 2px 3px}
 .chip img{width:22px;height:22px}
@@ -114,6 +116,16 @@ const MATS={
   crown:{n:'冥冠片',c:'#ffe88e',c2:'#a87818',sh:'crownp'},
   core:{n:'冥核',c:'#faa8ff',c2:'#7a1aa8',sh:'orb'},
   soul:{n:'魂片',c:'#e8e0ff',c2:'#6a58cc',sh:'wisp'},
+  // ★2 妖蛾の森
+  dust:{n:'鱗粉',c:'#eef8a8',c2:'#6a8a20',sh:'wisp'},
+  mothwing:{n:'妖蛾の翅',c:'#e6c8ff',c2:'#6a3aa0',sh:'wing'},
+  antenna:{n:'触角',c:'#dcf2c4',c2:'#4a7030',sh:'horn'},
+  silk:{n:'繭糸',c:'#f8f4ff',c2:'#9a88c0',sh:'cloth'},
+  // ★4 氷霧の霊廟
+  frost:{n:'霜鱗',c:'#eef9ff',c2:'#5a9ac8',sh:'scale'},
+  icefang:{n:'氷牙',c:'#f6fcff',c2:'#7ab8d8',sh:'claw'},
+  icecrys:{n:'永晶',c:'#fbffff',c2:'#80c8f0',sh:'crystal'},
+  mstone:{n:'霊廟石',c:'#dde4ec',c2:'#5a6878',sh:'shell'},
   // レア
   heartstone:{n:'岩竜の心石',c:'#ffa060',c2:'#8a2a10',sh:'gem',rare:1},
   amber:{n:'古代の琥珀',c:'#ffd868',c2:'#b05a0c',sh:'amber',rare:2},
@@ -124,6 +136,12 @@ const MATS={
   soulstone:{n:'冥王の魂石',c:'#e8a8ff',c2:'#4a1478',sh:'gem',rare:1},
   voidcrystal:{n:'虚無の結晶',c:'#4a4a66',c2:'#b070ff',sh:'crystal',rare:2},
   scepter:{n:'冥界の王笏',c:'#ffe070',c2:'#6a189a',sh:'scepter',rare:3},
+  moonsilk:{n:'月光の繭',c:'#f4f8ff',c2:'#7c8cff',sh:'orb',rare:1},
+  fairyeye:{n:'妖精の眼',c:'#eeffb8',c2:'#5a8a10',sh:'eye',rare:2},
+  lunarcrown:{n:'月蛾の宝冠',c:'#faf4ff',c2:'#9070d0',sh:'crownp',rare:3},
+  permafrost:{n:'永久凍土の核',c:'#dcf6ff',c2:'#2a6a9a',sh:'gem',rare:1},
+  iceheart:{n:'氷霊の心臓',c:'#ffffff',c2:'#40a0e0',sh:'orb',rare:2},
+  timeice:{n:'時止めの氷',c:'#ffffff',c2:'#3060ff',sh:'crystal',rare:3},
 };
 const RARE_NAME={1:'レア',2:'激レア',3:'超激レア'};
 
@@ -142,7 +160,7 @@ const ENEMIES=[
     {id:'legL',name:'左前脚',x:0.58,y:0.5,rx:0.17,ry:0.28,c:'#5e4f40',hp:140,mat:[['claw',2]],deco:'claws',limb:1},
     {id:'head',name:'岩角',x:0,y:-0.42,rx:0.27,ry:0.22,c:'#8c7b64',hp:170,mat:[['hornG',2]],deco:'horns2',eyes:true},
    ]},
-  {id:'volga',name:'雷竜ヴォルガ',stars:2,gimmick:'storm',gdesc:'【雷速モード／雷光転移】雷ゲージが満タンになると12秒間の雷速モード。攻撃が速くなり、振りかぶりの途中で雷光が走ると攻撃の向きが反対側へ入れ替わる。最後まで見てからはじこう。入れ替わった攻撃をパリィすると体勢+1ボーナス。雷角を折るとゲージの溜まりが半分に。',desc:'雷をまとう飛竜。ディレイ攻撃と、パリィ不能の雷ブレスを使う。',
+  {id:'volga',name:'雷竜ヴォルガ',stars:3,gimmick:'storm',gdesc:'【雷速モード／雷光転移】雷ゲージが満タンになると12秒間の雷速モード。攻撃が速くなり、振りかぶりの途中で雷光が走ると攻撃の向きが反対側へ入れ替わる。最後まで見てからはじこう。入れ替わった攻撃をパリィすると体勢+25ボーナス。雷角を折るとゲージの溜まりが半分に。',desc:'雷をまとう飛竜。ディレイ攻撃と、パリィ不能の雷ブレスを使う。',
    hp:2600,need:[4,7],needEvery:22,breakTime:3.5,windup:0.85,dmg:28,idle:[0.7,1.3],combo:2,
    moves:[['slash',5],['heavy',2],['delay',2],['breath',2]],breath:{type:'bolt',name:'雷ブレス',c:'#9fe8ff'},
    bg:['#22324e','#0b1120'],eye:'#fff27a',glow:'#7ad0ff',
@@ -155,7 +173,7 @@ const ENEMIES=[
     {id:'body',body:true,x:0,y:0.08,rx:0.45,ry:0.55,c:'#2f5288'},
     {id:'head',name:'雷角',x:0,y:-0.6,rx:0.22,ry:0.2,c:'#3b67a8',hp:380,mat:[['horn',2]],deco:'horn1',eyes:true},
    ]},
-  {id:'necros',name:'冥王ネクロス',stars:3,gimmick:'curse',gdesc:'【冥核再生／第二形態／反転の呪い】冥核が無事な間はHPが再生し続ける。HP50%で第二形態になり攻撃がさらに速くなる。第二形態では「反転の呪い」で、紫の輪の攻撃はいつもと逆方向にはじかないとパリィできない。',desc:'冥界の王。素早い3連撃と冥炎。胸の冥核が弱点。',
+  {id:'necros',name:'冥王ネクロス',stars:5,gimmick:'curse',gdesc:'【冥核再生／第二形態／反転の呪い】冥核が無事な間はHPが再生し続ける。HP50%で第二形態になり攻撃がさらに速くなる。第二形態では「反転の呪い」で、紫の輪の攻撃はいつもと逆方向にはじかないとパリィできない。',desc:'冥界の王。素早い3連撃と冥炎。胸の冥核が弱点。',
    hp:5500,need:[5,9],needEvery:20,breakTime:3.3,windup:0.7,dmg:45,idle:[0.6,1.1],combo:3,
    moves:[['slash',5],['heavy',2],['delay',3],['breath',3]],breath:{type:'fire',name:'冥炎',c:'#d070ff'},
    bg:['#2c1a3a','#0b0612'],eye:'#ff4fd8',glow:'#c060ff',
@@ -172,8 +190,34 @@ const ENEMIES=[
 
 // ===================== 雑魚（ボスの色違い）とダンジョン =====================
 function mixHex(a,b,t){const p=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));const x=p(a),y=p(b);return '#'+x.map((v,i)=>Math.round(v+(y[i]-v)*t).toString(16).padStart(2,'0')).join('')}
+// 既存の敵の体つきを借りて、色・部位の名前・素材・飾りを差し替える（o.names / o.mats / o.decos は部位id→値）
+function reskin(b,o,mix){return b.parts.map(p=>({...p,c:mixHex(p.c,o.tint,mix),name:(o.names||{})[p.id]||p.name,mat:(o.mats||{})[p.id]||p.mat,
+  deco:(o.decos||{})[p.id]!==undefined?o.decos[p.id]:p.deco,ice:o.ice||p.ice,hp:p.hp?Math.round(p.hp*(o.partMul||1)):undefined}))}
 function variant(baseId,o){const b=ENEMIES.find(e=>e.id===baseId);
-  return {...b,gimmick:null,gdesc:'',...o,minion:true,parts:b.parts.map(p=>({...p,c:mixHex(p.c,o.tint,0.45),hp:p.hp?Math.round(p.hp*o.partMul):undefined}))}}
+  return {...b,gimmick:null,gdesc:'',...o,minion:true,parts:reskin(b,o,0.45)}}
+function makeBoss(baseId,o){const b=ENEMIES.find(e=>e.id===baseId);return {...b,...o,parts:reskin(b,o,0.62)}}
+ENEMIES.push(
+  makeBoss('volga',{id:'lumina',name:'妖蛾ルミナス',stars:2,tint:'#8a4ac8',gimmick:'orbs',
+    gdesc:'【鱗粉の玉】ときどき攻撃をやめて、画面のあちこちに光る鱗粉の玉を7個まき散らす。玉はすぐ破裂するので、タップかスワイプで素早く撃ち落とそう。破裂した玉の数だけダメージ。全部撃ち落とすと体勢+25。',
+    desc:'月光に舞う巨大な蛾。まき散らす鱗粉の玉を撃ち落とせ。',
+    hp:2000,need:[3,6],needEvery:24,breakTime:3.6,windup:0.95,idle:[0.8,1.4],combo:2,
+    moves:[['slash',5],['heavy',2],['delay',2],['breath',2]],breath:{type:'fire',name:'鱗粉の嵐',c:'#d8ff70'},
+    eye:'#e8ff60',glow:'#c8ff70',
+    drops:[['dust',3,5],['silk',1,2],['antenna',1,1],['mothwing',1,1]],
+    rares:[['moonsilk',0.2],['fairyeye',0.04],['lunarcrown',0.004]],
+    names:{wingR:'右翅',wingL:'左翅',tail:'鱗粉嚢',head:'触角'},decos:{wingR:'wing2',wingL:'wing2',tail:null,head:'antenna'},
+    mats:{wingR:[['mothwing',2]],wingL:[['mothwing',2]],tail:[['dust',2],['silk',1]],head:[['antenna',2]]}}),
+  makeBoss('golm',{id:'glacier',name:'氷霊獣グラシエル',stars:4,tint:'#b8e4ff',gimmick:'icicle',ice:1,
+    gdesc:'【落氷】ボスの攻撃とは別に、天井からつららが降ってくる。当たると大ダメージで、パリィはできない。頭上のつららが震えて影が濃くなったら、落ちる瞬間に回避（Shift）！ HP50%を切ると、つららが2本続けて落ちてくることも。',
+    desc:'霊廟を守る氷の獣。霧の中から襲いかかる。',
+    hp:4500,need:[4,8],needEvery:21,breakTime:3.4,windup:0.78,idle:[0.65,1.2],combo:3,
+    moves:[['slash',5],['heavy',2],['delay',3],['breath',2]],breath:{type:'fire',name:'凍てつく息',c:'#cfefff'},
+    eye:'#ffffff',glow:'#cff4ff',
+    drops:[['frost',3,5],['icecrys',1,2],['icefang',1,1],['mstone',2,3]],
+    rares:[['permafrost',0.15],['iceheart',0.02],['timeice',0.002]],
+    names:{back:'氷殻',legR:'右氷爪',legL:'左氷爪',head:'氷角'},decos:{head:'crystalHorn',back:'iceSpikes'},
+    mats:{back:[['mstone',2],['icecrys',1]],legR:[['icefang',2]],legL:[['icefang',2]],head:[['icecrys',2]]}}),
+);
 const MINIONS=[
   variant('golm',{id:'pebble',name:'石ころ獣',tint:'#b0b098',size:0.72,hp:260,need:[2,3],needEvery:25,windup:1.15,dmg:10,combo:1,partMul:0.35,
     moves:[['slash',6],['heavy',1],['breath',1]],breath:{type:'rock',name:'小石投げ',c:'#c8b080'},drops:[['bone',2,3],['shell',1,1]],rares:[['heartstone',0.03]]}),
@@ -183,69 +227,105 @@ const MINIONS=[
     moves:[['slash',6],['heavy',1],['delay',1],['breath',1]],breath:{type:'bolt',name:'小雷',c:'#9ff0e0'},drops:[['scale',2,3],['wing',0,1]],rares:[['gekirin',0.03]]}),
   variant('volga',{id:'stormwyv',name:'嵐飛竜',tint:'#7a6ad0',size:0.85,hp:1100,need:[3,5],needEvery:22,windup:0.9,dmg:22,combo:2,partMul:0.55,
     moves:[['slash',5],['heavy',2],['delay',2],['breath',2]],breath:{type:'bolt',name:'嵐のブレス',c:'#c8b8ff'},drops:[['scale',2,3],['crystal',0,1],['tail',0,1]],rares:[['thunderorb',0.005]]}),
+  variant('lumina',{id:'mothling',name:'鱗粉蛾',tint:'#a0c060',size:0.7,need:[3,4],needEvery:24,windup:1.0,combo:1,partMul:0.4,
+    moves:[['slash',6],['heavy',1],['delay',1],['breath',1]],breath:{type:'fire',name:'鱗粉',c:'#e8ff90'},drops:[['dust',2,3],['mothwing',0,1]],rares:[['moonsilk',0.03]]}),
+  variant('golm',{id:'beetle',name:'森の甲虫',tint:'#2f6a3a',size:0.8,need:[3,4],needEvery:24,windup:1.05,combo:2,partMul:0.5,
+    moves:[['slash',6],['heavy',2],['delay',1],['breath',1]],breath:{type:'rock',name:'木の実投げ',c:'#a0c070'},drops:[['dust',2,3],['silk',1,1],['antenna',0,1]],rares:[['fairyeye',0.01]],
+    names:{back:'甲羅',legR:'右前脚',legL:'左前脚',head:'大顎'},mats:{back:[['silk',2]],legR:[['antenna',1]],legL:[['antenna',1]],head:[['dust',2]]}}),
+  variant('glacier',{id:'frostwolf',name:'霜狼',tint:'#d8eef8',size:0.75,need:[3,5],needEvery:21,windup:0.85,combo:2,partMul:0.4,
+    moves:[['slash',5],['heavy',2],['delay',2],['breath',1]],breath:{type:'fire',name:'霜の息',c:'#e0f6ff'},drops:[['frost',2,3],['icefang',0,1]],rares:[['permafrost',0.02]]}),
+  variant('necros',{id:'icewraith',name:'氷の亡霊',tint:'#9fd8f0',size:0.82,need:[4,5],needEvery:21,windup:0.82,combo:2,partMul:0.5,ice:1,
+    moves:[['slash',5],['heavy',2],['delay',2],['breath',2]],breath:{type:'fire',name:'氷霧',c:'#d8f4ff'},drops:[['frost',2,3],['mstone',1,1],['icecrys',0,1]],rares:[['iceheart',0.004]],
+    names:{armR:'右の氷腕',armL:'左の氷腕',core:'氷核',head:'氷冠'},mats:{armR:[['frost',1]],armL:[['frost',1]],core:[['icecrys',1]],head:[['mstone',2]]}}),
   variant('necros',{id:'wraith',name:'亡霊騎士',tint:'#3a7a7a',size:0.8,hp:1600,need:[3,5],needEvery:20,windup:0.8,dmg:30,combo:2,partMul:0.4,
     moves:[['slash',5],['heavy',2],['delay',2],['breath',2]],breath:{type:'fire',name:'怨念の炎',c:'#70e0d0'},drops:[['shade',2,3],['soul',1,1]],rares:[['soulstone',0.02]]}),
   variant('necros',{id:'lich',name:'骸骨魔導士',tint:'#b0a880',size:0.85,hp:2300,need:[4,6],needEvery:20,windup:0.75,dmg:36,combo:3,partMul:0.5,
     moves:[['slash',5],['heavy',2],['delay',3],['breath',3]],breath:{type:'fire',name:'呪炎',c:'#c0ff90'},drops:[['shade',2,3],['soul',1,2],['crown',0,1]],rares:[['voidcrystal',0.003]]}),
 ];
-const FLURRY={golm:[2,3],volga:[3,4],necros:[4,5],pebble:[2,2],moss:[2,3],sparkling:[2,3],stormwyv:[3,4],wraith:[3,4],lich:[3,5]};
+const FLURRY={golm:[2,3],lumina:[3,4],volga:[3,4],glacier:[4,5],necros:[4,5],pebble:[2,2],moss:[2,3],mothling:[2,3],beetle:[2,3],sparkling:[2,3],stormwyv:[3,4],frostwolf:[3,4],icewraith:[3,4],wraith:[3,4],lich:[3,5]};
 for(const e of[...ENEMIES,...MINIONS]){e.flurry=FLURRY[e.id];e.moves=[...e.moves,['combo',e.minion?1.5:2.5]]}
 // 敵の体力。部位体力は本体の33%（目安：普通の武器で2か所、狙い続ければ3か所）
-const ENEMY_HP={pebble:400,moss:650,golm:1300,sparkling:900,stormwyv:1350,volga:3000,wraith:2000,lich:2600,necros:6000};
+const ENEMY_HP={pebble:400,moss:650,golm:1300,mothling:650,beetle:950,lumina:2000,sparkling:900,stormwyv:1350,volga:3000,frostwolf:1600,icewraith:2200,glacier:4500,wraith:2000,lich:2600,necros:6000};
 const PART_RATIO=0.33;
 // 敵の攻撃力：適正防具で通常攻撃1発 ≒ 最大HPの1/3
-//  岩窟=岩甲一式+0 / 峡谷=雷鱗一式+0 / 冥界=雷鱗一式+3 を「適正」とした値（雑魚は階層補正込みで同程度）
-const ENEMY_DMG={pebble:37,moss:35,golm:40,sparkling:42,stormwyv:40,volga:45,wraith:52,lich:48,necros:55};
+//  ★1=岩甲一式+0 / ★2=岩甲一式+3 / ★3=★2の防具一式+3 / ★4=雷鱗一式+3 / ★5=★4の防具一式+2 を「適正」とした値（雑魚は階層補正込みで同程度）
+const ENEMY_DMG={pebble:37,moss:35,golm:40,mothling:42,beetle:40,lumina:46,sparkling:46,stormwyv:44,volga:50,frostwolf:52,icewraith:50,glacier:55,wraith:54,lich:50,necros:58};
 for(const e of[...ENEMIES,...MINIONS]){e.dmg=ENEMY_DMG[e.id];e.hp=ENEMY_HP[e.id];e.parts=e.parts.map(p=>p.hp?{...p,hp:Math.round(e.hp*PART_RATIO)}:p)}
 const EN=id=>ENEMIES.find(e=>e.id===id)||MINIONS.find(e=>e.id===id);
+// 並び順＝解放順（★1→★5）。idはセーブに使うので変えない
 const DUNGEONS=[
-  {id:'d1',name:'岩窟の迷宮',stars:1,desc:'岩の獣が棲む洞窟。最奥に岩甲獣ゴルムが待つ。',floors:['pebble','pebble','moss','moss','golm']},
-  {id:'d2',name:'雷鳴の峡谷',stars:2,desc:'雷が鳴りやまない峡谷。最奥に雷竜ヴォルガ。',floors:['sparkling','sparkling','stormwyv','stormwyv','volga']},
-  {id:'d3',name:'冥界の塔',stars:3,desc:'亡者がさまよう塔。頂上に冥王ネクロス。',floors:['wraith','wraith','lich','lich','lich','necros']},
+  {id:'d1',name:'岩窟の迷宮',stars:1,desc:'岩の獣が棲む洞窟。最奥には群れの主が待つという。',floors:['pebble','pebble','moss','moss','golm']},
+  {id:'f1',name:'妖蛾の森',stars:2,desc:'月光が差す夜の森。妖しく光る鱗粉が舞っている。',floors:['mothling','mothling','beetle','beetle','lumina']},
+  {id:'d2',name:'雷鳴の峡谷',stars:3,desc:'雷が鳴りやまない峡谷。空を裂く影が見えるという。',floors:['sparkling','sparkling','stormwyv','stormwyv','volga']},
+  {id:'g1',name:'氷霧の霊廟',stars:4,desc:'霧氷に閉ざされた霊廟。天井には無数のつららが垂れている。',floors:['frostwolf','frostwolf','icewraith','icewraith','icewraith','glacier']},
+  {id:'d3',name:'冥界の塔',stars:5,desc:'亡者がさまよう塔。頂上には冥界の王が君臨する。',floors:['wraith','wraith','lich','lich','lich','necros']},
 ];
 
 // ===================== 素材の必要量（ダンジョン踏破回数で決める） =====================
 // 1回踏破したときの素材の期待値：全階の討伐ドロップ（平均）＋ 1戦につき部位破壊1か所（部位はランダムとして平均）
 const PARTS_PER_FIGHT=1,SLACK=0.85;           // SLACK: 運が悪くても目安回数で届くよう少し少なめに
 const WEAPON_CLEARS=2,ARMOR_SET_CLEARS=3;      // 武器＝約2回、防具一式＝約3回
-const YIELD=DUNGEONS.map(D=>{const y={};for(const id of D.floors){const E=EN(id);
+const YIELD={};   // ダンジョンid → 1回踏破あたりの素材の期待値
+for(const D of DUNGEONS){const y={};for(const id of D.floors){const E=EN(id);
   for(const[k,a,b]of E.drops)y[k]=(y[k]||0)+(a+b)/2;
   const ps=E.parts.filter(p=>!p.body);for(const p of ps)for(const[k,q]of p.mat)y[k]=(y[k]||0)+q*PARTS_PER_FIGHT/ps.length}
-  return y});
+  YIELD[D.id]=y}
 function recipe(d,mats,clears,ratio=1){const c={};for(const m of mats)c[m]=Math.max(1,Math.round(clears*YIELD[d][m]*SLACK*ratio));return c}
 const TOPMAT=d=>Object.entries(YIELD[d]).sort((a,b)=>b[1]-a[1])[0][0];
 const upgRecipe=(d,m,k)=>({[m]:Math.max(1,Math.round(YIELD[d][m]*k))});
 
 // ===================== 装備 =====================
+// build：バランス／パリィ（崩しやすいが攻撃力が低い）／クリティカル（会心が出やすいが崩しにくい）／回避（回避でも崩せるが回避がシビア）
+const WP=(d,mats)=>({cost:recipe(d,mats,WEAPON_CLEARS),upg:upgRecipe(d,TOPMAT(d),0.08)});
 const WEAPONS=[
-  {id:'w0',name:'木の剣',atk:15,cost:{},upg:upgRecipe(0,TOPMAT(0),0.08),shape:'wood',blade:'#b9844a',glow:'#ffd08a'},
-  {id:'w1',name:'骨砕きの大剣',atk:19,cost:recipe(0,['bone','claw'],WEAPON_CLEARS),upg:upgRecipe(0,TOPMAT(0),0.08),shape:'great',blade:'#efe4c8',glow:'#fff0d0'},
-  {id:'w2',name:'岩角の槍',atk:22,cost:recipe(0,['hornG','shell','bone'],WEAPON_CLEARS),upg:upgRecipe(0,TOPMAT(0),0.08),shape:'spear',blade:'#e6d6ac',glow:'#ffe0a0'},
-  {id:'r1',name:'琥珀剣アンバー',atk:25,cost:{...recipe(0,['hornG'],WEAPON_CLEARS),amber:1,heartstone:1},upg:upgRecipe(0,TOPMAT(0),0.08),shape:'amber',blade:'#ffb840',glow:'#ffcf60',perk:{parry:1.12},pdesc:'パリィ受付 +12%'},
-  {id:'w3',name:'雷鳴刀',atk:27,cost:recipe(1,['scale','horn','crystal'],WEAPON_CLEARS),upg:upgRecipe(1,TOPMAT(1),0.08),shape:'katana',blade:'#fff6b8',glow:'#7ad0ff'},
-  {id:'r2',name:'天雷槍ヴァジュラ',atk:31,cost:{...recipe(1,['horn'],WEAPON_CLEARS),thunderorb:1,gekirin:1},upg:upgRecipe(1,TOPMAT(1),0.08),shape:'vajra',blade:'#fff27a',glow:'#9fe8ff',perk:{part:1.2},pdesc:'部位ダメージ +20%'},
-  {id:'w4',name:'冥刃ネクロ',atk:33,cost:recipe(2,['shade','crown','core'],WEAPON_CLEARS),upg:upgRecipe(2,TOPMAT(2),0.08),shape:'dark',blade:'#a874e8',glow:'#d080ff'},
-  {id:'r3',name:'王笏剣ルクスフェル',atk:38,cost:{...recipe(2,['soul'],WEAPON_CLEARS),scepter:1,soulstone:2,voidcrystal:1},upg:upgRecipe(2,TOPMAT(2),0.08),shape:'royal',blade:'#fff6dc',glow:'#ffe070',perk:{crit:0.08},pdesc:'会心率 +8%'},
+  {id:'w0',name:'木の剣',atk:15,...WP('d1',[]),cost:{},shape:'wood',blade:'#b9844a',glow:'#ffd08a'},
+  {id:'w1',name:'骨砕きの大剣',atk:19,build:'balance',...WP('d1',['bone','claw']),shape:'great',blade:'#efe4c8',glow:'#fff0d0'},
+  {id:'w2',name:'岩角の槍',atk:17,build:'parry',...WP('d1',['hornG','shell','bone']),shape:'spear',blade:'#e6d6ac',glow:'#ffe0a0',perk:{parryPts:1.35}},
+  {id:'r1',name:'琥珀剣アンバー',atk:21,build:'crit',...WP('d1',['hornG']),shape:'amber',blade:'#ffb840',glow:'#ffcf60',perk:{crit:0.15,critDmg:0.3,parryPts:0.8},rareCost:{amber:1,heartstone:1}},
+  {id:'f1',name:'蛾翅の双刃',atk:22,build:'dodge',...WP('f1',['mothwing','dust']),shape:'katana',blade:'#e6c8ff',glow:'#c8ff70',perk:{dodgePts:12,dodge:0.75}},
+  {id:'f2',name:'毒針レイピア',atk:23,build:'crit',...WP('f1',['antenna','silk']),shape:'spear',blade:'#d8ff90',glow:'#a0ff60',perk:{crit:0.12,critDmg:0.2,parryPts:0.85}},
+  {id:'r5w',name:'月蛾の宝剣',atk:25,build:'dodge',...WP('f1',['dust']),shape:'royal',blade:'#f4f0ff',glow:'#b8a0ff',perk:{dodgePts:12,dodge:0.82,crit:0.1},rareCost:{lunarcrown:1,moonsilk:1}},
+  {id:'w3',name:'雷鳴刀',atk:27,build:'balance',...WP('d2',['scale','horn','crystal']),shape:'katana',blade:'#fff6b8',glow:'#7ad0ff'},
+  {id:'r2',name:'天雷槍ヴァジュラ',atk:26,build:'parry',...WP('d2',['horn']),shape:'vajra',blade:'#fff27a',glow:'#9fe8ff',perk:{parryPts:1.35,part:1.2},rareCost:{thunderorb:1,gekirin:1}},
+  {id:'f3',name:'迅雷の短剣',atk:26,build:'dodge',...WP('d2',['crystal','wing']),shape:'katana',blade:'#fffbd0',glow:'#ffe060',perk:{dodgePts:16,dodge:0.7}},
+  {id:'g1',name:'氷牙の大剣',atk:26,build:'parry',...WP('g1',['icefang','mstone']),shape:'great',blade:'#e8f8ff',glow:'#a8e4ff',perk:{parryPts:1.5}},
+  {id:'g2',name:'霜花の刺突剣',atk:31,build:'crit',...WP('g1',['icecrys','frost']),shape:'spear',blade:'#f4fcff',glow:'#cfefff',perk:{crit:0.18,critDmg:0.4,parryPts:0.8}},
+  {id:'r6w',name:'時止めの氷刃',atk:33,build:'parry',...WP('g1',['icecrys']),shape:'amber',blade:'#cfe8ff',glow:'#6aa0ff',perk:{parryPts:1.3,parry:1.2,crit:0.08},rareCost:{timeice:1,permafrost:1}},
+  {id:'w4',name:'冥刃ネクロ',atk:35,build:'balance',...WP('d3',['shade','crown','core']),shape:'dark',blade:'#a874e8',glow:'#d080ff'},
+  {id:'f5',name:'魂喰らいの鎌',atk:33,build:'dodge',...WP('d3',['shade','soul']),shape:'dark',blade:'#70e0d0',glow:'#a0fff0',perk:{dodgePts:20,dodge:0.65}},
+  {id:'r3',name:'王笏剣ルクスフェル',atk:38,build:'crit',...WP('d3',['soul']),shape:'royal',blade:'#fff6dc',glow:'#ffe070',perk:{crit:0.2,critDmg:0.5,parryPts:0.85},rareCost:{scepter:1,soulstone:2,voidcrystal:1}},
 ];
+for(const w of WEAPONS)if(w.rareCost)w.cost={...w.cost,...w.rareCost};
 // 防具は「シリーズ」ごとに 頭・胴・手・足 の4部位。シリーズの防御/体力の合計を部位の比率で分ける
 const SLOTS=[{k:'head',n:'頭',r:0.25},{k:'body',n:'胴',r:0.35},{k:'hands',n:'手',r:0.15},{k:'legs',n:'足',r:0.25}];
+// setPerk＝シリーズ全体の効果（4部位そろえると全部、1部位なら部位の割合ぶん）。perkSlot＝その部位だけの追加効果
 const ARMOR_SETS=[
-  {id:'a0',title:'旅人',names:['旅人の頭巾','旅人の服','旅人の手袋','旅人の靴'],def:0,hp:0,d:0,mats:[],style:'cloth',color:'#7a5a3e',trim:'#c9a070'},
-  {id:'a1',title:'岩甲',names:['岩甲の兜','岩甲の鎧','岩甲の籠手','岩甲の脚甲'],def:10,hp:8,d:0,mats:['shell','bone'],style:'plate',color:'#8f7a5e',trim:'#c9b48a'},
-  {id:'r4',title:'心石',names:['心石の額当て','心石の守り','心石の腕輪','心石の具足'],def:14,hp:12,d:0,mats:['shell','bone'],rare:{heartstone:1},perkSlot:'body',perk:{heal:2},pdesc:'パリィ成功でHP2回復',perkCost:{heartstone:2},style:'plate',color:'#9a5a3a',trim:'#ff9a5a'},
-  {id:'r5',title:'黄金角',names:['黄金角の兜','黄金角の胴鎧','黄金角の籠手','黄金角の脚甲'],def:20,hp:18,d:0,mats:['shell','hornG'],rare:{heartstone:1},perkSlot:'head',perk:{need:-1},pdesc:'体勢崩しの必要回数 -1',perkCost:{goldhorn:1},style:'gold',color:'#a88228',trim:'#fff0a0'},
-  {id:'a2',title:'雷鱗',names:['雷鱗の兜','雷鱗の鎧','雷鱗の籠手','雷鱗の脚甲'],def:18,hp:15,d:1,mats:['scale','wing','tail'],style:'scale',color:'#3e6aa5',trim:'#8cc4ff'},
-  {id:'r6',title:'逆鱗',names:['逆鱗の兜','逆鱗の鎧','逆鱗の籠手','逆鱗の脚甲'],def:24,hp:20,d:1,mats:['scale','tail'],rare:{gekirin:1},perkSlot:'legs',perk:{dodge:1.2},pdesc:'回避受付 +20%',perkCost:{gekirin:2},style:'scale',color:'#22448a',trim:'#ffffff'},
-  {id:'r7',title:'竜眼',names:['竜眼の兜','竜眼の蒼鎧','竜眼の籠手','竜眼の脚甲'],def:30,hp:26,d:1,mats:['scale','crystal'],rare:{gekirin:1},perkSlot:'hands',perk:{parry:1.1},pdesc:'パリィ受付 +10%',perkCost:{dragoneye:1,gekirin:1},style:'gold',color:'#1a5a9a',trim:'#a0f0ff'},
-  {id:'a3',title:'冥王',names:['冥王の冠帽','冥王の外套','冥王の手甲','冥王の長靴'],def:32,hp:25,d:2,mats:['shade','soul','core'],style:'cloak',color:'#5e3a82',trim:'#c060ff'},
-  {id:'r8',title:'魂石',names:['魂石の頭巾','魂石の衣','魂石の手甲','魂石の長靴'],def:38,hp:32,d:2,mats:['shade','soul'],rare:{soulstone:1},perkSlot:'body',perk:{heal:3},pdesc:'パリィ成功でHP3回復',perkCost:{soulstone:2},style:'cloak',color:'#3a1a5a',trim:'#e0a0ff'},
+  {id:'a0',title:'旅人',names:['旅人の頭巾','旅人の服','旅人の手袋','旅人の靴'],def:0,hp:0,d:'d1',mats:[],style:'cloth',color:'#7a5a3e',trim:'#c9a070'},
+  {id:'a1',title:'岩甲',build:'balance',names:['岩甲の兜','岩甲の鎧','岩甲の籠手','岩甲の脚甲'],def:10,hp:8,d:'d1',mats:['shell','bone'],style:'plate',color:'#8f7a5e',trim:'#c9b48a'},
+  {id:'r4',title:'心石',build:'balance',names:['心石の額当て','心石の守り','心石の腕輪','心石の具足'],def:14,hp:12,d:'d1',mats:['shell','bone'],rare:{heartstone:1},perkSlot:'body',perk:{heal:2},perkCost:{heartstone:2},style:'plate',color:'#9a5a3a',trim:'#ff9a5a'},
+  {id:'r5',title:'黄金角',build:'parry',names:['黄金角の兜','黄金角の胴鎧','黄金角の籠手','黄金角の脚甲'],def:20,hp:18,d:'d1',mats:['shell','hornG'],rare:{heartstone:1},perkSlot:'head',perk:{parryPts:1.2},perkCost:{goldhorn:1},style:'gold',color:'#a88228',trim:'#fff0a0'},
+  {id:'fa',title:'鱗粉',build:'dodge',names:['鱗粉の頭巾','鱗粉の衣','鱗粉の手袋','鱗粉の靴'],def:13,hp:10,d:'f1',mats:['dust','silk'],setPerk:{dodgePts:12,dodge:0.8},style:'cloak',color:'#4a5a24',trim:'#d8ff70'},
+  {id:'fb',title:'毒蛾',build:'crit',names:['毒蛾の兜','毒蛾の甲殻','毒蛾の籠手','毒蛾の脚甲'],def:15,hp:11,d:'f1',mats:['mothwing','antenna'],setPerk:{crit:0.08,critDmg:0.2,parryPts:0.9},style:'plate',color:'#5a3a7a',trim:'#e0c0ff'},
+  {id:'r9',title:'月光',build:'dodge',names:['月光の冠','月光の羽衣','月光の手袋','月光の靴'],def:17,hp:13,d:'f1',mats:['silk','dust'],rare:{moonsilk:1},setPerk:{dodgePts:14,dodge:0.85},perkSlot:'head',perk:{crit:0.05},perkCost:{fairyeye:1},style:'cloak',color:'#3a3a6a',trim:'#e8ecff'},
+  {id:'a2',title:'雷鱗',build:'balance',names:['雷鱗の兜','雷鱗の鎧','雷鱗の籠手','雷鱗の脚甲'],def:18,hp:15,d:'d2',mats:['scale','wing','tail'],style:'scale',color:'#3e6aa5',trim:'#8cc4ff'},
+  {id:'r6',title:'逆鱗',build:'dodge',names:['逆鱗の兜','逆鱗の鎧','逆鱗の籠手','逆鱗の脚甲'],def:24,hp:20,d:'d2',mats:['scale','tail'],rare:{gekirin:1},perkSlot:'legs',perk:{dodgePts:8},perkCost:{gekirin:2},style:'scale',color:'#22448a',trim:'#ffffff'},
+  {id:'r7',title:'竜眼',build:'parry',names:['竜眼の兜','竜眼の蒼鎧','竜眼の籠手','竜眼の脚甲'],def:30,hp:26,d:'d2',mats:['scale','crystal'],rare:{gekirin:1},perkSlot:'hands',perk:{parryPts:1.15},perkCost:{dragoneye:1,gekirin:1},style:'gold',color:'#1a5a9a',trim:'#a0f0ff'},
+  {id:'ga',title:'霜鎧',build:'parry',names:['霜鎧の兜','霜鎧の胴','霜鎧の籠手','霜鎧の脚甲'],def:28,hp:22,d:'g1',mats:['mstone','icefang'],setPerk:{parryPts:1.3,atk:0.85},style:'plate',color:'#7aa8c8',trim:'#e8f8ff'},
+  {id:'gb',title:'氷晶',build:'crit',names:['氷晶の冠','氷晶の衣','氷晶の手甲','氷晶の靴'],def:24,hp:18,d:'g1',mats:['icecrys','frost'],setPerk:{crit:0.1,critDmg:0.3,parryPts:0.85},style:'scale',color:'#8ac4e4',trim:'#ffffff'},
+  {id:'r10',title:'永久氷',build:'parry',names:['永久氷の兜','永久氷の鎧','永久氷の籠手','永久氷の脚甲'],def:32,hp:26,d:'g1',mats:['mstone','frost'],rare:{permafrost:1},setPerk:{parryPts:1.3,atk:0.9},perkSlot:'body',perk:{heal:3},perkCost:{iceheart:1},style:'gold',color:'#4a7aa8',trim:'#dff6ff'},
+  {id:'a3',title:'冥王',build:'balance',names:['冥王の冠帽','冥王の外套','冥王の手甲','冥王の長靴'],def:32,hp:25,d:'d3',mats:['shade','soul','core'],style:'cloak',color:'#5e3a82',trim:'#c060ff'},
+  {id:'r8',title:'魂石',build:'balance',names:['魂石の頭巾','魂石の衣','魂石の手甲','魂石の長靴'],def:38,hp:32,d:'d3',mats:['shade','soul'],rare:{soulstone:1},perkSlot:'body',perk:{heal:3},perkCost:{soulstone:2},style:'cloak',color:'#3a1a5a',trim:'#e0a0ff'},
 ];
+const MULPERK=['parry','part','dodge','parryPts','atk'];   // 掛け算で効く効果（それ以外は足し算）
+function mergePerk(a,b){const o={...(a||{})};for(const[k,v]of Object.entries(b||{}))o[k]=k in o?(MULPERK.includes(k)?o[k]*v:o[k]+v):v;return o}
 const ARMORS=[];
 for(const st of ARMOR_SETS){let dl=st.def,hl=st.hp;
   const ps=SLOTS.map((sl,i)=>{const d=sl.k==='body'?0:Math.floor(st.def*sl.r),h=sl.k==='body'?0:Math.floor(st.hp*sl.r);dl-=d;hl-=h;
     const cost=recipe(st.d,st.mats,ARMOR_SET_CLEARS,sl.r);
     const isPerk=st.perkSlot===sl.k;Object.assign(cost,isPerk?st.perkCost:(st.rare||{}));
-    return {id:st.id+'_'+sl.k,set:st,slot:sl.k,name:st.names[i],def:d,hp:h,cost,upg:upgRecipe(st.d,TOPMAT(st.d),0.03),halfUpg:true,perk:isPerk?st.perk:null,pdesc:isPerk?st.pdesc:''}});
+    let pk=null;if(st.setPerk){pk={};for(const[k,v]of Object.entries(st.setPerk))pk[k]=MULPERK.includes(k)?Math.pow(v,sl.r):v*sl.r}
+    if(isPerk)pk=mergePerk(pk,st.perk);
+    return {id:st.id+'_'+sl.k,set:st,slot:sl.k,name:st.names[i],def:d,hp:h,cost,upg:upgRecipe(st.d,TOPMAT(st.d),0.03),halfUpg:true,perk:pk,slotPerk:isPerk?st.perk:null}});
   ps[1].def+=dl;ps[1].hp+=hl;ARMORS.push(...ps)}
 const MAXLV=5;
 
@@ -273,17 +353,34 @@ function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 const W_=id=>WEAPONS.find(w=>w.id===id)||WEAPONS[0], A_=id=>ARMORS.find(a=>a.id===id)||ARMORS[0];
 function wStat(it,lv){return Math.round(it.atk*(1+0.04*lv))}
 function aStat(it,lv){return {def:it.def+lv,hp:it.hp+lv}}
-const atkStat=()=>wStat(W_(S.eqW),S.weapons[S.eqW]||0);
+const atkStat=()=>Math.round(wStat(W_(S.eqW),S.weapons[S.eqW]||0)*perk('atk'));
 const eqPieces=()=>SLOTS.map(sl=>A_(S.eq[sl.k]));
 const eqSets=()=>{const o={};for(const sl of SLOTS)o[sl.k]=A_(S.eq[sl.k]).set;return o};
 const armStat=()=>{let def=0,hp=0;for(const p of eqPieces()){const st=aStat(p,S.armors[p.id]||0);def+=st.def;hp+=st.hp}return {def,hp}};
-function perk(k){const mul=k==='parry'||k==='part'||k==='dodge';let v=mul?1:0;
+// 装備の効果を合計。parry=パリィ受付 part=部位ダメージ dodge=回避受付 parryPts=パリィの体勢ポイント atk=攻撃力（以上は掛け算）
+//   crit=会心率 critDmg=会心ダメージ heal=パリィで回復 dodgePts=回避で入る体勢ポイント（以上は足し算）
+function perk(k){const mul=MULPERK.includes(k);let v=mul?1:0;
   for(const p of[W_(S.eqW).perk,...eqPieces().map(a=>a.perk)])if(p&&p[k]!=null)v=mul?v*p[k]:v+p[k];return v}
+const BUILD_NAME={balance:'バランス',parry:'パリィ特化',crit:'クリティカル',dodge:'回避'};
+function perkText(pk){if(!pk)return '';const o=[],pc=v=>Math.round(v*100);
+  for(const[k,v]of Object.entries(pk)){const d=pc(v-1),sg=x=>(x>0?'+':'')+x;
+    if(k==='parryPts')o.push(`パリィの体勢pt ${sg(d)}%`);else if(k==='atk')o.push(`攻撃力 ${sg(d)}%`);
+    else if(k==='parry')o.push(`パリィ受付 ${sg(d)}%`);else if(k==='part')o.push(`部位ダメージ ${sg(d)}%`);
+    else if(k==='dodge')o.push(`回避受付 ${sg(d)}%`);else if(k==='crit')o.push(`会心率 ${sg(pc(v))}%`);
+    else if(k==='critDmg')o.push(`会心ダメージ ${sg(pc(v))}%`);else if(k==='heal')o.push(`パリィ成功でHP${+v.toFixed(1)}回復`);
+    else if(k==='dodgePts')o.push(`回避成功で体勢 +${Math.round(v)}pt`)}
+  return o.join('／')}
+const buildTag=b=>b?`<span class="tag build b-${b}">${BUILD_NAME[b]}</span>`:'';
+// いまの装備で「1回の行動で入る体勢ポイント」
+const parryGain=heavy=>Math.round(PT*(heavy?2:1)*perk('parryPts'));
+const dodgeGain=()=>Math.round(perk('dodgePts'));
+const critRate=()=>BASE_CRIT+perk('crit'), critMul=()=>CRIT_MUL+perk('critDmg');
 function upgCost(it,lv){const c={};for(const[k,q]of Object.entries(it.upg))c[k]=q*(it.halfUpg?Math.ceil((lv+1)/2):(lv+1));return c}
 const has=c=>Object.entries(c).every(([k,q])=>(S.mats[k]||0)>=q);
 function pay(c){for(const[k,q]of Object.entries(c))S.mats[k]-=q}
 function addMat(k,q){S.mats[k]=(S.mats[k]||0)+q}
-const unlocked=i=>i===0||S.cleared[DUNGEONS[i-1].id]||S.cleared[DUNGEONS[i-1].floors.slice(-1)[0]];
+const OPEN_DETAIL={};   // 拠点の「詳細を表示」を開いているダンジョン
+const unlocked=i=>i===0||!!S.cleared[DUNGEONS[i].id]||!!S.cleared[DUNGEONS[i-1].id]||!!S.cleared[DUNGEONS[i-1].floors.slice(-1)[0]];
 
 // ===================== 汎用描画 =====================
 function shade(hex,amt){let n=parseInt(hex.slice(1),16),r=n>>16,g=(n>>8)&255,b=n&255;
@@ -494,6 +591,11 @@ const SFX={
   curse:()=>{tone(mf(61),0.9,{vol:0.12,det:-30});tone(mf(67),0.9,{vol:0.1,det:20})},
   heart:()=>{tone(60,0.12,{vol:0.45,to:40});tone(55,0.14,{vol:0.35,to:38,at:0.16})},
   escape:()=>noise(0.6,{vol:0.2,f:400,to:2000}),
+  orbSpawn:()=>[76,83,88,95].forEach((m,i)=>tone(mf(m),0.2,{type:'sine',vol:0.1,at:i*0.05})),
+  pop:()=>{tone(mf(96),0.08,{type:'triangle',vol:0.18,to:mf(103)});noise(0.06,{vol:0.15,f:6000,ftype:'highpass'})},
+  orbBoom:()=>{noise(0.3,{vol:0.35,f:900,to:300});tone(160,0.2,{vol:0.25,to:70})},
+  creak:()=>{noise(0.5,{vol:0.18,f:3000,q:6,attack:0.1});tone(1400,0.4,{type:'triangle',vol:0.04,to:1900})},
+  iceCrash:()=>{noise(0.5,{vol:0.45,f:5000,to:1500,q:0.8});[96,100,103].forEach((m,i)=>tone(mf(m),0.3,{type:'triangle',vol:0.07,at:i*0.03}))},
 };
 function sfx(name,...a){if(!SND.ctx||!SND.opt.sfx||SND.ctx.state!=='running')return;try{SFX[name](...a)}catch(e){}}
 
@@ -504,6 +606,10 @@ const SONGS={
   d1b:{bpm:120,root:45,prog:[[0,3,7],[0,3,7],[-4,0,3],[-5,-1,2]],bass:'x.x.x.x.x.x.x.x.',bassType:'sawtooth',arpOn:'x.xx..x.x.xx..x.',arpOct:24,kick:'x...x...x...x...',snare:'....x.......x..x',hat:'x.x.x.x.x.x.x.x.',pad:1,padCut:800},
   d2:{bpm:128,root:50,prog:[[0,3,7],[1,5,8],[0,3,7],[-2,2,5]],bass:'x.xx.x.xx.xx.x.x',bassType:'sawtooth',arpOn:'x..x..x.x..x..x.',arpType:'square',arpVol:0.04,arpOct:24,kick:'x..x..x...x..x..',snare:'....x.......x...',hat:'xxxxxxxxxxxxxxxx',hatVol:0.12,pad:1,padCut:900},
   d2b:{bpm:142,root:50,prog:[[0,3,7],[1,5,8],[0,3,7],[-2,2,5]],bass:'xxxxxxxxxxxxxxxx',bassType:'sawtooth',bassLen:1.5,arpOn:'x.xxx.xxx.xxx.xx',arpType:'square',arpVol:0.04,arpOct:24,kick:'x.x.x.x.x.x.x.x.',snare:'....x.......x.x.',hat:'xxxxxxxxxxxxxxxx',hatVol:0.12,pad:1,padCut:1200},
+  f1:{bpm:92,root:52,prog:[[0,4,7],[-3,0,4],[-7,-3,0],[-5,-1,2]],bass:'x.....x.x.......',arpOn:'x.xx.xx.x.xx.xx.',arpType:'triangle',arpOct:24,arpVol:0.05,hat:'..x...x...x...x.',hatVol:0.06,pad:1,padCut:900},
+  f1b:{bpm:116,root:52,prog:[[0,3,7],[-4,0,3],[-2,2,5],[-5,-1,2]],bass:'x..x..x.x..x..x.',bassType:'sawtooth',arpOn:'x.xxx.xxx.xxx.xx',arpType:'triangle',arpOct:24,arpVol:0.05,kick:'x...x...x...x...',snare:'....x.......x...',hat:'x.x.x.x.x.x.x.x.',pad:1,padCut:1000},
+  g1:{bpm:80,root:54,prog:[[0,3,7],[-2,2,5],[-4,0,3],[-5,-2,2]],bass:'x.......x.......',bassLen:6,arpOn:'x..x..x...x..x..',arpType:'sine',arpOct:36,arpVol:0.07,hat:'....x.......x...',hatVol:0.05,pad:1,padCut:1400},
+  g1b:{bpm:126,root:54,prog:[[0,3,7],[-2,2,5],[-4,0,3],[-5,-2,2]],bass:'x.xx.x.xx.xx.x.x',bassType:'sawtooth',arpOn:'x.x.xx.xx.x.xx.x',arpType:'sine',arpOct:36,arpVol:0.06,kick:'x..x..x...x..x..',snare:'....x.......x...',hat:'xxxxxxxxxxxxxxxx',hatVol:0.08,pad:1,padCut:1400},
   d3:{bpm:84,root:49,prog:[[0,3,6],[1,4,7],[0,3,7],[-1,2,6]],bass:'x.......x...x...',bassLen:6,arpOn:'x...x...x...x...',arpType:'sine',arpOct:36,arpVol:0.06,kick:'x.......x.......',hat:'....x.......x...',pad:1,padCut:500},
   d3b:{bpm:100,root:49,prog:[[0,3,6],[1,4,7],[0,3,7],[-1,2,6]],bass:'x..x....x..x..x.',bassType:'sawtooth',arpOn:'x.x.x.x.x.x.x.x.',arpType:'sine',arpOct:36,arpVol:0.06,kick:'x..x....x..x....',snare:'....x.......x...',hat:'x.x.x.x.x.x.x.x.',pad:1,padCut:700},
 };
@@ -549,16 +655,16 @@ function renderHub(){
   let h='';
   if(tab==='hunt'){
     h+=`<div class="card" style="border-color:#7a2a20"><p style="color:#ffb0a0;margin:0">⚠ ダンジョンで手に入れた素材は<b>帰還するまで未確定</b>。倒れると<b>その探索の戦利品と、装備中の武器・防具をすべて失う</b>（初期装備は強化が+0に戻る）。階の合間に「帰還」か戦闘中の「脱出」なら装備は守れる。</p></div>`;
-    DUNGEONS.forEach((D,i)=>{const lock=!unlocked(i);const boss=EN(D.floors[D.floors.length-1]);
-      const mobs=[...new Set(D.floors.slice(0,-1))].map(EN);
+    DUNGEONS.forEach((D,i)=>{const lock=!unlocked(i),open=OPEN_DETAIL[D.id]&&!lock;
       h+=`<div class="card ${lock?'locked':''}"><h3>${'★'.repeat(D.stars)} ${D.name}（全${D.floors.length}階） ${S.cleared[D.id]?'<span class="tag ok">踏破済</span>':''}</h3>
-      <p>${lock?'🔒 前のダンジョンを踏破すると解放':D.desc}</p>
-      <p>${D.floors.map((id,f)=>`${f+1}F ${EN(id).name}`).join(' → ')}</p>
-      <div class="rt">道中の敵の素材</div><div class="row">${[...new Set(mobs.flatMap(m=>m.drops.map(d=>d[0])))].map(k=>chip(k,MATS[k].n)).join('')}${mobs.flatMap(m=>m.rares).map(([k,p])=>chip(k,`${MATS[k].n}（${pct(p)}）`)).join('')}</div>
-      <div class="rt">ボス「${boss.name}」の部位破壊報酬</div><div class="row">${boss.parts.filter(p=>!p.body).map(p=>p.mat.map(([k,q])=>chip(k,`${p.name}：${MATS[k].n}×${q}`)).join('')).join('')}</div>
-      <div class="rt">ボスのギミック</div><p style="color:#ffcf9a">${boss.gdesc}</p>
-      <div class="rt">ボスのレアドロップ</div><div class="row">${boss.rares.map(([k,p])=>chip(k,`${MATS[k].n}（${RARE_NAME[MATS[k].rare]} ${pct(p)}）`)).join('')}</div>
-      <div class="row" style="justify-content:flex-end"><button class="btn" data-act="hunt" data-i="${i}" ${lock?'disabled':''}>潜入する</button></div></div>`});
+      <p>${lock?'🔒 前のダンジョンを踏破すると解放':D.desc}</p>`;
+      if(open){const y=YIELD[D.id];
+        // レア素材：1回踏破で1個以上出る確率（全階の討伐ぶんを合算）
+        const rp={};for(const id of D.floors)for(const[k,pr]of EN(id).rares)rp[k]=1-(1-(rp[k]||0))*(1-pr);
+        h+=`<div class="rt">手に入る素材（1回踏破あたりの目安）</div><div class="row">${Object.entries(y).sort((a,b)=>b[1]-a[1]).map(([k,q])=>chip(k,`${MATS[k].n} 約${Math.round(q)}個`)).join('')}</div>
+        <div class="rt">レア素材（1回踏破で出る確率）</div><div class="row">${Object.entries(rp).sort((a,b)=>b[1]-a[1]).map(([k,pr])=>chip(k,`${MATS[k].n}（${RARE_NAME[MATS[k].rare]} ${pct(pr)}）`)).join('')}</div>
+        <p style="font-size:12px;color:#a89478">部位破壊を多くするほど素材は増える。</p>`}
+      h+=`<div class="row" style="justify-content:flex-end">${lock?'':`<button class="btn sub2" data-act="detail" data-id="${D.id}">${open?'詳細を閉じる':'詳細を表示'}</button>`}<button class="btn" data-act="hunt" data-i="${i}" ${lock?'disabled':''}>潜入する</button></div></div>`});
   }else if(tab==='forge'){
     const sec=(title,list,kind)=>{h+=`<div class="sect">${title}</div>`;
       list.forEach(it=>{const own=kind==='w'?S.weapons:S.armors;const lv=own[it.id];const owned=lv!==undefined;
@@ -566,20 +672,22 @@ function renderHub(){
         const st=kind==='w'?`攻撃 ${wStat(it,lv||0)}`:(()=>{const s=aStat(it,lv||0);return `防御 ${s.def} / 体力 +${s.hp}`})();
         h+=`<div class="card ${rare?'rare':''}"><div class="item"><div class="ico"><img src="${kind==='w'?weaponIcon(it):armorIcon(it)}"></div><div class="body">
         <h3>${it.name}${owned?' +'+lv:''} ${eq?'<span class="tag ok">装備中</span>':''}${!owned?'<span class="tag">未作成</span>':''}</h3>
-        <p>${st} ${it.pdesc?`<span class="tag perk">✦ ${it.pdesc}</span>`:''}</p>`;
+        <p>${buildTag(it.build)} ${st} ${it.perk?`<span class="tag perk">✦ ${perkText(it.perk)}</span>`:''}</p>`;
         if(!owned){h+=`<div class="row">${costChips(it.cost)}</div><div class="row"><button class="btn" data-act="craft" data-k="${kind}" data-id="${it.id}" ${has(it.cost)?'':'disabled'}>作成する</button></div>`}
         else{const c=upgCost(it,lv);
           h+=`<div class="row">${lv<MAXLV?costChips(c):'<span class="chip" style="padding:3px 8px">強化MAX</span>'}</div><div class="row">
           ${eq?'':`<button class="btn sub2" data-act="equip" data-k="${kind}" data-id="${it.id}">装備する</button>`}
           ${lv<MAXLV?`<button class="btn" data-act="upg" data-k="${kind}" data-id="${it.id}" ${has(c)?'':'disabled'}>強化 +${lv}→+${lv+1}（${kind==='w'?'攻撃 '+wStat(it,lv+1):'防御 '+aStat(it,lv+1).def}）</button>`:''}</div>`}
         h+='</div></div></div>'})};
+    h+=`<div class="buildbox"><b>いまのビルド</b>　攻撃 ${atkStat()}　／　パリィ1回で体勢 +${parryGain(false)}pt（強撃 +${parryGain(true)}）　／　回避で体勢 ${dodgeGain()>0?'+'+dodgeGain()+'pt':'なし'}<br>
+      会心率 ${Math.round(critRate()*100)}%（×${critMul().toFixed(1)}）　／　パリィ受付 ×${perk('parry').toFixed(2)}　／　回避受付 ×${perk('dodge').toFixed(2)}${perk('heal')?`　／　パリィでHP+${+perk('heal').toFixed(1)}`:''}</div>`;
     sec(`— 武器 —（素材の目安：そのダンジョン約${WEAPON_CLEARS}回踏破分）`,WEAPONS,'w');
     h+=`<div class="sect">— 防具（頭・胴・手・足） —</div><p style="font-size:12px;color:#a89478;margin:-4px 0 10px">シリーズの部位を全部そろえると合計：防御／体力。強化は1段ごとに 防御+1・体力+1。素材の目安：防具一式＝そのダンジョン約${ARMOR_SET_CLEARS}回踏破分</p>`;
     ARMOR_SETS.forEach(st=>{const ps=ARMORS.filter(p=>p.set===st);const rare=!!st.rare||Object.keys(st.perkCost||{}).length>0;
-      h+=`<div class="card ${rare?'rare':''}"><h3>${st.title}シリーズ <span style="font-size:12px;color:#bba78a;font-weight:700">一式 防御${st.def} / 体力+${st.hp}</span>${st.pdesc?`<span class="tag perk">✦ ${SLOTS.find(x=>x.k===st.perkSlot).n}：${st.pdesc}</span>`:''}</h3>`;
+      h+=`<div class="card ${rare?'rare':''}"><h3>${st.title}シリーズ <span style="font-size:12px;color:#bba78a;font-weight:700">一式 防御${st.def} / 体力+${st.hp}</span> ${buildTag(st.build)}${st.setPerk?` <span class="tag perk">✦ 一式：${perkText(st.setPerk)}</span>`:''}${st.perk?` <span class="tag perk">✦ ${SLOTS.find(x=>x.k===st.perkSlot).n}：${perkText(st.perk)}</span>`:''}</h3>`;
       ps.forEach(it=>{const lv=S.armors[it.id],owned=lv!==undefined,eq=S.eq[it.slot]===it.id,sn=SLOTS.find(x=>x.k===it.slot).n,stt=aStat(it,lv||0);
         h+=`<div class="prow"><div class="ico"><img src="${armorIcon(it)}"></div><div class="body">
-          <div class="pn"><span class="tag">${sn}</span> <b>${it.name}${owned?' +'+lv:''}</b> ${eq?'<span class="tag ok">装備中</span>':''} <span class="pst">防御 ${stt.def} / 体力 +${stt.hp}</span>${it.pdesc?` <span class="tag perk">✦ ${it.pdesc}</span>`:''}</div>`;
+          <div class="pn"><span class="tag">${sn}</span> <b>${it.name}${owned?' +'+lv:''}</b> ${eq?'<span class="tag ok">装備中</span>':''} <span class="pst">防御 ${stt.def} / 体力 +${stt.hp}</span>${it.perk?` <span class="tag perk" style="opacity:.85">✦ ${perkText(it.perk)}</span>`:''}</div>`;
         if(!owned)h+=`<div class="row">${costChips(it.cost)}<button class="btn mini" data-act="craft" data-k="a" data-id="${it.id}" ${has(it.cost)?'':'disabled'}>作成</button></div>`;
         else{const c=upgCost(it,lv);h+=`<div class="row">${eq?'':`<button class="btn sub2 mini" data-act="equip" data-k="a" data-id="${it.id}">装備</button>`}${lv<MAXLV?costChips(c)+`<button class="btn mini" data-act="upg" data-k="a" data-id="${it.id}" ${has(c)?'':'disabled'}>強化 +${lv+1}</button>`:'<span class="chip" style="padding:3px 8px">強化MAX</span>'}</div>`}
         h+='</div></div>'});
@@ -593,11 +701,12 @@ function renderHub(){
     <li>矢印は出ない。<b>敵のモーション</b>（振りかぶった手足・光る部位）から攻撃が来る方向を読み、<b>その方向へはじき返す</b>ようにスワイプでパリィ！（上からの攻撃→上へ、右下からの攻撃→右下へ。8方向）</li>
     <li>タイミングの輪は<b>攻撃が来る場所</b>に出る。輪が縮んで<b>黄色</b>になった瞬間にはじこう。</li>
     <li>輪がピッタリ重なる瞬間なら <b>PERFECT</b>。体勢崩しの時間が延びる。</li>
-    <li><b>強撃</b>（赤く光る大振り）はパリィで体勢ゲージ+2。被弾すると痛い。</li>
+    <li><b>強撃</b>（赤く光る大振り）はパリィで体勢ポイント2倍。被弾すると痛い。</li>
     <li><b>ディレイ攻撃</b>は途中で溜めが止まる。焦って早くスワイプしないように！</li>
-    <li><b>連撃</b>は2〜5発の連続攻撃。上に並ぶ矢印の順に素早く弾こう。<b>⚠マークはブレス／投擲</b>なので回避。全部さばくと体勢+1ボーナス。</li>
-    <li><b>⚠マーク</b>のブレス・投擲はパリィ不可。<b>回避ボタン</b>（Shift）で着弾直前に避けよう。普通の攻撃も回避できるが体勢ゲージは増えない。</li>
-    <li>パリィを規定回数成功させると敵の<b>体勢が崩れる</b>。必要回数は戦闘が長引くほど増えていく。</li>
+    <li><b>連撃</b>は2〜5発の連続攻撃。上に並ぶ矢印の順に素早く弾こう。<b>⚠マークはブレス／投擲</b>なので回避。全部さばくと体勢+25ボーナス。</li>
+    <li><b>⚠マーク</b>のブレス・投擲はパリィ不可。<b>回避ボタン</b>（Shift）で着弾直前に避けよう。普通の攻撃も回避できるが、体勢ポイントが入るのは<b>回避ビルド</b>の装備のときだけ。</li>
+    <li>敵には<b>体勢ポイント</b>の必要量がある。パリィ1回で<b>25pt</b>（PERFECTは+5pt、被弾すると-25pt）。必要量に届くと<b>体勢が崩れる</b>。必要量は戦闘が長引くほど増えていく。</li>
+    <li><b>ビルド</b>：装備で戦い方が変わる。<b>パリィ特化</b>＝1回のパリィで入るptが多いが攻撃力が低め。<b>クリティカル</b>＝会心が出やすく強いが、パリィのptが少なく崩しにくい。<b>回避</b>＝回避でもptが入るが、回避の受付がシビア。<b>バランス</b>＝クセがない。工房の「いまのビルド」で数値を確認できる。</li>
     <li>体勢崩し中は、<b>敵の部位を押したまま、こするように動かす</b>と連続攻撃。速くこするほど強い。</li>
     <li>部位の耐久をゼロにすると<b>部位破壊</b>！その部位の素材が手に入る。</li>
     <li>防具は<b>頭・胴・手・足</b>の4部位。シリーズごとに作って組み合わせられる（レアシリーズは特定の部位に特殊効果）。</li>
@@ -610,6 +719,7 @@ function renderHub(){
 document.querySelector('.tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b){tab=b.dataset.tab;renderHub()}});
 $('#panel').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled)return;const act=b.dataset.act;
   if(act==='hunt')startDungeon(+b.dataset.i);
+  else if(act==='detail'){OPEN_DETAIL[b.dataset.id]=!OPEN_DETAIL[b.dataset.id];sfx('click');renderHub()}
   else if(act==='craft'){const it=(b.dataset.k==='w'?W_:A_)(b.dataset.id);if(!has(it.cost))return;pay(it.cost);sfx('craft');(b.dataset.k==='w'?S.weapons:S.armors)[it.id]=0;
     if(b.dataset.k==='w')S.eqW=it.id;else S.eq[it.slot]=it.id;save();toast(`${it.name} を作成して装備した！`);renderHub()}
   else if(act==='upg'){const own=b.dataset.k==='w'?S.weapons:S.armors;const it=(b.dataset.k==='w'?W_:A_)(b.dataset.id);const c=upgCost(it,own[it.id]);if(!has(c))return;pay(c);sfx('upgrade');own[it.id]++;save();toast(`${it.name} を +${own[it.id]} に強化！`);renderHub()}
@@ -646,7 +756,8 @@ function startFloor(){
   B={E,hp:E.hp,maxHp:E.hp,parts:E.parts.map((p,k)=>({...p,maxHp:p.hp||0,hp:p.hp||0,broken:false,flash:0,seed:k*13+5})),
      posture:0,state:'idle',timer:2.0,atk:null,combo:0,brokenT:0,brokenMax:1,bonus:0,php:RUN.php,pmax:RUN.pmax,loot:{},over:false,
      shake:0,lunge:0,recoil:0,pAnim:null,dAnim:null,hurt:0,t:0,fade:1,tf:{x:0,y:0,rot:0,sc:1,u:1},bounce:0,dodgeAt:-9,dodgeCD:0,lastNeed:0,deathT:0,flurry:null,roar:0,
-     g:{charge:0,storm:0,armor:0,armorMax:3,armorDone:false,phase2:false,curse:0,curseCD:5,regenAcc:0}};
+     g:{charge:0,storm:0,armor:0,armorMax:3,armorDone:false,phase2:false,curse:0,curseCD:5,regenAcc:0,orbCD:9,icCD:6}};
+  B.orbs=[];B.icicles=[];
   B.lastNeed=needNow();
   fx={parts:[],floats:[],trails:[],slashes:[],bolts:[],zaps:[],icons:[],flash:null};
   $('#hub').classList.add('hidden');$('#battle').classList.remove('hidden');$('#result').classList.add('hidden');
@@ -657,7 +768,11 @@ function startFloor(){
 }
 function endToHub(){bgm('hub');B=null;RUN=null;$('#battle').classList.add('hidden');$('#hub').classList.remove('hidden');renderHub()}
 $('#retreat').onclick=()=>{if(!B)return;if(B.over){if($('#result').classList.contains('hidden'))return;endToHub();return}B.over=true;escapeRun()};
-function needNow(){const E=B.E;return Math.max(1,Math.min(E.need[1],E.need[0]+Math.floor(B.t/E.needEvery))+perk('need'))}
+// 体勢ポイント：敵ごとに必要ポイントがあり（PT×段階）、時間で増える。パリィ=25pt、強撃=50pt、PERFECT=+5pt、被弾=-25pt
+const PT=25,PERFECT_PT=5,BASE_CRIT=0.1,CRIT_MUL=1.8;
+const needLv=()=>Math.min(B.E.need[1],B.E.need[0]+Math.floor(B.t/B.E.needEvery));
+function needNow(){return PT*needLv()}
+function addPosture(v,x,y,label){if(v<=0)return;B.posture+=v;float(`${label?label+' ':''}体勢 +${v}`,x,y,'#9fe0ff',18,0.9)}
 
 function float(t,x,y,c,size=22,life=0.9){fx.floats.push({t,x,y,c,size,life,max:life})}
 function burst(x,y,c,n=14,sp=260,add=false){for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,s=rand(sp*0.3,sp);fx.parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:rand(0.25,0.6),max:0.6,c,r:rand(1.5,4),add})}}
@@ -710,7 +825,7 @@ function afterResolve(){ // 1回の攻撃が終わったあとの共通処理
 }
 function finishFlurry(){
   const f=B.flurry;B.flurry=null;
-  if(f.ok===f.total&&!f.dodged){B.posture++;sfx('bonus');float(`${f.total}連撃 見切り！ 体勢+1`,W/2,H*0.26,'#9fe0ff',24,1.3)}
+  if(f.ok===f.total&&!f.dodged){B.posture+=PT;sfx('bonus');float(`${f.total}連撃 見切り！ 体勢+${PT}`,W/2,H*0.26,'#9fe0ff',24,1.3)}
   if(B.posture>=needNow())enterBroken();else{B.state='recover';B.timer=0.3}
 }
 function tryParry(ang){
@@ -722,15 +837,15 @@ function tryParry(ang){
   const nd=needDir(a);
   if(angDiff(ang,DIRS[nd])>30){a.fail=true;sfx('fail');float(a.cursed?`呪い！ 逆の${DNAME[nd]}だった`:`向きが違う！（${DNAME[nd]}）`,c.x,c.y-60,'#ff8f7a',24);return}
   a.res=true;const perfect=Math.abs(a.t-a.w)<=PERFECT*perk('parry');
-  const gain=a.kind==='heavy'?2:1;B.posture+=gain;if(perfect)B.bonus+=0.6;
+  const gain=parryGain(a.kind==='heavy')+(perfect?PERFECT_PT:0);B.posture+=gain;if(perfect)B.bonus+=0.6;
   const heal=perk('heal');if(heal){B.php=Math.min(B.pmax,B.php+heal)}
   sfx(perfect?'perfect':'parry');if(a.kind==='heavy')sfx('heavyParry');
   float((a.kind==='heavy'?'強撃':'')+(perfect?'PERFECT!':'パリィ！'),c.x,c.y-60,perfect?'#fff27a':'#9fe0ff',perfect?40:32,0.9);
-  if(gain>1)float('体勢 +2',c.x,c.y-20,'#9fe0ff',20,0.9);
+  float(`体勢 +${gain}`,c.x,c.y-20,'#9fe0ff',a.kind==='heavy'?22:18,0.9);
   burst(c.x,c.y,perfect?'#fff27a':'#bfe8ff',perfect?34:20,perfect?440:300,true);
   fx.slashes.push({ang:DIRS[a.dir],life:0.18,max:0.18,c:'#ffffff',parried:true});
   B.recoil=0.3;B.shake=perfect?10:a.kind==='heavy'?9:5;
-  if(a.warped){B.posture++;float('雷光転移を見切った！ 体勢+1',c.x,c.y+14,'#bff4ff',20,1.1)}
+  if(a.warped){B.posture+=PT;float(`雷光転移を見切った！ 体勢+${PT}`,c.x,c.y+14,'#bff4ff',20,1.1)}
   if(a.fl)B.flurry.ok++;
   afterResolve();
 }
@@ -750,12 +865,16 @@ function impact(){
 function resolveHit(){
   const a=B.atk;const win=DODGEWIN*perk('dodge');
   if(B.dodgeAt>=a.impactAt-win&&B.dodgeAt<=a.impactAt+LATE){
-    // 回避は体勢ポイントを増やさない。連撃中は「⚠ブレス/投擲を回避」だけがさばいた扱いで、普通の攻撃を回避すると連撃ボーナスはなくなる
-    if(a.fl&&B.flurry){if(a.kind==='breath')B.flurry.ok++;else{B.flurry.dodged=true;float('回避（体勢は増えない）',W/2,H*0.7+34,'#cdb89a',16,0.9)}}
-    sfx('dodgeOk');float('回避成功！',W/2,H*0.7,'#9fffc0',30,0.9);return}
+    // 回避で体勢ポイントが入るのは回避ビルドの装備（dodgePts）だけ。
+    // 連撃中は「⚠ブレス/投擲を回避」はさばいた扱い。普通の攻撃を回避すると、回避ビルドでなければ連撃ボーナスはなくなる
+    const dg=dodgeGain();
+    if(a.fl&&B.flurry){if(a.kind==='breath'||dg>0)B.flurry.ok++;else{B.flurry.dodged=true;float('回避（体勢は増えない）',W/2,H*0.7+34,'#cdb89a',16,0.9)}}
+    sfx('dodgeOk');float('回避成功！',W/2,H*0.7,'#9fffc0',30,0.9);
+    if(dg>0){addPosture(dg,W/2,H*0.7+34,'見切り');burst(W/2,H*0.7,'#9fffc0',16,300,true)}
+    return}
   const mul=(a.kind==='heavy'?1.6:a.kind==='breath'?1.35:1)*(a.fl?0.6:1);
   const raw=B.E.dmg*mul*rand(0.9,1.1);const def=armStat().def;const dmg=Math.round(raw*100/(100+def));
-  sfx('hurt',a.kind==='heavy');B.php-=dmg;B.hurt=0.4;B.shake=a.kind==='heavy'?20:14;B.posture=Math.max(0,B.posture-1);
+  sfx('hurt',a.kind==='heavy');B.php-=dmg;B.hurt=0.4;B.shake=a.kind==='heavy'?20:14;B.posture=Math.max(0,B.posture-PT);
   float('-'+dmg,W/2,H*0.76,'#ff5a4a',a.kind==='heavy'?40:32,0.9);
   if(B.php<=0){B.php=0;B.over=true;bgm(null);setTimeout(died,900)}
 }
@@ -763,7 +882,7 @@ function resolveHit(){
 // --- プレイヤーの攻撃（こすり） ---
 function strike(p,f,x,y,ang){
   let dmg=atkStat()*f*rand(0.9,1.1)*(p.weak&&!p.broken?p.weak:1)*(B.g.armor>0?0.2:1);
-  const crit=Math.random()<0.1+perk('crit');if(crit)dmg*=1.8;dmg=Math.max(1,Math.round(dmg));
+  const crit=Math.random()<critRate();if(crit)dmg*=critMul();dmg=Math.max(1,Math.round(dmg));
   sfx(crit?'crit':'hit');B.hp-=dmg;guardPhase();p.flash=0.12;B.bounce=0.1;
   B.pAnim={ang,t:0,dur:0.12};
   float((crit?'会心 ':'')+dmg,x+rand(-14,14),y-10,crit?'#ff6a4a':'#fff',crit?28:20,0.7);
@@ -846,11 +965,12 @@ function escapeRun(){
 
 // --- 入力 ---
 let ptr=null;
-cv.addEventListener('pointerdown',e=>{if(!B)return;const now=performance.now();
+cv.addEventListener('pointerdown',e=>{if(!B)return;const now=performance.now();popOrbAt(e.clientX,e.clientY);
   ptr={sx:e.clientX,sy:e.clientY,lx:e.clientX,ly:e.clientY,t:now,acc:0,lastHit:now-RUBCD,accT:now,used:false,pts:[{x:e.clientX,y:e.clientY}],blocked:false};
   try{cv.setPointerCapture(e.pointerId)}catch(_){}});
 cv.addEventListener('pointermove',e=>{if(!ptr||!B)return;const now=performance.now(),x=e.clientX,y=e.clientY;
   const seg=Math.hypot(x-ptr.lx,y-ptr.ly);ptr.pts.push({x,y});if(ptr.pts.length>24)ptr.pts.shift();
+  if(B.state==='orbs'){for(let i=1;i<=4;i++)popOrbAt(ptr.lx+(x-ptr.lx)*i/4,ptr.ly+(y-ptr.ly)*i/4);fx.trails.push({pts:[{x:ptr.lx,y:ptr.ly},{x,y}],life:0.2,max:0.2,c:'#e8ff90'});ptr.lx=x;ptr.ly=y;return}
   if(B.state==='broken'&&!B.over){
     ptr.acc+=seg;
     if(seg>2)fx.trails.push({pts:[{x:ptr.lx,y:ptr.ly},{x,y}],life:0.22,max:0.22,c:'#ffe0a0'});
@@ -872,7 +992,7 @@ cv.addEventListener('pointerup',e=>{if(!ptr)return;const p=ptr;ptr=null;if(!B)re
 cv.addEventListener('pointercancel',()=>ptr=null);
 cv.addEventListener('contextmenu',e=>e.preventDefault());
 function gesture(dx,dy){
-  if(!B||B.over)return;const ang=Math.atan2(dy,dx)*180/Math.PI;
+  if(!B||B.over||B.state==='orbs')return;const ang=Math.atan2(dy,dx)*180/Math.PI;
   if(B.state==='windup'&&!B.atk.res&&!B.atk.fail){tryParry(ang);return}
   if(hitTest(ptr?ptr.sx:W/2,ptr?ptr.sy:H/2)){const c=PC();burst(c.x,c.y-120,'#ccc',8,160);float('ガキン！ 弾かれた',W/2,H*0.3,'#cfc4b4',18,0.8);float('まず体勢を崩せ！',W/2,H*0.25,'#ffb070',18,1)}
 }
@@ -908,8 +1028,8 @@ function bgPoly(g,pts){g.beginPath();pts.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.
 function buildBG(theme){
   const c=document.createElement('canvas');c.width=Math.ceil(W*DPR);c.height=Math.ceil(H*DPR);
   const g=c.getContext('2d');g.setTransform(DPR,0,0,DPR,0,0);
-  const R=mulberry(theme==='d1'?11:theme==='d2'?22:33),hz=H*0.5;
-  if(theme==='d2')bgCanyon(g,R,hz);else if(theme==='d3')bgUnder(g,R,hz);else bgCave(g,R,hz);
+  const R=mulberry({d1:11,f1:44,d2:22,g1:55,d3:33}[theme]||11),hz=H*0.5;
+  if(theme==='d2')bgCanyon(g,R,hz);else if(theme==='d3')bgUnder(g,R,hz);else if(theme==='f1')bgForest(g,R,hz);else if(theme==='g1')bgIce(g,R,hz);else bgCave(g,R,hz);
   return c;
 }
 // --- 岩窟の迷宮：奥へ続く洞窟。手前ほど暗い岩のアーチ、つらら石と石筍、壁のたいまつ
@@ -954,6 +1074,37 @@ function bgCanyon(g,R,hz){
       pts.push([X(0),topY],...edge,[X(0),H]);g.fillStyle=mix(f);bgPoly(g,pts);g.fill();
       g.strokeStyle='rgba(255,255,255,0.05)';g.lineWidth=1;for(let s=1;s<6;s++){const e=edge[Math.floor(s*16/6)];g.beginPath();g.moveTo(X(0),e[1]+R()*6);g.lineTo(e[0],e[1]);g.stroke()}
       g.strokeStyle=`rgba(160,200,255,${0.12*(1-f)+0.04})`;g.lineWidth=2;g.beginPath();edge.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.stroke()}}
+}
+// --- 妖蛾の森：夜の森。月明かりの差す奥の空き地、両側に重なる木々、光るキノコ
+function bgForest(g,R,hz){
+  let gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#050a14');gr.addColorStop(0.45,'#13233a');gr.addColorStop(0.5,'#1a2e2a');gr.addColorStop(1,'#060c08');g.fillStyle=gr;g.fillRect(0,0,W,H);
+  const mx=W*0.5,my=H*0.16,mr=Math.min(W,H)*0.07;let rg=g.createRadialGradient(mx,my,0,mx,my,mr*5);rg.addColorStop(0,'rgba(220,235,255,0.35)');rg.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=rg;g.fillRect(0,0,W,H);
+  g.fillStyle='#eef4ff';g.beginPath();g.arc(mx,my,mr,0,Math.PI*2);g.fill();
+  for(let i=0;i<60;i++){g.fillStyle=`rgba(255,255,255,${0.2+R()*0.5})`;g.fillRect(R()*W,R()*H*0.35,1.5,1.5)}
+  gr=g.createLinearGradient(0,hz,0,H);gr.addColorStop(0,'#1a2a1e');gr.addColorStop(1,'#050a06');g.fillStyle=gr;g.fillRect(0,hz,W,H-hz);
+  g.fillStyle='rgba(200,225,255,0.06)';bgPoly(g,[[mx-mr,my],[mx+mr,my],[W*0.7,H],[W*0.3,H]]);g.fill();
+  const cols=['#1e3a34','#132a24','#0a1a14','#030a06'];
+  for(let k=0;k<4;k++){const f=k/3,n=5+k;
+    for(let i=0;i<n;i++){const side=i%2?1:-1,x0=W*(0.5-(0.12+0.38*R())*(0.4+f*0.6)),x=side<0?x0:W-x0,base=hz+H*0.12*f+R()*20,tw=8+22*f+R()*10,th=H*(0.35+0.3*f);
+      g.fillStyle=cols[k];g.fillRect(x-tw/2,base-th,tw,th+H);
+      for(let j=0;j<3;j++){const cy=base-th+j*th*0.22,cr=(30+60*f)*(1-j*0.15);g.beginPath();g.ellipse(x+(R()-0.5)*20,cy,cr*1.2,cr*0.7,0,0,Math.PI*2);g.fill()}}}
+  for(let i=0;i<14;i++){const x=R()*W,y=lerp(hz*1.2,H*0.95,R()),r=4+R()*8*(y/H);g.fillStyle='#e8f0d0';g.fillRect(x-1.5,y-r,3,r);
+    const c=R()<0.5?'#a0ff80':'#80d0ff';rg=g.createRadialGradient(x,y-r,0,x,y-r,r*3);rg.addColorStop(0,rgba(c,0.5));rg.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=rg;g.fillRect(x-r*3,y-r*4,r*6,r*6);
+    g.fillStyle=c;g.beginPath();g.ellipse(x,y-r,r*1.3,r*0.7,0,Math.PI,0);g.fill()}
+}
+// --- 氷霧の霊廟：青白い霊廟の広間。氷の柱が並び、奥に凍った祭壇、天井からつらら
+function bgIce(g,R,hz){
+  let gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a1626');gr.addColorStop(0.45,'#28486a');gr.addColorStop(0.5,'#4a6e90');gr.addColorStop(1,'#101c2a');g.fillStyle=gr;g.fillRect(0,0,W,H);
+  let rg=g.createRadialGradient(W/2,hz*0.9,0,W/2,hz*0.9,Math.max(W,H)*0.45);rg.addColorStop(0,'rgba(200,240,255,0.4)');rg.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=rg;g.fillRect(0,0,W,H);
+  g.fillStyle='#8ab0cc';g.fillRect(W/2-W*0.06,hz-H*0.08,W*0.12,H*0.08);g.fillStyle='#c8e8ff';g.fillRect(W/2-W*0.07,hz-H*0.09,W*0.14,H*0.015);
+  gr=g.createLinearGradient(0,hz,0,H);gr.addColorStop(0,'#5a7e9c');gr.addColorStop(1,'#14202e');g.fillStyle=gr;g.fillRect(0,hz,W,H-hz);
+  g.strokeStyle='rgba(220,245,255,0.12)';g.lineWidth=1;for(let i=-8;i<=8;i++){g.beginPath();g.moveTo(W/2+i*8,hz);g.lineTo(W/2+i*W*0.12,H);g.stroke()}
+  for(let j=1;j<7;j++){const y=hz+(H-hz)*Math.pow(j/7,1.6);g.beginPath();g.moveTo(0,y);g.lineTo(W,y);g.stroke()}
+  const cols=['#5a80a0','#3e6082','#284460','#122030'];
+  for(let k=0;k<4;k++){const f=k/3,x0=W*(0.36-0.33*f),w=10+30*f,top=hz-H*(0.2+0.32*f),bot=hz+H*0.16*f;
+    for(const side of[-1,1]){const x=side<0?x0:W-x0;g.fillStyle=cols[k];g.fillRect(x-w/2,top,w,bot-top);
+      g.fillStyle='rgba(230,248,255,0.25)';g.fillRect(x-w/2+2,top,w*0.2,bot-top);g.fillStyle=cols[k];g.fillRect(x-w*0.7,top-6,w*1.4,8);g.fillRect(x-w*0.7,bot-4,w*1.4,8)}}
+  g.fillStyle='#dff4ff';for(let i=0;i<30;i++){const x=R()*W,len=8+R()*40*(Math.abs(x-W/2)/W+0.3),w=3+R()*6;bgPoly(g,[[x-w,0],[x+w,0],[x,len]]);g.fill()}
 }
 // --- 冥界の塔：紫の闇、背後に開く冥界の門、ゴシックの尖塔、床の魔法陣、垂れ下がる鎖
 function bgUnder(g,R,hz){
@@ -1016,6 +1167,13 @@ function drawBGAnim(theme){
     if(t>L.next){const x0=W*(0.2+Math.random()*0.6);L.pts=[[x0,0]];let x=x0,y=0;const yEnd=H*rand(0.22,0.36);while(y<yEnd){y+=rand(14,30);x+=rand(-24,24);L.pts.push([x,y])}L.life=0.35;L.next=t+rand(2.5,6)}
     if(L.life>0){L.life-=1/60;const al=Math.max(0,L.life/0.35);ctx.fillStyle=`rgba(200,225,255,${0.18*al})`;ctx.fillRect(0,0,W,H);
       ctx.strokeStyle=`rgba(235,248,255,${al})`;ctx.shadowColor='#9fd8ff';ctx.shadowBlur=20;ctx.lineWidth=3;ctx.beginPath();L.pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.stroke()}
+  }else if(theme==='f1'){ // 森：ホタルと鱗粉、差し込む月光のゆらぎ
+    ctx.fillStyle=`rgba(200,225,255,${0.04+0.03*Math.sin(t*0.7)})`;bgPoly(ctx,[[W*0.45,0],[W*0.55,0],[W*0.72,H],[W*0.28,H]]);ctx.fill();
+    for(let i=0;i<26;i++){const x=W*((i*0.173+0.05*Math.sin(t*0.6+i*1.7))%1),y=H*(0.35+0.5*((i*0.29+0.04*Math.sin(t*0.9+i))%1)),a=0.3+0.5*Math.max(0,Math.sin(t*2+i*1.3)),c=i%3?'#d8ff70':'#a0ffe0';
+      const gl=ctx.createRadialGradient(x,y,0,x,y,9);gl.addColorStop(0,rgba(c,a));gl.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=gl;ctx.fillRect(x-9,y-9,18,18)}
+  }else if(theme==='g1'){ // 霊廟：舞う雪と流れる冷気
+    ctx.fillStyle='rgba(240,250,255,0.7)';for(let i=0;i<70;i++){const x=(i*61.7+Math.sin(t*0.8+i)*20+t*12)%W,y=(i*83.1+t*(30+(i%5)*10))%H;ctx.fillRect(x,y,2+(i%3),2+(i%3))}
+    for(let k=0;k<3;k++){const x=((t*18*(k+1)+k*260)%(W*1.6))-W*0.3;ctx.fillStyle='rgba(220,240,255,0.08)';ctx.beginPath();ctx.ellipse(x,H*(0.6+0.08*k),W*0.5,H*0.04,0,0,Math.PI*2);ctx.fill()}
   }else{ // 冥界：門の脈動、立ちのぼる魂、流れる霧、魔法陣の明滅
     const P=PORTAL(),pl=0.5+0.5*Math.sin(t*1.6);
     ctx.strokeStyle=`rgba(230,140,255,${0.25+0.3*pl})`;ctx.lineWidth=4;ctx.shadowColor='#c060ff';ctx.shadowBlur=24;ctx.beginPath();ctx.arc(P.x,P.y,P.r*(1+0.015*pl),0,Math.PI*2);ctx.stroke();ctx.shadowBlur=0;
@@ -1093,11 +1251,22 @@ function drawPart(p,u,glow){
   if(p.deco==='crown'){ctx.fillStyle=p.broken?'#6a5a30':'#ecc860';ctx.beginPath();const n=p.broken?3:5;ctx.moveTo(cx-rx*0.95,cy-ry*0.4);
     for(let i=0;i<n;i++){const t0=-0.95+i*1.9/n,t1=t0+0.95/n;ctx.lineTo(cx+rx*t1,cy-ry*(p.broken?1.1:1.9));ctx.lineTo(cx+rx*(t0+1.9/n),cy-ry*0.9)}
     ctx.lineTo(cx-0.95*rx+rx*1.9*(p.broken?0.6:1),cy-ry*0.4);ctx.closePath();ctx.fill()}
+  if(p.deco==='wing2'&&!p.broken){const s=p.x<0?-1:1,fl=Math.sin(B.t*5)*0.18;ctx.save();ctx.translate(cx-s*rx*0.6,cy);ctx.scale(1,1+fl);
+    ctx.fillStyle=rgba(p.c,0.85);ctx.beginPath();ctx.moveTo(0,0);ctx.bezierCurveTo(s*rx*1.2,-ry*2.2,s*rx*2.4,-ry*1.2,s*rx*2.0,ry*0.1);ctx.bezierCurveTo(s*rx*2.2,ry*1.4,s*rx*0.9,ry*1.6,0,ry*0.3);ctx.closePath();ctx.fill();
+    ctx.strokeStyle=shade(p.c,0.4);ctx.lineWidth=2;ctx.stroke();
+    for(const[ex,ey,er]of[[1.35,-0.55,0.32],[1.2,0.7,0.24]]){ctx.fillStyle='#1a1030';ell(s*rx*ex,ry*ey,rx*er,rx*er);ctx.fill();ctx.fillStyle=E.glow;ell(s*rx*ex,ry*ey,rx*er*0.55,rx*er*0.55);ctx.fill()}ctx.restore()}
+  if(p.deco==='antenna'){ctx.strokeStyle=p.broken?'#5a5a40':'#e8f0c0';ctx.lineWidth=3;const L=p.broken?0.5:1;for(const s of[-1,1]){ctx.beginPath();ctx.moveTo(cx+s*rx*0.3,cy-ry*0.6);
+    ctx.quadraticCurveTo(cx+s*rx*0.6,cy-ry*2.4*L,cx+s*rx*1.5,cy-ry*(1.6+1.2*L)+Math.sin(B.t*4+s)*4);ctx.stroke();
+    if(!p.broken){ctx.fillStyle=E.glow;const sb=ctx.shadowBlur;ctx.shadowColor=E.glow;ctx.shadowBlur=14;ell(cx+s*rx*1.5,cy-ry*2.8+Math.sin(B.t*4+s)*4,5,5);ctx.fill();ctx.shadowBlur=sb}}}
+  if(p.deco==='crystalHorn'){const L=p.broken?0.35:1;ctx.fillStyle=p.broken?'#8aa0b0':'rgba(220,245,255,0.95)';const sb=ctx.shadowBlur;ctx.shadowColor='#bff4ff';ctx.shadowBlur=p.broken?0:16;
+    for(const[s,h]of[[-1,1],[0,1.4],[1,1]]){ctx.beginPath();ctx.moveTo(cx+s*rx*0.5-rx*0.18,cy-ry*0.5);ctx.lineTo(cx+s*rx*0.75,cy-ry*(0.5+2*h*L));ctx.lineTo(cx+s*rx*0.5+rx*0.18,cy-ry*0.5);ctx.closePath();ctx.fill()}ctx.shadowBlur=sb}
   if(p.deco==='blade'&&!p.broken){const s=p.x<0?-1:1;ctx.fillStyle='#d8ccf0';ctx.beginPath();ctx.moveTo(cx+s*rx*0.3,cy+ry*0.7);ctx.lineTo(cx+s*rx*1.6,cy+ry*1.5);ctx.lineTo(cx+s*rx*0.7,cy+ry*0.55);ctx.closePath();ctx.fill()}
   const g=ctx.createRadialGradient(cx-rx*0.35,cy-ry*0.45,0,cx,cy,Math.max(rx,ry)*1.1);
   g.addColorStop(0,shade(base,0.28));g.addColorStop(0.6,base);g.addColorStop(1,shade(base,-0.45));
   ctx.fillStyle=g;ell(cx,cy,rx,ry);ctx.fill();ctx.lineWidth=2;ctx.strokeStyle=shade(base,-0.6);ctx.stroke();
   const sb=ctx.shadowBlur;ctx.shadowBlur=0;
+  if(p.deco==='iceSpikes'){ctx.fillStyle=p.broken?'#7890a0':'rgba(225,248,255,0.95)';for(let i=0;i<6;i++){const t=(i-2.5)/3;ctx.beginPath();ctx.moveTo(cx+t*rx-rx*0.09,cy-ry*0.2);ctx.lineTo(cx+t*rx+rx*0.03,cy-ry*(p.broken?0.6:1.5+0.3*(i%2)));ctx.lineTo(cx+t*rx+rx*0.1,cy-ry*0.2);ctx.fill()}}
+  if(p.ice&&!p.broken){ctx.fillStyle='rgba(255,255,255,0.25)';ell(cx-rx*0.3,cy-ry*0.35,rx*0.3,ry*0.15);ctx.fill()}
   if(p.deco==='rocks'){ctx.fillStyle=shade(base,-0.25);for(let i=0;i<5;i++){const t=(i-2)/2.5;ctx.beginPath();ctx.moveTo(cx+t*rx-rx*0.12,cy-ry*0.2);ctx.lineTo(cx+t*rx,cy-ry*(p.broken?0.6:1.25));ctx.lineTo(cx+t*rx+rx*0.12,cy-ry*0.2);ctx.fill()}}
   if(p.deco==='claws'&&!p.broken){ctx.fillStyle='#efe2c8';for(let i=-1;i<=1;i++){ctx.beginPath();ctx.moveTo(cx+i*rx*0.55-5,cy+ry*0.85);ctx.lineTo(cx+i*rx*0.6,cy+ry*1.2);ctx.lineTo(cx+i*rx*0.55+5,cy+ry*0.85);ctx.fill()}}
   if(p.deco==='spikes'){ctx.fillStyle=p.broken?'#556':'#9fd8ff';for(let i=0;i<4;i++){const t=-0.6+i*0.4;ctx.beginPath();ctx.moveTo(cx+t*rx-6,cy-ry*0.6);ctx.lineTo(cx+t*rx,cy-ry*(p.broken?0.9:1.7));ctx.lineTo(cx+t*rx+6,cy-ry*0.6);ctx.fill()}}
@@ -1175,6 +1344,8 @@ function drawGimmickHUD(){
   if(E.gimmick==='storm'){const bw=150;
     if(g.storm>0){ctx.fillStyle='#dff8ff';ctx.fillText(`雷速モード 残り${Math.ceil(g.storm)}秒 — 雷光が走ったら向きが反対に！`,W/2,y-4);bar(W/2-bw/2,y+2,bw,5,g.storm/STORM_TIME,'#dff8ff')}
     else{ctx.fillStyle='#9fe8ff';ctx.fillText('雷ゲージ',W/2,y-4);bar(W/2-bw/2,y+2,bw,5,g.charge,'#9fe8ff')}}
+  if(E.gimmick==='orbs'){ctx.fillStyle='#e8ff90';ctx.fillText(B.state==='orbs'?`鱗粉の玉 ${B.orbPop}/${ORB_N} 撃ち落とし`:'鱗粉の玉が出たら素早く撃ち落とせ',W/2,y)}
+  if(E.gimmick==='icicle'){ctx.fillStyle='#bff4ff';ctx.fillText(`落氷に注意 — つららは回避でのみ避けられる${B.hp<=B.maxHp*0.5?'（2本続けて落ちることも）':''}`,W/2,y)}
   if(E.gimmick==='curse'){const core=B.parts.find(p=>p.id==='core');const t=[];if(!core.broken)t.push('冥核が再生中（破壊で停止）');if(g.phase2)t.push('第二形態');if(g.curse>0)t.push(`反転の呪い 残り${Math.ceil(g.curse)}秒`);
     ctx.fillStyle=g.curse>0?'#e090ff':'#ff9ab0';ctx.fillText(t.join('　'),W/2,y)}
 }
@@ -1226,9 +1397,11 @@ function drawHUD(){
   ctx.textAlign='center';ctx.fillStyle='#ffe2ad';ctx.font="900 16px 'M PLUS 1p'";ctx.fillText(E.name,W/2,24);
   bar(bx,32,bw,10,B.hp/B.maxHp,'#d8402a');
   if(B.state==='broken'){bar(bx,50,bw,8,B.brokenT/B.brokenMax,'#ffcc3a');ctx.fillStyle='#ffd04a';ctx.font="900 15px 'M PLUS 1p'";ctx.fillText('体勢崩し中！ 部位を押したまま こすって攻撃',W/2,80)}
-  else{const n=needNow(),sp=Math.min(26,(bw-40)/n),sx=W/2-(n-1)*sp/2;ctx.font="700 12px 'M PLUS 1p'";ctx.fillStyle='#cdb89a';ctx.textAlign='right';ctx.fillText('体勢',sx-14,58);ctx.textAlign='center';
-    for(let i=0;i<n;i++){ctx.beginPath();ctx.arc(sx+i*sp,54,Math.min(8,sp*0.35),0,Math.PI*2);ctx.fillStyle=i<B.posture?'#9fe0ff':'rgba(255,255,255,0.12)';ctx.fill();ctx.strokeStyle='#6a8aa0';ctx.lineWidth=1.5;ctx.stroke()}
-    if(n<E.need[1]+perk('need')){const left=E.needEvery-(B.t%E.needEvery);ctx.fillStyle='#a89478';ctx.font="700 11px 'M PLUS 1p'";ctx.fillText(`${Math.ceil(left)}秒後に必要回数+1（最大${Math.max(1,E.need[1]+perk('need'))}）`,W/2,76)}
+  else{const n=needNow(),pw2=Math.min(bw*0.7,320),px=W/2-pw2/2;
+    bar(px,50,pw2,9,Math.min(1,B.posture/n),'#9fe0ff');
+    ctx.strokeStyle='rgba(0,0,0,0.5)';ctx.lineWidth=1;for(let v=PT;v<n;v+=PT){const x=px+pw2*v/n;ctx.beginPath();ctx.moveTo(x,50);ctx.lineTo(x,59);ctx.stroke()}
+    ctx.font="700 12px 'M PLUS 1p'";ctx.fillStyle='#cdb89a';ctx.textAlign='right';ctx.fillText('体勢',px-8,59);ctx.textAlign='left';ctx.fillStyle='#e8f6ff';ctx.fillText(`${B.posture}/${n}`,px+pw2+8,59);ctx.textAlign='center';
+    if(needLv()<E.need[1]){const left=E.needEvery-(B.t%E.needEvery);ctx.fillStyle='#a89478';ctx.font="700 11px 'M PLUS 1p'";ctx.fillText(`${Math.ceil(left)}秒後に必要ポイント+${PT}（最大${PT*E.need[1]}）`,W/2,76)}
     if(B.bonus>0){ctx.fillStyle='#fff27a';ctx.font="700 12px 'M PLUS 1p'";ctx.fillText(`崩し時間 +${B.bonus.toFixed(1)}秒`,W/2,92)}}
   if(RUN){ctx.textAlign='left';ctx.font="700 12px 'M PLUS 1p'";ctx.fillStyle='#e8d4b4';ctx.fillText(`${RUN.D.name}`,10,52);
     ctx.fillStyle=isBossFloor()?'#ff8a6a':'#ffd58a';ctx.font="900 15px 'M PLUS 1p'";ctx.fillText(`${RUN.floor+1}F / ${RUN.D.floors.length}F${isBossFloor()?' BOSS':''}`,10,70);
@@ -1286,8 +1459,61 @@ function cancelBreak(msg){
   if(B.state==='broken')float(msg||'崩しが解除された！',W/2,H*0.34,'#ff9a6a',24,1.6);
   B.posture=0;B.bonus=0;B.flurry=null;B.combo=0;B.state='idle';B.timer=1.4;B.roar=1.2;ptr&&(ptr.acc=0);
 }
+// ===== 妖蛾ルミナス：鱗粉の玉 =====
+const ORB_N=7,ORB_LIFE=1.6,ORB_GAP=0.14,ORB_R=26;   // 玉の数／1個が破裂するまでの秒数／出現の間隔／半径
+function spawnOrbs(){B.state='orbs';B.orbs=[];B.orbHit=0;B.orbPop=0;sfx('orbSpawn');
+  float('鱗粉の玉！ タップ／スワイプで撃ち落とせ',W/2,H*0.3,'#e8ff90',24,1.6);
+  for(let i=0;i<ORB_N;i++){let x,y,k=0;
+    do{x=rand(50,W-50);y=rand(120,H-170);k++}while(k<40&&B.orbs.some(o=>Math.hypot(o.x-x,o.y-y)<Math.min(110,W*0.18)));
+    B.orbs.push({x,y,t:-i*ORB_GAP,done:false,popped:false})}}
+function popOrbAt(x,y){if(!B||B.state!=='orbs'||B.over)return;
+  for(const o of B.orbs)if(!o.done&&o.t>=0&&Math.hypot(o.x-x,o.y-y)<=ORB_R+16){o.done=o.popped=true;B.orbPop++;sfx('pop');burst(o.x,o.y,'#eaff9a',16,320,true)}}
+function updateOrbs(dt){let left=0;
+  for(const o of B.orbs){if(o.done)continue;o.t+=dt;left++;
+    if(o.t>=ORB_LIFE){o.done=true;B.orbHit++;sfx('orbBoom');burst(o.x,o.y,'#c8ff60',26,420,true);
+      const dmg=Math.round(B.E.dmg*0.35*rand(0.9,1.1)*100/(100+armStat().def));B.php-=dmg;B.hurt=0.3;B.shake=Math.max(B.shake,8);
+      float('-'+dmg,o.x,o.y,'#ff5a4a',24,0.8);if(B.php<=0){B.php=0;B.over=true;bgm(null);setTimeout(died,900);return}}}
+  if(left===0){B.g.orbCD=rand(13,17);
+    if(B.orbPop===ORB_N){B.posture+=PT;sfx('bonus');float(`全部撃ち落とした！ 体勢+${PT}`,W/2,H*0.26,'#e8ff90',26,1.4)}
+    else float(`${B.orbPop}/${ORB_N}個 撃ち落とした`,W/2,H*0.26,'#cdb89a',20,1.2);
+    if(B.posture>=needNow())enterBroken();else{B.state='recover';B.timer=0.6}}}
+function drawOrbs(){if(!B.orbs||!B.orbs.length)return;
+  for(const o of B.orbs){if(o.done||o.t<0)continue;const k=o.t/ORB_LIFE,pl=1+0.12*Math.sin(B.t*18),r=ORB_R*Math.min(1,o.t/0.12)*pl;
+    ctx.save();ctx.globalCompositeOperation='lighter';const g=ctx.createRadialGradient(o.x,o.y,0,o.x,o.y,r*1.8);
+    g.addColorStop(0,'rgba(255,255,220,0.95)');g.addColorStop(0.45,rgba(k>0.65?'#ffb040':'#d8ff70',0.75));g.addColorStop(1,'rgba(160,255,80,0)');
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(o.x,o.y,r*1.8,0,Math.PI*2);ctx.fill();ctx.restore();
+    ctx.lineWidth=4;ctx.strokeStyle=k>0.65?'#ff7a3a':'#f4ffb0';ctx.beginPath();ctx.arc(o.x,o.y,ORB_R+8,-Math.PI/2,-Math.PI/2+Math.PI*2*(1-k));ctx.stroke()}}
+// ===== 氷霊獣グラシエル：落氷（ボスの攻撃とは別に降るつらら。回避でしか避けられない） =====
+const ICE_WARN=1.15,ICE_DMG=1.5;   // 落ちるまでの予兆の秒数／被弾ダメージ倍率（通常攻撃比）
+function spawnIcicle(delay=0){const x=W/2+rand(-0.18,0.18)*Math.min(W,600);B.icicles.push({x,t:-delay,w:ICE_WARN*rand(0.95,1.08),landed:false,life:0});sfx('creak')}
+function updateIcicles(dt){
+  for(const ic of B.icicles){if(ic.landed){ic.life+=dt;continue}ic.t+=dt;
+    if(ic.t>=ic.w+LATE){ic.landed=true;const win=DODGEWIN*perk('dodge'),ok=B.dodgeAt>=B.t-LATE-win&&B.dodgeAt<=B.t;const pp=PP();
+      sfx('iceCrash');burst(ic.x,pp.y-30,'#e8f8ff',30,480,true);B.shake=Math.max(B.shake,12);
+      if(ok){float('つららを回避！',W/2,H*0.62,'#bff4ff',26,0.9);const dg=dodgeGain();if(dg>0)addPosture(dg,W/2,H*0.62+30,'見切り')}
+      else{const dmg=Math.round(B.E.dmg*ICE_DMG*rand(0.9,1.1)*100/(100+armStat().def));sfx('hurt',true);B.php-=dmg;B.hurt=0.5;B.shake=20;B.posture=Math.max(0,B.posture-PT);
+        float('つららが直撃！ -'+dmg,W/2,H*0.74,'#ff5a4a',34,1.0);if(B.php<=0){B.php=0;B.over=true;bgm(null);setTimeout(died,900)}}}}
+  B.icicles=B.icicles.filter(ic=>!ic.landed||ic.life<0.4)}
+function drawIcicles(){if(!B.icicles||!B.icicles.length)return;const pp=PP(),gy=pp.y-20;
+  for(const ic of B.icicles){if(ic.t<0)continue;
+    if(ic.landed){ctx.globalAlpha=Math.max(0,1-ic.life/0.4);ctx.fillStyle='#e8f8ff';for(let i=0;i<6;i++){const a=i*1.05;ctx.beginPath();ctx.moveTo(ic.x+Math.cos(a)*10,gy+Math.sin(a)*6);ctx.lineTo(ic.x+Math.cos(a)*(30+ic.life*120),gy+Math.sin(a)*(12+ic.life*40)-ic.life*60);ctx.lineTo(ic.x+Math.cos(a+0.3)*10,gy);ctx.fill()}ctx.globalAlpha=1;continue}
+    const k=Math.min(1,ic.t/ic.w),fall=ic.t>ic.w-0.3?Math.min(1,(ic.t-(ic.w-0.3))/0.3):0;
+    const top=150,y=top+fall*fall*(gy-top),shk=fall>0?0:Math.sin(B.t*60)*3*k;
+    // 足元の影（だんだん濃く大きく）
+    ctx.fillStyle=`rgba(120,200,255,${0.15+0.45*k})`;ctx.beginPath();ctx.ellipse(ic.x,gy+10,20+40*k,6+8*k,0,0,Math.PI*2);ctx.fill();
+    const dw=DODGEWIN*perk('dodge'),inWin=ic.t>=ic.w-dw;
+    ctx.save();ctx.translate(ic.x+shk,y);ctx.shadowColor=inWin?'#ff4af0':'#bff4ff';ctx.shadowBlur=inWin?24:12;
+    const L=70+30*k,Wd=18;const g=ctx.createLinearGradient(0,-L,0,0);g.addColorStop(0,'#ffffff');g.addColorStop(1,'#7ac8f0');
+    ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(-Wd,-L*0.6);ctx.lineTo(Wd,-L*0.6);ctx.lineTo(0,L*0.4);ctx.closePath();ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,0.8)';ctx.lineWidth=2;ctx.stroke();ctx.restore();
+    if(!fall)warnIcon(ic.x+46,top-20,26+3*Math.sin(B.t*20),inWin?'#ff4af0':'#7ad0ff')}
+  if(B.icicles.some(ic=>!ic.landed&&ic.t>=0))label('❄ 落氷！ 落ちる瞬間に回避',DODGEWIN*perk('dodge')>=Math.min(...B.icicles.filter(i=>!i.landed&&i.t>=0).map(i=>i.w-i.t))?'#ff4af0':'#9fe0ff',H*0.4)}
 function gimmicks(dt){
   const E=B.E,g=B.g;
+  if(E.gimmick==='orbs'){if(B.state==='orbs')updateOrbs(dt);else if(B.state==='idle'&&!B.flurry){g.orbCD-=dt;if(g.orbCD<=0&&B.timer>0.3){spawnOrbs();return}}}
+  if(E.gimmick==='icicle'){updateIcicles(dt);if(B.over)return;
+    if(B.state!=='broken'&&!B.icicles.length){g.icCD-=dt;const low=B.hp<=B.maxHp*0.5;
+      if(g.icCD<=0){spawnIcicle(0);if(low&&Math.random()<0.5){spawnIcicle(0.8);float('つららが2本！',W/2,H*0.3,'#bff4ff',22,1.2)}g.icCD=low?rand(4.5,6.5):rand(6.5,9)}}}
   if(E.gimmick==='armor'&&!g.armorDone&&(B.hp<=B.maxHp*0.6||g.trig)){g.armorDone=true;g.armor=g.armorMax;
     sfx('armor');float('岩鎧をまとった！',W/2,H*0.28,'#d8c8b0',30,1.8);float('体勢崩し3回目で砕ける',W/2,H*0.28+30,'#d8c8b0',18,1.8);B.shake=16;burst(B.tf.x,B.tf.y,'#9a8a78',40,500);cancelBreak()}
   if(E.gimmick==='storm'){
@@ -1318,12 +1544,12 @@ function update(dt){
   if(fx.flash){fx.flash.life-=dt;if(fx.flash.life<=0)fx.flash=null}
   if(B.dying)B.fade=Math.max(0,B.fade-dt*0.7);
   const a=B.atk;
-  dodgeBtn.classList.toggle('warn',!!(B.state==='windup'&&a&&(a.kind==='breath'||a.fail)&&!B.over));
+  dodgeBtn.classList.toggle('warn',!!(((B.state==='windup'&&a&&(a.kind==='breath'||a.fail))||(B.icicles&&B.icicles.some(i=>!i.landed&&i.t>=0)))&&!B.over));
   dodgeBtn.classList.toggle('cd',B.dodgeCD>0);
   if(B.over)return;
   { // 瀕死の鼓動（体力35%未満で、減るほど速く）
     const r=B.php/B.pmax;if(r<0.35&&r>0){B.hb=(B.hb||0)-dt;if(B.hb<=0){sfx('heart');B.hb=60/(70+(0.35-r)*240)}}}
-  const n=needNow();if(n>B.lastNeed){B.lastNeed=n;sfx('warn');float('敵が警戒を強めた！ 必要パリィ +1',W/2,H*0.2,'#ff9a6a',20,1.6)}
+  const n=needNow();if(n>B.lastNeed){B.lastNeed=n;sfx('warn');float(`敵が警戒を強めた！ 必要ポイント +${PT}`,W/2,H*0.2,'#ff9a6a',20,1.6)}
   gimmicks(dt);if(B.over)return;
   if(B.state==='idle'){B.timer-=dt;if(B.timer<=0)beginAttack()}
   else if(B.state==='windup'){
@@ -1332,7 +1558,7 @@ function update(dt){
       fx.flash={c:'#e8fbff',life:0.12,max:0.12};fx.zaps.push({a:p0,b:p1,life:0.28,max:0.28});sfx('zap');burst(p1.x,p1.y,'#e8fbff',22,420,true);B.shake=Math.max(B.shake,6)}
     // 冥炎：着弾前から炎を吐く
     if(a.kind==='breath'&&B.E.breath.type==='fire'&&a.t>a.w-Math.min(0.45,a.w*0.75)&&a.t<a.w+0.1){const h=headScreen(),p=PP();
-      for(let i=0;i<3;i++){const ang=Math.atan2(p.y-h.y,p.x-h.x)+rand(-0.25,0.25),sp=rand(700,1000);fx.parts.push({x:h.x,y:h.y,vx:Math.cos(ang)*sp,vy:Math.sin(ang)*sp,life:rand(0.35,0.55),max:0.55,c:Math.random()<0.5?'#d070ff':'#ff70c0',r:rand(8,18),add:true,round:true,drag:0.97,grav:0})}}
+      for(let i=0;i<3;i++){const ang=Math.atan2(p.y-h.y,p.x-h.x)+rand(-0.25,0.25),sp=rand(700,1000);fx.parts.push({x:h.x,y:h.y,vx:Math.cos(ang)*sp,vy:Math.sin(ang)*sp,life:rand(0.35,0.55),max:0.55,c:Math.random()<0.5?B.E.breath.c:shade(B.E.breath.c,0.4),r:rand(8,18),add:true,round:true,drag:0.97,grav:0})}}
     if(a.kind==='breath'&&B.E.breath.type==='bolt'&&a.t<a.w&&Math.random()<0.5){const h=headScreen();burst(h.x,h.y,'#e8fbff',1,120,true)}
     if(!a.lunged&&a.t>=a.w){a.lunged=true;if(!a.res)impact()}
     if(!a.res&&a.t>=a.w+LATE){resolveHit();if(!B.over)afterResolve()}}
@@ -1345,7 +1571,7 @@ function loop(now){
   const dt=Math.min(0.05,(now-last)/1000);last=now;
   if(B){update(dt);
     ctx.save();if(B.shake>0)ctx.translate((Math.random()-0.5)*B.shake,(Math.random()-0.5)*B.shake);
-    drawBG();drawEnemy();drawBreath();drawTelegraph();drawPlayer();drawFX(dt);ctx.restore();drawLowHP();drawHUD();drawGimmickHUD();
+    drawBG();drawEnemy();drawBreath();drawTelegraph();drawPlayer();drawIcicles();drawFX(dt);ctx.restore();drawOrbs();drawLowHP();drawHUD();drawGimmickHUD();
     if(B.g.curse>0){const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.3,W/2,H/2,Math.max(W,H)*0.7);g.addColorStop(0,'rgba(120,0,200,0)');g.addColorStop(1,'rgba(120,0,200,0.35)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
     if(fx.flash){ctx.fillStyle=rgba(fx.flash.c,0.45*fx.flash.life/fx.flash.max);ctx.fillRect(0,0,W,H)}
     if(B.hurt>0){const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.3,W/2,H/2,Math.max(W,H)*0.7);g.addColorStop(0,'rgba(255,0,0,0)');g.addColorStop(1,`rgba(220,20,10,${B.hurt})`);ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
