@@ -20,6 +20,7 @@ h1{font-weight:900;font-size:30px;letter-spacing:.06em;text-align:center;color:#
 .equip b{color:#ffd58a}
 .tabs{display:flex;gap:6px;margin-bottom:14px}
 .tabs button{flex:1;padding:11px 0;font:700 15px 'M PLUS 1p';color:#c9b597;background:#24190f;border:1px solid #47331f;border-radius:10px;cursor:pointer}
+.card.equipped{border-color:#5a9a4a}.prow.equipped{background:rgba(90,154,74,0.08)}
 .subtabs{display:flex;gap:6px;margin:0 0 10px}.subtabs button{flex:1;padding:8px 0;font:700 14px 'M PLUS 1p';color:#c9b597;background:#1c140d;border:1px solid #47331f;border-radius:20px;cursor:pointer}
 .subtabs button.on{background:#5a3a18;color:#fff0d0;border-color:#c98a3a}.hint{font-size:12px;color:#a89478;text-align:center;margin:6px 0 14px}
 .tabs button.on{background:linear-gradient(#b9772a,#8a4f15);color:#fff6e0;border-color:#e0a050}
@@ -101,7 +102,7 @@ h1{font-weight:900;font-size:30px;letter-spacing:.06em;text-align:center;color:#
     <button data-tab="hunt" class="on">ダンジョン</button>
     <button data-tab="forge">工房</button>
     <button data-tab="gacha">ガチャ</button>
-    <button data-tab="mats">素材</button>
+    <button data-tab="inv">持ち物</button>
     <button data-tab="how">遊び方</button>
   </div>
   <div id="panel"></div>
@@ -782,6 +783,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b||
 // ===================== 拠点UI =====================
 const $=s=>document.querySelector(s);
 let tab='hunt';
+let invTab='w';   // 持ち物の小タブ：w=武器 / a=防具 / m=素材
 function toast(t){const el=$('#toast');el.textContent=t;el.style.opacity=1;clearTimeout(toast.h);toast.h=setTimeout(()=>el.style.opacity=0,1600)}
 const chip=(k,txt,cls='')=>`<span class="chip ${cls} ${MATS[k].rare?'r'+MATS[k].rare:''}"><img src="${ICON[k]}">${txt}</span>`;
 function costChips(c){const e=Object.entries(c);if(!e.length)return '<span class="chip" style="padding:3px 8px">素材不要</span>';
@@ -853,10 +855,30 @@ function renderHub(){
           <span class="chip"><img src="${weaponIcon(w)}">ボス武器：${w.name}${S.weapons[w.id]!==undefined?'（所持）':''}</span></div>
         <p class="grate">${w.name}：${perkText(w.perk)}（攻撃 ${w.atk}）</p>
         <div class="row" style="justify-content:flex-end"><button class="btn" data-act="gacha" data-b="${b.id}" ${n>0?'':'disabled'}>ガチャを回す（証1つ）</button></div></div>`}
-  }else if(tab==='mats'){
+  }else if(tab==='inv'){
+    // 持ち物：武器・防具はここから装備できる（作成と強化は工房）
+    h+=`<div class="subtabs">${[['w','武器'],['a','防具'],['m','素材']].map(([k,n])=>`<button class="${invTab===k?'on':''}" data-act="itab" data-v="${k}">${n}</button>`).join('')}</div>`;
+    if(invTab==='w'){
+      h+=`<div class="buildbox"><b>いまのビルド</b>　攻撃 ${atkStat()}　／　パリィ1回で体勢 +${parryGain(false)}pt　／　回避で体勢 ${dodgeGain()>0?'+'+dodgeGain()+'pt':'なし'}　／　会心率 ${Math.round(critRate()*100)}%</div>`;
+      for(const w of WEAPONS){const lv=S.weapons[w.id];if(lv===undefined)continue;const eq=S.eqW===w.id;
+        h+=`<div class="card ${eq?'equipped':''}"><div class="item"><div class="ico"><img src="${weaponIcon(w)}"></div><div class="body">
+          <h3>${w.name} +${lv} ${eq?'<span class="tag ok">装備中</span>':''}</h3>
+          <p>${buildTag(w.build)} 攻撃 ${wStat(w,lv)} ${w.perk?`<span class="tag perk">✦ ${perkText(w.perk)}</span>`:''}</p>
+          ${eq?'':`<div class="row"><button class="btn sub2" data-act="equip" data-k="w" data-id="${w.id}">装備する</button></div>`}</div></div></div>`}
+    }else if(invTab==='a'){
+      const as=armStat();h+=`<div class="buildbox"><b>いまの防具</b>　防御 ${as.def}　／　体力 +${as.hp}</div>`;
+      for(const sl of SLOTS){h+=`<div class="sect">— ${sl.n} —</div><div class="card">`;
+        const list=ARMORS.filter(p=>p.slot===sl.k&&S.armors[p.id]!==undefined);
+        for(const it of list){const lv=S.armors[it.id],eq=S.eq[sl.k]===it.id,st=aStat(it,lv);
+          h+=`<div class="prow ${eq?'equipped':''}"><div class="ico"><img src="${armorIcon(it)}"></div><div class="body">
+            <div class="pn"><b>${it.name} +${lv}</b> ${eq?'<span class="tag ok">装備中</span>':''} ${buildTag(it.set.build)} <span class="pst">防御 ${st.def} / 体力 +${st.hp}</span>${it.perk?` <span class="tag perk" style="opacity:.85">✦ ${perkText(it.perk)}</span>`:''}</div>
+            ${eq?'':`<div class="row"><button class="btn sub2 mini" data-act="equip" data-k="a" data-id="${it.id}">装備</button></div>`}</div></div>`}
+        h+='</div>'}
+    }else{
     const e=Object.entries(S.mats).filter(([k,q])=>q>0).sort((a,b)=>(MATS[a[0]].rare||0)-(MATS[b[0]].rare||0));
     h+=e.length?`<div class="mats">${e.map(([k,q])=>`<div class="mat ${MATS[k].rare?'r'+MATS[k].rare:''}"><img src="${ICON[k]}"><div>${MATS[k].n}${MATS[k].rare?`<div style="font-size:10px;color:#e0c0ff">${RARE_NAME[MATS[k].rare]}</div>`:''}</div><b>×${q}</b></div>`).join('')}</div>`:'<div class="card"><p>まだ素材がありません。狩りに出て部位破壊・討伐で集めよう！</p></div>';
     h+=`<div class="row" style="margin-top:24px"><button class="btn sub2" data-act="reset">データをリセット</button></div>`;
+    }
   }else{
     h+=`<div class="card how"><h3>遊び方</h3><ul>
     <li>矢印は出ない。<b>敵のモーション</b>（振りかぶった手足・光る部位）から攻撃が来る方向を読み、<b>その方向へはじき返す</b>ようにスワイプでパリィ！（上からの攻撃→上へ、右下からの攻撃→右下へ。8方向）</li>
@@ -889,6 +911,7 @@ $('#panel').addEventListener('click',e=>{const b=e.target.closest('button');if(!
   if(act==='hunt')startDungeon(+b.dataset.i);
   else if(act==='bossrush'){const i=+b.dataset.i;sfx('start');const D=DUNGEONS[i],pmax=100+armStat().hp;RUN={i,D,floor:D.floors.length-1,loot:{},php:pmax,pmax,test:true};startFloor()}
   else if(act==='gacha'){rollGacha(b.dataset.b)}
+  else if(act==='itab'){invTab=b.dataset.v;renderHub()}
   else if(act==='ftab'){forgeTab=b.dataset.v;renderHub()}
   else if(act==='detail'){OPEN_DETAIL[b.dataset.id]=!OPEN_DETAIL[b.dataset.id];sfx('click');renderHub()}
   else if(act==='craft'){const it=(b.dataset.k==='w'?W_:A_)(b.dataset.id);if(!has(it.cost))return;pay(it.cost);sfx('craft');(b.dataset.k==='w'?S.weapons:S.armors)[it.id]=0;
