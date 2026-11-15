@@ -337,6 +337,7 @@ const upgRecipe=(d,m,k)=>({[m]:Math.max(1,Math.round(YIELD[d][m]*k))});
 
 // ===================== 装備 =====================
 // build：バランス／パリィ（崩しやすいが攻撃力が低い）／クリティカル（会心が出やすいが崩しにくい）／回避（回避でも崩せるが回避がシビア）
+const MAXLV=5;   // 強化の上限
 const WP=(d,mats)=>({cost:recipe(d,mats,WEAPON_CLEARS),upg:upgRecipe(d,TOPMAT(d),0.08)});
 const WEAPONS=[
   {id:'w0',name:'木の剣',atk:15,...WP('d1',[]),cost:{},shape:'wood',blade:'#b9844a',glow:'#ffd08a'},
@@ -363,6 +364,10 @@ const WEAPONS=[
   {id:'gw_necros',name:'冥王鎌ネクロシス',atk:37,build:'special',gacha:'necros',...WP('d3',[]),cost:{},shape:'dark',blade:'#8a3ab8',glow:'#d070ff',perk:{gBeam:1}},
 ];
 for(const w of WEAPONS)if(w.rareCost)w.cost={...w.cost,...w.rareCost};
+// ボス武器の攻撃力＝同じ星の普通の武器（レア素材なし）でいちばん強いものを最大強化（+MAXLV）したときと同じ
+const WSTAR={d1:['w1','w2'],f1:['f1','f2'],d2:['w3','f3'],g1:['g1','g2'],d3:['w4','f5']};
+const GACHA_DUNGEON={golm:'d1',lumina:'f1',volga:'d2',glacier:'g1',necros:'d3'};
+for(const w of WEAPONS)if(w.gacha){const best=Math.max(...WSTAR[GACHA_DUNGEON[w.gacha]].map(id=>WEAPONS.find(x=>x.id===id).atk));w.atk=Math.round(best*(1+0.04*MAXLV))}
 // 防具は「シリーズ」ごとに 頭・胴・手・足 の4部位。シリーズの防御/体力の合計を部位の比率で分ける
 const SLOTS=[{k:'head',n:'頭',r:0.25},{k:'body',n:'胴',r:0.35},{k:'hands',n:'手',r:0.15},{k:'legs',n:'足',r:0.25}];
 // setPerk＝シリーズ全体の効果（4部位そろえると全部、1部位なら部位の割合ぶん）。perkSlot＝その部位だけの追加効果
@@ -394,7 +399,6 @@ for(const st of ARMOR_SETS){let dl=st.def,hl=st.hp;
     if(isPerk)pk=mergePerk(pk,st.perk);
     return {id:st.id+'_'+sl.k,set:st,slot:sl.k,name:st.names[i],def:d,hp:h,cost,upg:upgRecipe(st.d,TOPMAT(st.d),0.03),halfUpg:true,perk:pk,slotPerk:isPerk?st.perk:null}});
   ps[1].def+=dl;ps[1].hp+=hl;ARMORS.push(...ps)}
-const MAXLV=5;
 
 // ===================== 方向 =====================
 const DIRS={R:0,DR:45,D:90,DL:135,L:180,UL:-135,U:-90,UR:-45};
