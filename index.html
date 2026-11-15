@@ -449,10 +449,10 @@ function perkText(pk){if(!pk)return '';const o=[],pc=v=>Math.round(v*100);
     else if(k==='critDmg')o.push(`会心ダメージ ${sg(pc(v))}%`);else if(k==='heal')o.push(`パリィ成功でHP${+v.toFixed(1)}回復`);
     else if(k==='dodgePts')o.push(`回避成功で体勢 +${Math.round(v)}pt`);
     else if(k==='dmgCut')o.push(`被ダメージ ${Math.round(v*100)}%カット`);
-    else if(k==='gPoison')o.push(`攻撃時 1/${Math.round(1/G_POISON_CH)}で敵を毒に（最大HPの${G_POISON_PCT*100}%×${G_POISON_TICKS}回）`);
-    else if(k==='gBolt')o.push(`攻撃時 1/${Math.round(1/G_BOLT_CH)}で落雷（最大HPの${G_BOLT_PCT*100}%）`);
+    else if(k==='gPoison')o.push(`攻撃時 1/${Math.round(1/G_POISON_CH)}で敵を毒に（最大HPの${Math.round(G_POISON_PCT*100)}%×${G_POISON_TICKS}回）`);
+    else if(k==='gBolt')o.push(`攻撃時 1/${Math.round(1/G_BOLT_CH)}で落雷（最大HPの${Math.round(G_BOLT_PCT*100)}%）`);
     else if(k==='gFreeze')o.push(`この武器で崩すと敵が凍り、崩し時間 +${G_FREEZE_SEC}秒`);
-    else if(k==='gBeam')o.push(`攻撃時 1/${Math.round(1/G_BEAM_CH)}で闇の光線（最大HPの${G_BEAM_PCT*100}%）`)}
+    else if(k==='gBeam')o.push(`攻撃時 1/${Math.round(1/G_BEAM_CH)}で闇の光線（最大HPの${Math.round(G_BEAM_PCT*100)}%）`)}
   return o.join('／')}
 const buildTag=b=>b?`<span class="tag build b-${b}">${BUILD_NAME[b]}</span>`:'';
 // いまの装備で「1回の行動で入る体勢ポイント」
@@ -827,16 +827,16 @@ function renderHub(){
   }else if(tab==='gacha'){
     h+=`<div class="card"><p style="margin:0">ボスを倒すと <b>${PROOF_RATE*100}%</b> で「討伐の証」が手に入る。証1つでそのボスのガチャを1回まわせる。</p>
       <p class="grate" style="margin:6px 0 0">排出率：レア ${GACHA_ODDS.r1*100}%（1〜2個）／激レア ${GACHA_ODDS.r2*100}%（1〜2個）／<b style="color:#ffc0f0">大当たり ${GACHA_ODDS.top*100}%：ボス武器＋超激レア（1〜2個）</b></p></div>`;
-    let any=false;
-    for(const b of ENEMIES){const D=DUNGEONS.find(d=>d.floors.slice(-1)[0]===b.id),pk='proof_'+b.id,n=S.mats[pk]||0;
-      if(!(n>0||S.cleared[D.id]))continue;any=true;const w=WEAPONS.find(x=>x.gacha===b.id),r=gachaRares(b);
+    // ★1から順に並べる。ボスを倒す（そのダンジョンを踏破する）までは「???」
+    for(const D of DUNGEONS){const b=EN(D.floors.slice(-1)[0]),pk='proof_'+b.id,n=S.mats[pk]||0;
+      if(!(n>0||S.cleared[D.id])){h+=`<div class="card locked"><h3>${'★'.repeat(D.stars)} ???</h3><p>🔒 ???</p></div>`;continue}
+      const w=WEAPONS.find(x=>x.gacha===b.id),r=gachaRares(b);
       h+=`<div class="card"><h3>${'★'.repeat(D.stars)} ${b.name}のガチャ</h3>
         <div class="row">${chip(pk,`${MATS[pk].full} ×${n}`)}</div>
         <div class="rt">当たり</div><div class="row">${[1,2,3].map(q=>r[q]?chip(r[q],`${RARE_NAME[q]}：${MATS[r[q]].n}`):'').join('')}
           <span class="chip"><img src="${weaponIcon(w)}">ボス武器：${w.name}${S.weapons[w.id]!==undefined?'（所持）':''}</span></div>
         <p class="grate">${w.name}：${perkText(w.perk)}（攻撃 ${w.atk}）</p>
         <div class="row" style="justify-content:flex-end"><button class="btn" data-act="gacha" data-b="${b.id}" ${n>0?'':'disabled'}>ガチャを回す（証1つ）</button></div></div>`}
-    if(!any)h+=`<div class="card"><p>まだガチャはない。ダンジョンのボスを倒して「討伐の証」を手に入れよう！</p></div>`;
   }else if(tab==='mats'){
     const e=Object.entries(S.mats).filter(([k,q])=>q>0).sort((a,b)=>(MATS[a[0]].rare||0)-(MATS[b[0]].rare||0));
     h+=e.length?`<div class="mats">${e.map(([k,q])=>`<div class="mat ${MATS[k].rare?'r'+MATS[k].rare:''}"><img src="${ICON[k]}"><div>${MATS[k].n}${MATS[k].rare?`<div style="font-size:10px;color:#e0c0ff">${RARE_NAME[MATS[k].rare]}</div>`:''}</div><b>×${q}</b></div>`).join('')}</div>`:'<div class="card"><p>まだ素材がありません。狩りに出て部位破壊・討伐で集めよう！</p></div>';
@@ -848,6 +848,7 @@ function renderHub(){
     <li>輪がピッタリ重なる瞬間なら <b>PERFECT</b>。体勢崩しの時間が延びる。</li>
     <li><b>強撃</b>（赤く光る大振り）はパリィで体勢ポイント2倍。被弾すると痛い。</li>
     <li><b>ディレイ攻撃</b>は途中で溜めが止まる。焦って早くスワイプすると<b>釣られて、その攻撃は回避もできなくなる</b>！</li>
+    <li>回避に成功すると<b>0.6秒間は無敵</b>（体が水色に光る）。ただし効くのは<b>落下物がからむとき</b>だけ。敵の攻撃と落下物が続けて来ても、まとめてよけられる（攻撃が続けて来るときは1つずつよける）。</li>
     <li>パリィに失敗すると<b>0.5秒間は回避できない</b>（回避ボタンに✕が出る）。ただし<b>連撃の途中</b>の失敗なら、すぐ回避できる。</li>
     <li>ダンジョンによっては、敵の攻撃とは別に<b>頭上から何かが降ってくる</b>（落石・落雷など）。パリィはできないので、落ちる瞬間に回避（左右どちらでもOK）！</li>
     <li><b>連撃</b>は2〜5発の連続攻撃。上に並ぶ矢印の順に素早く弾こう。<b>⚠マークはブレス／投擲</b>なので回避。全部さばくと体勢+25ボーナス。</li>
@@ -1010,6 +1011,17 @@ function tryParry(ang){
   if(a.fl)B.flurry.ok++;
   afterResolve();
 }
+// 回避に成功すると INVINCIBLE 秒のあいだ無敵。ただし効くのは「落下物がからむとき」だけ
+//   ・攻撃をよけた直後の落下物 → 当たらない
+//   ・落下物をよけた直後の攻撃／落下物 → 当たらない
+//   ・攻撃をよけた直後の攻撃（連撃の次・投擲など）→ 無敵は効かない（1つずつよける）
+//   空振りの回避では無敵にならない
+const INVINCIBLE=0.6;
+function grantInv(src){B.invUntil=B.t+INVINCIBLE;B.invSrc=src}
+const invOn=()=>!!B&&B.t<(B.invUntil||0);
+const invVsAttack=()=>invOn()&&B.invSrc==='hz';   // 敵の攻撃に対して効くのは、落下物をよけたあとの無敵だけ
+const invVsHazard=()=>invOn();                    // 落下物には、どちらをよけたあとの無敵でも効く
+const invuln=invVsAttack;
 // パリィに失敗すると少しのあいだ回避できない
 function failLock(){if(B.atk&&B.atk.fl)return;B.noDodgeT=PARRY_FAIL_LOCK}   // 連撃中の失敗はすぐ回避できる
 function doDodge(dir='R'){
@@ -1028,10 +1040,12 @@ function impact(){
 }
 function resolveHit(){
   const a=B.atk;const win=dodgeWin();
+  const inv=invuln();   // 直前の回避成功で無敵中なら、何が来ても当たらない
   const inTime=!a.noDodge&&B.dodgeAt>=a.impactAt-win&&B.dodgeAt<=a.impactAt+LATE;
-  const wrongSide=inTime&&a.kind==='breath'&&B.dodgeDir!==safeSide(a);   // ブレス／投擲は飛んでくる側の反対へよける
+  const wrongSide=!inv&&inTime&&a.kind==='breath'&&B.dodgeDir!==safeSide(a);   // ブレス／投擲は飛んでくる側の反対へよける
   if(wrongSide)float(`逆によけた！ ${SIDE_NAME[safeSide(a)]}へ回避`,W/2,H*0.66,'#ff8f7a',22,0.9);
-  if(inTime&&!wrongSide){
+  if(inv||(inTime&&!wrongSide)){
+    if(!inv)grantInv('atk');
     // 回避で体勢ポイントが入るのは回避ビルドの装備（dodgePts）だけ。
     // 連撃中は「⚠ブレス/投擲を回避」はさばいた扱い。普通の攻撃を回避すると、回避ビルドでなければ連撃ボーナスはなくなる
     const dg=dodgeGain();
@@ -1592,6 +1606,7 @@ function attackPoint(a){
 }
 function label(tx,col,y){const fs=Math.round(Math.min(24,W*0.055));ctx.font=`900 ${fs}px 'M PLUS 1p'`;ctx.textAlign='center';ctx.lineWidth=4;ctx.strokeStyle='rgba(0,0,0,0.75)';ctx.strokeText(tx,W/2,y);ctx.fillStyle=col;ctx.fillText(tx,W/2,y)}
 function drawTelegraph(){
+  B.flRow=null;
   const a=B.atk;if(B.state!=='windup'||!a||B.over)return;
   const c=PC(),ty=c.y+10;
   const rMin=20,rMax=78,r=rMin+(rMax-rMin)*Math.max(0,1-a.t/a.w);
@@ -1606,7 +1621,7 @@ function drawTelegraph(){
       ctx.save();ctx.fillStyle=rgba(col,0.12+0.25*k);ctx.strokeStyle=col;ctx.lineWidth=3;ctx.setLineDash([8,6]);ctx.lineDashOffset=-B.t*50;
       ctx.beginPath();ctx.ellipse(tg.x,tg.y-10,60+20*k,26+8*k,0,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.setLineDash([]);ctx.restore();
       const ax=W/2+sx*Math.min(W*0.22,150),ay=H*0.82-70;arrowIcon(ax,ay,46+6*Math.sin(B.t*14),sd==='L'?180:0,'#9fffc0')}
-    if(a.fl)drawFlurryRow(W/2,ty+34,col);
+    if(a.fl)B.flRow={y:ty+46,col};
     const sdn=SIDE_NAME[safeSide(a)];
     label(a.fl&&B.flurry?`${B.flurry.total}連撃 ${B.flurry.idx}/${B.flurry.total}！ ⚠${b_name()} ${sdn}へ回避！`:`⚠ ${b_name()}（${SIDE_NAME[a.side]}側）！ ${sdn}へ回避`,col,ty);
     return;
@@ -1619,7 +1634,7 @@ function drawTelegraph(){
   ctx.beginPath();ctx.arc(pt.x,pt.y,r,0,Math.PI*2);ctx.stroke();
   ctx.lineWidth=2;ctx.globalAlpha=0.7;ctx.strokeStyle='#fff';ctx.beginPath();ctx.arc(pt.x,pt.y,rMin,0,Math.PI*2);ctx.stroke();
   ctx.globalAlpha=a.fail?0.3:0.35+0.4*inWin;ctx.fillStyle=col;ctx.beginPath();ctx.arc(pt.x,pt.y,rMin*0.6,0,Math.PI*2);ctx.fill();ctx.restore();
-  if(a.fl)drawFlurryRow(W/2,ty+34,col);
+  if(a.fl)B.flRow={y:ty+46,col};
   const name=hot?'強撃':a.kind==='delay'?'斬撃':'斬撃';
   const tx=a.fail?(a.noDodge?'ディレイに釣られた！ 回避もできない':B.noDodgeT>0?`失敗… ${B.noDodgeT.toFixed(1)}秒 回避できない`:'失敗… 今なら回避が間に合う！'):a.cursed?'呪い！ いつもと【逆】へはじけ':a.fl&&B.flurry?`${B.flurry.total}連撃 ${B.flurry.idx}/${B.flurry.total}！`:`${name}！`;
   label(tx,col,ty);
@@ -1648,12 +1663,13 @@ function drawGimmickHUD(){
 const b_name=()=>B.E.breath.name;
 function warnIcon(x,y,sz,col){ctx.save();ctx.fillStyle=col;ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x,y-sz*0.45);ctx.lineTo(x+sz*0.48,y+sz*0.38);ctx.lineTo(x-sz*0.48,y+sz*0.38);ctx.closePath();ctx.fill();ctx.stroke();
   ctx.fillStyle='#200';ctx.font=`900 ${Math.round(sz*0.5)}px 'M PLUS 1p'`;ctx.textAlign='center';ctx.fillText('!',x,y+sz*0.3);ctx.restore()}
+const FLURRY_UI=46;   // 連撃の並びの大きさ（1つぶんのマスの大きさ）
 function drawFlurryRow(cx,yy,col){ // 連撃の並び（⚠はブレス／投擲）
-  if(!B.flurry)return;const f=B.flurry,n=f.total,sz=30,gap=38,x0=cx-(n-1)*gap/2;
-  ctx.fillStyle='rgba(0,0,0,0.55)';ctx.beginPath();ctx.roundRect(x0-sz/2-10,yy-sz/2-8,(n-1)*gap+sz+20,sz+16,10);ctx.fill();
+  if(!B.flurry)return;const f=B.flurry,n=f.total,sz=FLURRY_UI*Math.min(1,W/420),gap=sz*1.3,x0=cx-(n-1)*gap/2;
+  ctx.fillStyle='rgba(0,0,0,0.55)';ctx.beginPath();ctx.roundRect(x0-sz/2-12,yy-sz/2-10,(n-1)*gap+sz+24,sz+(f.dirs.some(d=>d[0]==='B')?32:20),12);ctx.fill();
   for(let i=0;i<n;i++){const cur=i===f.idx-1,done=i<f.idx-1,d=f.dirs[i];ctx.globalAlpha=done?0.3:1;
     if(cur){ctx.fillStyle='rgba(255,233,74,0.25)';ctx.fillRect(x0+i*gap-sz/2-3,yy-sz/2-3,sz+6,sz+6)}
-    if(d[0]==='B'){warnIcon(x0+i*gap,yy,cur?sz:sz*0.8,cur?col:'#ff3a3a');ctx.fillStyle='#9fffc0';ctx.font="900 11px 'M PLUS 1p'";ctx.textAlign='center';ctx.fillText(d[1]==='L'?'→':'←',x0+i*gap,yy+sz*0.75)}else{ctx.fillStyle=cur?col:'#ff8a3a';ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x0+i*gap,yy,(cur?sz:sz*0.8)*0.32,0,Math.PI*2);ctx.fill();ctx.stroke()}}
+    if(d[0]==='B'){warnIcon(x0+i*gap,yy,cur?sz:sz*0.8,cur?col:'#ff3a3a');ctx.fillStyle='#9fffc0';ctx.font=`900 ${Math.round(sz*0.42)}px 'M PLUS 1p'`;ctx.textAlign='center';ctx.fillText(d[1]==='L'?'→':'←',x0+i*gap,yy+sz*0.9)}else{ctx.fillStyle=cur?col:'#ff8a3a';ctx.strokeStyle='#fff';ctx.lineWidth=3;ctx.beginPath();ctx.arc(x0+i*gap,yy,(cur?sz:sz*0.8)*0.34,0,Math.PI*2);ctx.fill();ctx.stroke()}}
   ctx.globalAlpha=1}
 
 function swordAngle(){
@@ -1669,7 +1685,12 @@ function drawPlayer(){
   if(B.dAnim){const k=Math.min(1,B.dAnim.t/B.dAnim.dur);const off=B.dAnim.side*Math.sin(k*Math.PI)*110*s;
     for(let i=1;i<=2;i++){ctx.save();ctx.globalAlpha=0.18*i;drawPlayerAt(x+off*(i/3),gy,s,a,w);ctx.restore()}x+=off}
   if(B.hurt>0)x+=(Math.random()-0.5)*10;
-  drawPlayerAt(x,gy+(B.hurt>0?B.hurt*20:0),s,a,w);
+  const showInv=invOn()&&(B.invSrc==='hz'||(B.hz&&B.hz.some(i=>!i.landed)));
+  if(showInv){ // 無敵が効く場面だけ：体のまわりに水色の光
+    const k=(B.invUntil-B.t)/INVINCIBLE,cy=gy-130*s,g=ctx.createRadialGradient(x,cy,10*s,x,cy,150*s);
+    g.addColorStop(0,`rgba(160,255,230,${0.35*k})`);g.addColorStop(1,'rgba(160,255,230,0)');ctx.fillStyle=g;ctx.fillRect(x-160*s,cy-170*s,320*s,340*s)}
+  ctx.save();if(showInv)ctx.globalAlpha=0.55+0.35*Math.sin(B.t*40);
+  drawPlayerAt(x,gy+(B.hurt>0?B.hurt*20:0),s,a,w);ctx.restore();
 }
 function drawPlayerAt(x,gy,s,a,w){
   ctx.fillStyle='rgba(0,0,0,0.45)';ell(x,gy-4*s,70*s,14*s);ctx.fill();
@@ -1801,7 +1822,7 @@ function spawnHazard(delay=0){const hz=hazard();const x=W/2+rand(-0.18,0.18)*Mat
 function updateHazards(dt){const hz=hazard();
   for(const ic of B.hz){if(ic.landed){ic.life+=dt;continue}ic.t+=dt;
     if(ic.t>=0&&!ic.warned){ic.warned=true;sfx({rock:'rumble',bolt:'zap',ice:'creak',dark:'curse'}[ic.type])}
-    if(ic.t>=ic.w+LATE){ic.landed=true;const win=dodgeWin(),ok=B.dodgeAt>=B.t-LATE-win&&B.dodgeAt<=B.t;const pp=PP();
+    if(ic.t>=ic.w+LATE){ic.landed=true;const win=dodgeWin(),inv=invVsHazard(),ok=inv||(B.dodgeAt>=B.t-LATE-win&&B.dodgeAt<=B.t);const pp=PP();if(ok&&!inv)grantInv('hz');
       sfx({rock:'rock',bolt:'thunder',ice:'iceCrash',dark:'darkBeam'}[ic.type]);burst(ic.x,pp.y-30,hz.c,30,480,true);B.shake=Math.max(B.shake,12);
       if(ic.type==='bolt'||ic.type==='dark')fx.flash={c:hz.c,life:0.2,max:0.2};
       if(ok){float(`${hz.name}を回避！`,W/2,H*0.62,'#bff4ff',26,0.9);const dg=dodgeGain();if(dg>0)addPosture(dg,W/2,H*0.62+30,'見切り')}
@@ -1927,7 +1948,7 @@ function loop(now){
   const dt=Math.min(0.05,(now-last)/1000);last=now;
   if(B){update(dt);
     ctx.save();if(B.shake>0)ctx.translate((Math.random()-0.5)*B.shake,(Math.random()-0.5)*B.shake);
-    drawBG();drawEnemy();drawBreath();drawTelegraph();drawPlayer();drawHazards();drawFX(dt);drawSpecialFX(dt);ctx.restore();drawOrbs();drawCold();drawLowHP();drawHUD();drawGimmickHUD();
+    drawBG();drawEnemy();drawBreath();drawTelegraph();drawPlayer();if(B.flRow&&B.atk&&B.atk.fl)drawFlurryRow(W/2,B.flRow.y,B.flRow.col);drawHazards();drawFX(dt);drawSpecialFX(dt);ctx.restore();drawOrbs();drawCold();drawLowHP();drawHUD();drawGimmickHUD();
     if(B.g.curse>0){const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.3,W/2,H/2,Math.max(W,H)*0.7);g.addColorStop(0,'rgba(120,0,200,0)');g.addColorStop(1,'rgba(120,0,200,0.35)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
     if(fx.flash){ctx.fillStyle=rgba(fx.flash.c,0.45*fx.flash.life/fx.flash.max);ctx.fillRect(0,0,W,H)}
     if(B.hurt>0){const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.3,W/2,H/2,Math.max(W,H)*0.7);g.addColorStop(0,'rgba(255,0,0,0)');g.addColorStop(1,`rgba(220,20,10,${B.hurt})`);ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
