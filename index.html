@@ -449,10 +449,10 @@ function perkText(pk){if(!pk)return '';const o=[],pc=v=>Math.round(v*100);
     else if(k==='critDmg')o.push(`会心ダメージ ${sg(pc(v))}%`);else if(k==='heal')o.push(`パリィ成功でHP${+v.toFixed(1)}回復`);
     else if(k==='dodgePts')o.push(`回避成功で体勢 +${Math.round(v)}pt`);
     else if(k==='dmgCut')o.push(`被ダメージ ${Math.round(v*100)}%カット`);
-    else if(k==='gPoison')o.push(`攻撃時 1/${Math.round(1/G_POISON_CH)}で敵を毒に（最大HPの${G_POISON_PCT*100}%×${G_POISON_TICKS}回）`);
-    else if(k==='gBolt')o.push(`攻撃時 1/${Math.round(1/G_BOLT_CH)}で落雷（最大HPの${G_BOLT_PCT*100}%）`);
+    else if(k==='gPoison')o.push(`攻撃時 1/${Math.round(1/G_POISON_CH)}で敵を毒に（最大HPの${Math.round(G_POISON_PCT*100)}%×${G_POISON_TICKS}回）`);
+    else if(k==='gBolt')o.push(`攻撃時 1/${Math.round(1/G_BOLT_CH)}で落雷（最大HPの${Math.round(G_BOLT_PCT*100)}%）`);
     else if(k==='gFreeze')o.push(`この武器で崩すと敵が凍り、崩し時間 +${G_FREEZE_SEC}秒`);
-    else if(k==='gBeam')o.push(`攻撃時 1/${Math.round(1/G_BEAM_CH)}で闇の光線（最大HPの${G_BEAM_PCT*100}%）`)}
+    else if(k==='gBeam')o.push(`攻撃時 1/${Math.round(1/G_BEAM_CH)}で闇の光線（最大HPの${Math.round(G_BEAM_PCT*100)}%）`)}
   return o.join('／')}
 const buildTag=b=>b?`<span class="tag build b-${b}">${BUILD_NAME[b]}</span>`:'';
 // いまの装備で「1回の行動で入る体勢ポイント」
@@ -827,16 +827,16 @@ function renderHub(){
   }else if(tab==='gacha'){
     h+=`<div class="card"><p style="margin:0">ボスを倒すと <b>${PROOF_RATE*100}%</b> で「討伐の証」が手に入る。証1つでそのボスのガチャを1回まわせる。</p>
       <p class="grate" style="margin:6px 0 0">排出率：レア ${GACHA_ODDS.r1*100}%（1〜2個）／激レア ${GACHA_ODDS.r2*100}%（1〜2個）／<b style="color:#ffc0f0">大当たり ${GACHA_ODDS.top*100}%：ボス武器＋超激レア（1〜2個）</b></p></div>`;
-    let any=false;
-    for(const b of ENEMIES){const D=DUNGEONS.find(d=>d.floors.slice(-1)[0]===b.id),pk='proof_'+b.id,n=S.mats[pk]||0;
-      if(!(n>0||S.cleared[D.id]))continue;any=true;const w=WEAPONS.find(x=>x.gacha===b.id),r=gachaRares(b);
+    // ★1から順に並べる。ボスを倒す（そのダンジョンを踏破する）までは「???」
+    for(const D of DUNGEONS){const b=EN(D.floors.slice(-1)[0]),pk='proof_'+b.id,n=S.mats[pk]||0;
+      if(!(n>0||S.cleared[D.id])){h+=`<div class="card locked"><h3>${'★'.repeat(D.stars)} ???</h3><p>🔒 ???</p></div>`;continue}
+      const w=WEAPONS.find(x=>x.gacha===b.id),r=gachaRares(b);
       h+=`<div class="card"><h3>${'★'.repeat(D.stars)} ${b.name}のガチャ</h3>
         <div class="row">${chip(pk,`${MATS[pk].full} ×${n}`)}</div>
         <div class="rt">当たり</div><div class="row">${[1,2,3].map(q=>r[q]?chip(r[q],`${RARE_NAME[q]}：${MATS[r[q]].n}`):'').join('')}
           <span class="chip"><img src="${weaponIcon(w)}">ボス武器：${w.name}${S.weapons[w.id]!==undefined?'（所持）':''}</span></div>
         <p class="grate">${w.name}：${perkText(w.perk)}（攻撃 ${w.atk}）</p>
         <div class="row" style="justify-content:flex-end"><button class="btn" data-act="gacha" data-b="${b.id}" ${n>0?'':'disabled'}>ガチャを回す（証1つ）</button></div></div>`}
-    if(!any)h+=`<div class="card"><p>まだガチャはない。ダンジョンのボスを倒して「討伐の証」を手に入れよう！</p></div>`;
   }else if(tab==='mats'){
     const e=Object.entries(S.mats).filter(([k,q])=>q>0).sort((a,b)=>(MATS[a[0]].rare||0)-(MATS[b[0]].rare||0));
     h+=e.length?`<div class="mats">${e.map(([k,q])=>`<div class="mat ${MATS[k].rare?'r'+MATS[k].rare:''}"><img src="${ICON[k]}"><div>${MATS[k].n}${MATS[k].rare?`<div style="font-size:10px;color:#e0c0ff">${RARE_NAME[MATS[k].rare]}</div>`:''}</div><b>×${q}</b></div>`).join('')}</div>`:'<div class="card"><p>まだ素材がありません。狩りに出て部位破壊・討伐で集めよう！</p></div>';
