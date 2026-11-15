@@ -326,8 +326,7 @@ const PART_RATIO=0.33;
 // 敵の攻撃力：適正防具で通常攻撃1発 ≒ 最大HPの1/3
 //  ★1=岩甲一式+0 / ★2=岩甲一式+3 / ★3=★2の防具一式+3 / ★4=雷鱗一式+3 / ★5=★4の防具一式+2 を「適正」とした値（雑魚は階層補正込みで同程度）
 const ENEMY_DMG={pebble:37,moss:35,golm:40,mothling:42,beetle:40,lumina:46,sparkling:46,stormwyv:44,volga:50,frostwolf:52,icewraith:50,glacier:55,wraith:54,lich:50,necros:52};
-const ENEMY_DMG_MUL=0.98;   // 敵の攻撃力を全員一律で調整する倍率（v16で2%下げた）
-for(const e of[...ENEMIES,...MINIONS]){e.dmg=ENEMY_DMG[e.id]*ENEMY_DMG_MUL;e.hp=ENEMY_HP[e.id];e.parts=e.parts.map(p=>p.hp?{...p,hp:Math.round(e.hp*PART_RATIO)}:p)}
+for(const e of[...ENEMIES,...MINIONS]){e.dmg=ENEMY_DMG[e.id];e.hp=ENEMY_HP[e.id];e.parts=e.parts.map(p=>p.hp?{...p,hp:Math.round(e.hp*PART_RATIO)}:p)}
 const EN=id=>ENEMIES.find(e=>e.id===id)||MINIONS.find(e=>e.id===id);
 // 並び順＝解放順（★1→★5）。idはセーブに使うので変えない
 const DUNGEONS=[
@@ -952,7 +951,7 @@ let RUN=null;
 function startDungeon(i){sfx('start');const D=DUNGEONS[i];const pmax=100+armStat().hp;RUN={i,D,floor:0,loot:{},php:pmax,pmax};startFloor()}
 function floorEnemy(){const id=RUN.D.floors[RUN.floor],E=EN(id);if(!E.minion)return E;
   const m=1+0.12*RUN.floor;
-  return {...E,hp:Math.round(E.hp*m),dmg:E.dmg*(1+0.06*RUN.floor),parts:E.parts.map(p=>p.hp?{...p,hp:Math.round(p.hp*m)}:p)}}
+  return {...E,hp:Math.round(E.hp*m),dmg:Math.round(E.dmg*(1+0.06*RUN.floor)),parts:E.parts.map(p=>p.hp?{...p,hp:Math.round(p.hp*m)}:p)}}
 const isBossFloor=()=>RUN.floor===RUN.D.floors.length-1;
 function startFloor(){
   const E=floorEnemy();
