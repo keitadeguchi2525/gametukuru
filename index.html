@@ -60,15 +60,18 @@ h1{font-weight:900;font-size:30px;letter-spacing:.06em;text-align:center;color:#
 .btn.mini{padding:5px 12px;font-size:12px;box-shadow:0 2px 0 #8a4f15}.btn.sub2.mini{box-shadow:0 2px 0 #2a1e14}
 #battle{position:fixed;inset:0;touch-action:none}
 #cv{display:block;touch-action:none}
-#mute{position:absolute;left:64px;top:8px;font:700 12px 'M PLUS 1p';padding:5px 10px;border-radius:8px;border:1px solid #6b4a2a;background:rgba(30,20,12,.7);color:#e8d4b4;cursor:pointer}
+#mute{position:absolute;left:8px;top:8px;font:700 12px 'M PLUS 1p';padding:5px 10px;border-radius:8px;border:1px solid #6b4a2a;background:rgba(30,20,12,.7);color:#e8d4b4;cursor:pointer}
 .audio{display:flex;gap:8px;justify-content:center;margin:-4px 0 14px}
 .sbtn{font:700 12px 'M PLUS 1p';padding:5px 12px;border-radius:16px;border:1px solid #6b4a2a;background:#2a1e15;color:#ffd58a;cursor:pointer}
 .sbtn.off{color:#8a7a66;border-color:#3d2b1b}
-#retreat{position:absolute;left:8px;top:8px;font:700 12px 'M PLUS 1p';padding:5px 10px;border-radius:8px;border:1px solid #6b4a2a;background:rgba(30,20,12,.7);color:#e8d4b4;cursor:pointer}
-#dodge{position:absolute;right:16px;bottom:22px;width:84px;height:84px;border-radius:50%;border:3px solid #9fd8ff;background:radial-gradient(circle at 40% 35%,rgba(90,150,200,.55),rgba(20,40,70,.75));color:#e8f6ff;font:900 17px 'M PLUS 1p';cursor:pointer;touch-action:none;box-shadow:0 0 14px rgba(120,200,255,.35)}
-#dodge small{display:block;font-size:10px;font-weight:700;opacity:.7}
-#dodge.warn{border-color:#ff5a5a;background:radial-gradient(circle at 40% 35%,rgba(255,90,90,.7),rgba(90,10,10,.8));animation:pulse .35s infinite alternate}
-#dodge.cd{opacity:.45}
+#dodgeL{left:16px}#dodgeR{right:16px}
+.dodgebtn{position:absolute;bottom:56px;width:84px;height:84px;border-radius:50%;border:3px solid #9fd8ff;background:radial-gradient(circle at 40% 35%,rgba(90,150,200,.55),rgba(20,40,70,.75));color:#e8f6ff;font:900 17px 'M PLUS 1p';cursor:pointer;touch-action:none;box-shadow:0 0 14px rgba(120,200,255,.35)}
+
+.dodgebtn small{display:block;font-size:10px;font-weight:700;opacity:.7}
+.dodgebtn.warn{border-color:#ff5a5a;background:radial-gradient(circle at 40% 35%,rgba(255,90,90,.7),rgba(90,10,10,.8));animation:pulse .35s infinite alternate}
+.dodgebtn.cd{opacity:.45}
+.dodgebtn.lock{border-color:#777;background:radial-gradient(circle at 40% 35%,rgba(110,110,110,.7),rgba(30,30,30,.85));color:#aaa;animation:none}
+.dodgebtn.lock::after{content:'✕';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:58px;color:rgba(255,90,90,.75);font-weight:900}
 @keyframes pulse{to{transform:scale(1.1);box-shadow:0 0 28px rgba(255,80,80,.8)}}
 #result{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(8,5,3,.72)}
 #result .box{background:linear-gradient(#2e2116,#1d140d);border:1px solid #7a5530;border-radius:16px;padding:22px 24px;min-width:280px;max-width:92vw;text-align:center}
@@ -96,9 +99,9 @@ h1{font-weight:900;font-size:30px;letter-spacing:.06em;text-align:center;color:#
 
 <div id="battle" class="hidden">
   <canvas id="cv"></canvas>
-  <button id="retreat">脱出</button>
   <button id="mute"></button>
-  <button id="dodge">回避<small>Shift</small></button>
+  <button id="dodgeL" class="dodgebtn">← 回避<small>Shift+←</small></button>
+  <button id="dodgeR" class="dodgebtn">回避 →<small>Shift+→</small></button>
   <div id="result" class="hidden"><div class="box" id="resultBox"></div></div>
 </div>
 <div id="toast"></div>
@@ -221,8 +224,8 @@ ENEMIES.push(
      {id:'body',body:true,x:0,y:0.06,rx:0.22,ry:0.27,c:'#efe6ff',deco:'fuzz'},
      {id:'head',name:'触角',x:0,y:-0.3,rx:0.15,ry:0.13,c:'#e8dcf8',hp:1,mat:[['antenna',2]],deco:'featherAntenna',eyes:true},
     ]}),
-  makeBoss('golm',{id:'glacier',name:'氷霊獣グラシエル',stars:4,tint:'#b8e4ff',gimmick:'icicle',ice:1,
-    gdesc:'【落氷】ボスの攻撃とは別に、天井からつららが降ってくる。当たると大ダメージで、パリィはできない。頭上のつららが震えて影が濃くなったら、落ちる瞬間に回避（Shift）！ HP50%を切ると、つららが2本続けて落ちてくることも。',
+  makeBoss('golm',{id:'glacier',name:'氷霊獣グラシエル',stars:4,tint:'#b8e4ff',gimmick:'cold',ice:1,
+    gdesc:'【寒さ】戦いが長引くほど体が凍え、パリィと回避の受付時間が短くなっていく。HP50%を切ると吹雪になり、さらに短くなる。HP50%以下では、つららが2本続けて落ちてくることも。',
     desc:'霊廟を守る氷の獣。霧の中から襲いかかる。',
     hp:4500,need:[4,8],needEvery:21,breakTime:3.4,windup:0.78,idle:[0.65,1.2],combo:3,
     moves:[['slash',5],['heavy',2],['delay',3],['breath',2]],breath:{type:'fire',name:'凍てつく息',c:'#cfefff'},
@@ -287,8 +290,9 @@ const MINIONS=[
   variant('necros',{id:'lich',name:'骸骨魔導士',tint:'#b0a880',size:0.85,hp:2300,need:[4,6],needEvery:20,windup:0.75,dmg:36,combo:3,partMul:0.5,
     moves:[['slash',5],['heavy',2],['delay',3],['breath',3]],breath:{type:'fire',name:'呪炎',c:'#c0ff90'},drops:[['shade',2,3],['soul',1,2],['crown',0,1]],rares:[['voidcrystal',0.003]]}),
 ];
+const COMBO_W_MINION=3,COMBO_W_BOSS=5;   // 連撃の出やすさ（技の重み。ほかの技の合計はおよそ10〜13）
 const FLURRY={golm:[2,3],lumina:[3,4],volga:[3,4],glacier:[4,5],necros:[4,5],pebble:[2,2],moss:[2,3],mothling:[2,3],beetle:[2,3],sparkling:[2,3],stormwyv:[3,4],frostwolf:[3,4],icewraith:[3,4],wraith:[3,4],lich:[3,5]};
-for(const e of[...ENEMIES,...MINIONS]){e.flurry=FLURRY[e.id];e.moves=[...e.moves,['combo',e.minion?1.5:2.5]]}
+for(const e of[...ENEMIES,...MINIONS]){e.flurry=FLURRY[e.id];e.moves=[...e.moves,['combo',e.minion?COMBO_W_MINION:COMBO_W_BOSS]]}
 // 敵の体力。部位体力は本体の33%（目安：普通の武器で2か所、狙い続ければ3か所）
 const ENEMY_HP={pebble:400,moss:650,golm:1300,mothling:650,beetle:950,lumina:2000,sparkling:900,stormwyv:1350,volga:3000,frostwolf:1600,icewraith:2200,glacier:4500,wraith:2000,lich:2600,necros:6000};
 const PART_RATIO=0.33;
@@ -642,6 +646,9 @@ const SFX={
   orbSpawn:()=>[76,83,88,95].forEach((m,i)=>tone(mf(m),0.2,{type:'sine',vol:0.1,at:i*0.05})),
   pop:()=>{tone(mf(96),0.08,{type:'triangle',vol:0.18,to:mf(103)});noise(0.06,{vol:0.15,f:6000,ftype:'highpass'})},
   orbBoom:()=>{noise(0.3,{vol:0.35,f:900,to:300});tone(160,0.2,{vol:0.25,to:70})},
+  rumble:()=>{noise(0.9,{vol:0.3,f:220,ftype:'lowpass',attack:0.15});tone(45,0.8,{vol:0.25,attack:0.2})},
+  darkBeam:()=>{tone(mf(37),0.7,{type:'sawtooth',vol:0.14,to:mf(25)});noise(0.6,{vol:0.3,f:900,to:200,q:1.2});tone(mf(61),0.5,{vol:0.08,det:30})},
+  blizzard:()=>{noise(1.6,{vol:0.35,f:1500,to:3500,q:0.7,attack:0.3});noise(1.2,{vol:0.2,f:500,ftype:'lowpass',attack:0.2})},
   creak:()=>{noise(0.5,{vol:0.18,f:3000,q:6,attack:0.1});tone(1400,0.4,{type:'triangle',vol:0.04,to:1900})},
   iceCrash:()=>{noise(0.5,{vol:0.45,f:5000,to:1500,q:0.8});[96,100,103].forEach((m,i)=>tone(mf(m),0.3,{type:'triangle',vol:0.07,at:i*0.03}))},
 };
@@ -702,7 +709,7 @@ function renderHub(){
   document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab));
   let h='';
   if(tab==='hunt'){
-    h+=`<div class="card" style="border-color:#7a2a20"><p style="color:#ffb0a0;margin:0">⚠ ダンジョンで手に入れた素材は<b>帰還するまで未確定</b>。倒れると<b>その探索の戦利品と、装備中の武器・防具（5つ）のうちランダムに1〜3つを失う</b>（初期装備は強化が+0に戻る）。階の合間に「帰還」か戦闘中の「脱出」なら装備は守れる。</p></div>`;
+    h+=`<div class="card" style="border-color:#7a2a20"><p style="color:#ffb0a0;margin:0">⚠ ダンジョンで手に入れた素材は<b>帰還するまで未確定</b>。倒れると<b>その探索の戦利品と、装備中の武器・防具（5つ）のうちランダムに1〜3つを失う</b>（初期装備は強化が+0に戻る）。階の合間に「帰還」すれば戦利品も装備も守れる（戦闘中に逃げることはできない）。</p></div>`;
     DUNGEONS.forEach((D,i)=>{const lock=!unlocked(i),open=OPEN_DETAIL[D.id]&&!lock;
       // 前のダンジョンを踏破していないうちは、星の数だけ見せて名前・説明は「???」
       h+=`<div class="card ${lock?'locked':''}"><h3>${'★'.repeat(D.stars)} ${lock?'???':`${D.name}（全${D.floors.length}階）`} ${S.cleared[D.id]?'<span class="tag ok">踏破済</span>':''}</h3>
@@ -759,9 +766,11 @@ function renderHub(){
     <li>タイミングの輪は<b>攻撃が来る場所</b>に出る。輪が縮んで<b>黄色</b>になった瞬間にはじこう。</li>
     <li>輪がピッタリ重なる瞬間なら <b>PERFECT</b>。体勢崩しの時間が延びる。</li>
     <li><b>強撃</b>（赤く光る大振り）はパリィで体勢ポイント2倍。被弾すると痛い。</li>
-    <li><b>ディレイ攻撃</b>は途中で溜めが止まる。焦って早くスワイプしないように！</li>
+    <li><b>ディレイ攻撃</b>は途中で溜めが止まる。焦って早くスワイプすると<b>釣られて、その攻撃は回避もできなくなる</b>！</li>
+    <li>パリィに失敗すると<b>0.5秒間は回避できない</b>（回避ボタンに✕が出る）。</li>
+    <li>ダンジョンによっては、敵の攻撃とは別に<b>頭上から何かが降ってくる</b>（落石・落雷など）。パリィはできないので、落ちる瞬間に回避（左右どちらでもOK）！</li>
     <li><b>連撃</b>は2〜5発の連続攻撃。上に並ぶ矢印の順に素早く弾こう。<b>⚠マークはブレス／投擲</b>なので回避。全部さばくと体勢+25ボーナス。</li>
-    <li><b>⚠マーク</b>のブレス・投擲はパリィ不可。<b>回避ボタン</b>（Shift）で着弾直前に避けよう。普通の攻撃も回避できるが、体勢ポイントが入るのは<b>回避ビルド</b>の装備のときだけ。</li>
+    <li><b>⚠マーク</b>のブレス・投擲はパリィ不可。<b>画面の左側か右側</b>に飛んでくるので、<b>反対側へ回避</b>（左側に来たら右回避）。回避ボタンは左右に2つ（PCは Shift＋←／→）。普通の攻撃も回避できるが、体勢ポイントが入るのは<b>回避ビルド</b>の装備のときだけ。</li>
     <li>敵には<b>体勢ポイント</b>の必要量がある。パリィ1回で<b>25pt</b>（PERFECTは+5pt、被弾すると-25pt）。必要量に届くと<b>体勢が崩れる</b>。必要量は戦闘が長引くほど増えていく。</li>
     <li><b>ビルド</b>：装備で戦い方が変わる。<b>パリィ特化</b>＝1回のパリィで入るptが多いが攻撃力が低め。<b>クリティカル</b>＝会心が出やすく強いが、パリィのptが少なく崩しにくい。<b>回避</b>＝回避でもptが入るが、回避の受付がシビア。<b>バランス</b>＝クセがない。工房の「いまのビルド」で数値を確認できる。</li>
     <li>体勢崩し中は、<b>敵の部位を押したまま、こするように動かす</b>と連続攻撃。速くこするほど強い。</li>
@@ -769,7 +778,7 @@ function renderHub(){
     <li>防具は<b>頭・胴・手・足</b>の4部位。シリーズごとに作って組み合わせられる（レアシリーズは特定の部位に特殊効果）。</li>
     <li>倒すと討伐素材と、確率で<b>レア素材</b>がドロップ。レア素材で特殊効果つきの装備が作れる。</li>
     <li><b>ダンジョン</b>は階層制。HPは階をまたいで持ち越し（次の階へ進むとき最大HPの5%だけ回復）。各階の後に<b>帰還</b>すれば戦利品を持ち帰れるが、<b>倒れると全ロスト</b>。最奥のボスを倒すと踏破＆全部持ち帰り。<b>倒れると装備中の武器・防具5つのうちランダムに1〜3つも失う</b>（1つ33%・2つ33%・3つ34%。工房で作り直せる）。</li>
-    <li>PCキー：パリィは矢印キー／WASD、斜めは Q・E・Z・C。回避は Shift。</li></ul></div>`;
+    <li>PCキー：パリィは矢印キー／WASD、斜めは Q・E・Z・C。回避は Shift＋← ／ Shift＋→（Shift＋A／D でも可）。</li></ul></div>`;
   }
   $('#panel').innerHTML=h;
 }
@@ -799,7 +808,8 @@ const rand=(a,b)=>a+Math.random()*(b-a),ri=(a,b)=>Math.floor(rand(a,b+1));
 const ease=k=>1-Math.pow(1-k,3);
 const BREATH_IN_FLURRY=0.3,BREATH_WINDUP=0.8;
 const STORM_CHARGE=16,STORM_TIME=12,STORM_SPEED=0.85,WARP_CHANCE=0.45;   // ヴォルガ：ゲージが溜まる秒数／雷速モードの長さ／溜めの速さ倍率／向きが入れ替わる確率
-const LATE=0.12,PERFECT=0.085,DODGEWIN=0.3,RUB=42,RUBCD=95;
+const LATE=0.12,PERFECT=0.085,DODGEWIN=0.22,RUB=42,RUBCD=95;
+const PARRY_FAIL_LOCK=0.5;   // パリィに失敗してから回避できない秒数
 const PC=()=>({x:W/2,y:H*0.62});           // パリィ判定の中心
 const PP=()=>({x:W/2,y:H*0.82});           // プレイヤー胸元
 
@@ -814,8 +824,8 @@ function startFloor(){
   B={E,hp:E.hp,maxHp:E.hp,parts:E.parts.map((p,k)=>({...p,maxHp:p.hp||0,hp:p.hp||0,broken:false,flash:0,seed:k*13+5})),
      posture:0,state:'idle',timer:2.0,atk:null,combo:0,brokenT:0,brokenMax:1,bonus:0,php:RUN.php,pmax:RUN.pmax,loot:{},over:false,
      shake:0,lunge:0,recoil:0,pAnim:null,dAnim:null,hurt:0,t:0,fade:1,tf:{x:0,y:0,rot:0,sc:1,u:1},bounce:0,dodgeAt:-9,dodgeCD:0,lastNeed:0,deathT:0,flurry:null,roar:0,
-     g:{charge:0,storm:0,armor:0,armorMax:3,armorDone:false,phase2:false,curse:0,curseCD:5,regenAcc:0,orbCD:9,icCD:6}};
-  B.orbs=[];B.icicles=[];
+     g:{charge:0,storm:0,armor:0,armorMax:3,armorDone:false,phase2:false,curse:0,curseCD:5,regenAcc:0,orbCD:6,hzCD:0,blizzard:false}};
+  B.orbs=[];B.hz=[];if(hazard())B.g.hzCD=hzEvery()*rand(0.6,0.9);
   B.lastNeed=needNow();
   fx={parts:[],floats:[],trails:[],slashes:[],bolts:[],zaps:[],icons:[],flash:null};
   $('#hub').classList.add('hidden');$('#battle').classList.remove('hidden');$('#result').classList.add('hidden');
@@ -825,7 +835,6 @@ function startFloor(){
   float(isBossFloor()?`BOSS ${E.name}`:E.name,W/2,H*0.53,isBossFloor()?'#ff7a5a':'#e8d4b4',isBossFloor()?34:24,1.6);
 }
 function endToHub(){bgm('hub');B=null;RUN=null;$('#battle').classList.add('hidden');$('#hub').classList.remove('hidden');renderHub()}
-$('#retreat').onclick=()=>{if(!B)return;if(B.over){if($('#result').classList.contains('hidden'))return;endToHub();return}B.over=true;escapeRun()};
 // 体勢ポイント：敵ごとに必要ポイントがあり（PT×段階）、時間で増える。パリィ=25pt、強撃=50pt、PERFECT=+5pt、被弾=-25pt
 const PT=25,PERFECT_PT=5,BASE_CRIT=0.1,CRIT_MUL=1.8;
 const needLv=()=>Math.min(B.E.need[1],B.E.need[0]+Math.floor(B.t/B.E.needEvery));
@@ -849,12 +858,14 @@ function beginAttack(){
   const E=B.E;let kind,dir,w;
   let fl=false;const ph=(B.g.phase2?0.85:1)*(B.g.storm>0?STORM_SPEED:1);
   if(B.flurry){const d=B.flurry.dirs[B.flurry.idx++];fl=true;
-    if(d==='B'){kind='breath';dir='D';w=Math.max(0.34,E.windup*SPD*0.5)*ph}else{kind='slash';dir=d;w=Math.max(0.36,E.windup*SPD*0.55)*ph}}
+    if(d[0]==='B'){kind='breath';dir='D';w=Math.max(0.34,E.windup*SPD*0.5)*ph}else{kind='slash';dir=d;w=Math.max(0.36,E.windup*SPD*0.55)*ph}}
   else{kind=pickMove();w=E.windup*SPD*rand(0.92,1.08)*ph;
-    if(kind==='combo'){const n=ri(E.flurry[0],E.flurry[1]);B.flurry={dirs:Array.from({length:n},(_,i)=>i>0&&Math.random()<BREATH_IN_FLURRY?'B':DIRKEYS[ri(0,7)]),idx:1,ok:0,total:n};
+    if(kind==='combo'){const n=ri(E.flurry[0],E.flurry[1]);B.flurry={dirs:Array.from({length:n},(_,i)=>i>0&&Math.random()<BREATH_IN_FLURRY?(Math.random()<0.5?'BL':'BR'):DIRKEYS[ri(0,7)]),idx:1,ok:0,total:n};
       dir=B.flurry.dirs[0];kind='slash';fl=true;w*=1.15}
     else dir=DIRKEYS[ri(0,7)]}
   const a={kind,dir,t:0,w,res:false,fail:false,lunged:false,holdAt:0,holdLeft:0,impactAt:null,fl,cursed:B.g.curse>0&&kind!=='breath'};
+  // ブレス／投擲は画面の左側か右側に飛んでくる。side＝着弾する側（よけるのは反対側）
+  if(kind==='breath')a.side=fl&&B.flurry?B.flurry.dirs[B.flurry.idx-1][1]:(Math.random()<0.5?'L':'R');
   if(kind==='heavy')a.w*=1.4;
   if(kind==='breath'&&!fl)a.w*=BREATH_WINDUP;   // ブレス/投擲は溜めを短く（以前は×1.35）
   if(kind==='delay'){a.holdAt=a.w*rand(0.5,0.68);a.holdLeft=rand(0.3,0.55)}
@@ -864,7 +875,11 @@ function beginAttack(){
   //   入れ替わりは受付が始まる前に必ず起きる（前の向きのままでは弾けない）。溜めが短すぎる攻撃では起きない
   if(B.g.storm>0&&kind!=='breath'&&a.w>=0.45&&Math.random()<WARP_CHANCE){a.warpAt=Math.max(0.15,a.w-earlyWin()-rand(0.03,0.1));a.warped=false}
 }
-const earlyWin=()=>Math.min(0.3,B.atk.w*0.45)*perk('parry');
+const earlyWin=()=>Math.min(0.3,B.atk.w*0.45)*perk('parry')*coldMul();
+const dodgeWin=()=>DODGEWIN*perk('dodge')*coldMul();
+// ★4 グラシエル【寒さ】：時間がたつほどパリィ・回避の受付が短くなる（最低×0.6）。HP50%以下の吹雪でさらに×0.85
+const COLD_RATE=0.004,COLD_MIN=0.6,BLIZZARD_MUL=0.85;
+function coldMul(){if(!B||B.E.gimmick!=='cold')return 1;return Math.max(COLD_MIN,1-B.t*COLD_RATE)*(B.g.blizzard?BLIZZARD_MUL:1)}
 const needDir=a=>a.cursed?a.dir:OPP[a.dir];   // 攻撃が来た方向へはじき返す（呪い中は逆）
 function enterBroken(extra=0){
   B.state='broken';B.brokenMax=B.E.breakTime+B.bonus+extra;B.brokenT=B.brokenMax;B.bonus=0;B.combo=0;
@@ -890,10 +905,10 @@ function tryParry(ang){
   const a=B.atk,c=PC();
   if(a.res||a.fail)return;
   B.pAnim={ang,t:0,dur:0.16};
-  if(a.kind==='breath'){a.fail=true;sfx('fail');float('パリィ不可！ 回避せよ',c.x,c.y-60,'#ff6a6a',24);return}
-  if(a.t<a.w-earlyWin()){a.fail=true;sfx('fail');float(a.holdLeft>0||a.kind==='delay'?'ディレイに釣られた！':'早すぎ！',c.x,c.y-60,'#ff8f7a',26);return}
+  if(a.kind==='breath'){failLock();a.fail=true;sfx('fail');float('パリィ不可！ 回避せよ',c.x,c.y-60,'#ff6a6a',24);return}
+  if(a.t<a.w-earlyWin()){failLock();a.fail=true;sfx('fail');const bait=a.holdLeft>0||a.kind==='delay';if(bait)a.noDodge=true;float(bait?'ディレイに釣られた！ 回避もできない':'早すぎ！',c.x,c.y-60,'#ff8f7a',26);return}
   const nd=needDir(a);
-  if(angDiff(ang,DIRS[nd])>30){a.fail=true;sfx('fail');float(a.cursed?`呪い！ 逆の${DNAME[nd]}だった`:`向きが違う！（${DNAME[nd]}）`,c.x,c.y-60,'#ff8f7a',24);return}
+  if(angDiff(ang,DIRS[nd])>30){failLock();a.fail=true;sfx('fail');float(a.cursed?`呪い！ 逆の${DNAME[nd]}だった`:`向きが違う！（${DNAME[nd]}）`,c.x,c.y-60,'#ff8f7a',24);return}
   a.res=true;const perfect=Math.abs(a.t-a.w)<=PERFECT*perk('parry');
   const gain=parryGain(a.kind==='heavy')+(perfect?PERFECT_PT:0);B.posture+=gain;if(perfect)B.bonus+=0.6;
   const heal=perk('heal');if(heal){B.php=Math.min(B.pmax,B.php+heal)}
@@ -907,22 +922,28 @@ function tryParry(ang){
   if(a.fl)B.flurry.ok++;
   afterResolve();
 }
-function doDodge(){
+// パリィに失敗すると少しのあいだ回避できない
+function failLock(){B.noDodgeT=PARRY_FAIL_LOCK}
+function doDodge(dir='R'){
   if(!B||B.over||B.dodgeCD>0)return;
-  B.dodgeCD=0.45;B.dodgeAt=B.t;sfx('dodge');B.dAnim={t:0,dur:0.38,side:Math.random()<0.5?-1:1};
+  if(B.noDodgeT>0){if(!B.lockMsg){B.lockMsg=0.3;sfx('fail');float('体勢が崩れて回避できない！',W/2,H*0.7,'#ff8f7a',20,0.7)}return}
+  B.dodgeCD=0.45;B.dodgeAt=B.t;B.dodgeDir=dir;sfx('dodge');B.dAnim={t:0,dur:0.38,side:dir==='L'?-1:1};
 }
 function impact(){
   const a=B.atk,E=B.E;a.impactAt=B.t;
-  if(a.kind==='breath'){const p=PP();
+  if(a.kind==='breath'){const p=breathTarget(a);
     sfx({rock:'rock',bolt:'thunder',fire:'fire'}[E.breath.type]);
-    if(E.breath.type==='bolt')fx.bolts.push({life:0.32,max:0.32});
+    if(E.breath.type==='bolt')fx.bolts.push({life:0.32,max:0.32,x:p.x});
     if(E.breath.type==='rock')burst(p.x,p.y-40,'#a88058',26,380);
     fx.flash={c:E.breath.c,life:0.25,max:0.25};
   }else{sfx('swing');fx.slashes.push({ang:DIRS[a.dir],life:0.24,max:0.24,c:E.glow,heavy:a.kind==='heavy'});B.lunge=0.25}
 }
 function resolveHit(){
-  const a=B.atk;const win=DODGEWIN*perk('dodge');
-  if(B.dodgeAt>=a.impactAt-win&&B.dodgeAt<=a.impactAt+LATE){
+  const a=B.atk;const win=dodgeWin();
+  const inTime=!a.noDodge&&B.dodgeAt>=a.impactAt-win&&B.dodgeAt<=a.impactAt+LATE;
+  const wrongSide=inTime&&a.kind==='breath'&&B.dodgeDir!==safeSide(a);   // ブレス／投擲は飛んでくる側の反対へよける
+  if(wrongSide)float(`逆によけた！ ${SIDE_NAME[safeSide(a)]}へ回避`,W/2,H*0.66,'#ff8f7a',22,0.9);
+  if(inTime&&!wrongSide){
     // 回避で体勢ポイントが入るのは回避ビルドの装備（dodgePts）だけ。
     // 連撃中は「⚠ブレス/投擲を回避」はさばいた扱い。普通の攻撃を回避すると、回避ビルドでなければ連撃ボーナスはなくなる
     const dg=dodgeGain();
@@ -1020,15 +1041,6 @@ function died(){
     <div class="row"><button class="btn" id="home">拠点へ戻る</button></div>`);
   $('#home').onclick=endToHub;
 }
-function escapeRun(){
-  sfx('escape');bgm(null);
-  bankRun();
-  showBox(`<h2 style="color:#e8d4b4">脱出した</h2><p style="font-size:13px;color:#ffb0a0">この階（${RUN.floor+1}F）で得た戦利品は置いてきた</p>
-    <div style="font-size:13px;color:#bba78a">持ち帰った戦利品（${RUN.floor}F までの分）</div><div class="row">${lootChips(RUN.loot)}</div>
-    <div class="row"><button class="btn" id="home">拠点へ戻る</button></div>`);
-  $('#home').onclick=endToHub;
-}
-
 // --- 入力 ---
 let ptr=null;
 cv.addEventListener('pointerdown',e=>{if(!B)return;const now=performance.now();popOrbAt(e.clientX,e.clientY);
@@ -1062,8 +1074,8 @@ function gesture(dx,dy){
   if(B.state==='windup'&&!B.atk.res&&!B.atk.fail){tryParry(ang);return}
   if(hitTest(ptr?ptr.sx:W/2,ptr?ptr.sy:H/2)){const c=PC();burst(c.x,c.y-120,'#ccc',8,160);float('ガキン！ 弾かれた',W/2,H*0.3,'#cfc4b4',18,0.8);float('まず体勢を崩せ！',W/2,H*0.25,'#ffb070',18,1)}
 }
-const dodgeBtn=$('#dodge');
-dodgeBtn.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();doDodge()});
+const dodgeBtns={L:$('#dodgeL'),R:$('#dodgeR')};
+for(const d of['L','R'])dodgeBtns[d].addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();doDodge(d)});
 // 隠しコマンド（テスト用）：拠点の「遊び方」画面で Q を1.5秒以内に5回 → 全ダンジョン解放＋全素材を100個追加
 let qTimes=[];
 addEventListener('keydown',e=>{if(B||tab!=='how'||e.repeat||e.key.toLowerCase()!=='q')return;
@@ -1071,7 +1083,9 @@ addEventListener('keydown',e=>{if(B||tab!=='how'||e.repeat||e.key.toLowerCase()!
   if(qTimes.length>=5){qTimes=[];for(const D of DUNGEONS)S.cleared[D.id]=true;for(const k in MATS)addMat(k,100);save();sfx('rare');toast('隠しコマンド：全ダンジョン解放＆全素材 +100個！')}});
 const KEYDIR={ArrowLeft:'L',ArrowRight:'R',ArrowUp:'U',ArrowDown:'D',a:'L',d:'R',w:'U',s:'D',q:'UL',e:'UR',z:'DL',c:'DR'};
 addEventListener('keydown',e=>{if(!B||B.over)return;
-  if(e.key==='Shift'){e.preventDefault();if(!e.repeat)doDodge();return}
+  if(e.key==='Shift'){e.preventDefault();return}
+  if(e.shiftKey){const k=e.key.length===1?e.key.toLowerCase():e.key;const d=k==='ArrowLeft'||k==='a'?'L':k==='ArrowRight'||k==='d'?'R':null;
+    if(d){e.preventDefault();if(!e.repeat)doDodge(d);return}}
   const m=KEYDIR[e.key.length===1?e.key.toLowerCase():e.key];
   if(m){e.preventDefault();if(B.state==='windup'&&!B.atk.res&&!B.atk.fail)tryParry(DIRS[m])}});
 
@@ -1430,9 +1444,13 @@ function drawPart(p,u,glow){
 }
 function headScreen(){const h=B.parts.find(p=>p.id==='head'),u=B.tf.u,o=partOff(h,u);return toScreen(h.x*u+o.ox,h.y*u+o.oy+h.ry*u*0.6)}
 
+// ブレス／投擲の着弾点（プレイヤーの左側か右側）と、よけるべき方向
+const breathTarget=a=>({x:W/2+(a.side==='L'?-1:1)*Math.min(W*0.22,150),y:H*0.82});
+const safeSide=a=>a.side==='L'?'R':'L';
+const SIDE_NAME={L:'左',R:'右'};
 function drawBreath(){
   const a=B.atk;if(B.state!=='windup'||!a||a.kind!=='breath')return;
-  const E=B.E,b=E.breath,h=headScreen(),p=PP();
+  const E=B.E,b=E.breath,h=headScreen(),p=breathTarget(a);
   const ld=Math.min(0.4,a.w*0.75);if(b.type==='rock'&&a.t>a.w-ld&&a.t<a.w){const k=(a.t-(a.w-ld))/ld;const x=h.x+(p.x-h.x)*k,y=h.y+(p.y-60-h.y)*k-Math.sin(k*Math.PI)*60,r=12+60*k*k;
     ctx.save();ctx.translate(x,y);ctx.rotate(B.t*8);ctx.fillStyle='#7a6248';ctx.strokeStyle='#3a2a1a';ctx.lineWidth=3;ctx.beginPath();
     for(let i=0;i<9;i++){const an=i/9*Math.PI*2,rr=r*(0.8+0.2*Math.sin(i*2.7));ctx.lineTo(Math.cos(an)*rr,Math.sin(an)*rr)}ctx.closePath();ctx.fill();ctx.stroke();
@@ -1452,12 +1470,18 @@ function drawTelegraph(){
   const rMin=20,rMax=78,r=rMin+(rMax-rMin)*Math.max(0,1-a.t/a.w);
   const pt=attackPoint(a);
   if(a.kind==='breath'){
-    const dw=DODGEWIN*perk('dodge'),inWin=a.t>=a.w-dw&&a.t<=a.w+LATE,col=inWin?'#ff4af0':'#ff3a3a';
+    const dw=dodgeWin(),inWin=a.t>=a.w-dw&&a.t<=a.w+LATE,col=inWin?'#ff4af0':'#ff3a3a';
     ctx.save();ctx.lineWidth=5;ctx.strokeStyle=col;ctx.shadowColor=col;ctx.shadowBlur=18;ctx.setLineDash([10,7]);ctx.lineDashOffset=-B.t*60;
     ctx.beginPath();ctx.arc(pt.x,pt.y,r,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);ctx.restore();
     warnIcon(pt.x,pt.y,30+4*Math.sin(B.t*20),col);
+    { // 着弾する側に危険マーク、よける側に矢印
+      const tg=breathTarget(a),k=Math.min(1,a.t/a.w),sd=safeSide(a),sx=sd==='L'?-1:1;
+      ctx.save();ctx.fillStyle=rgba(col,0.12+0.25*k);ctx.strokeStyle=col;ctx.lineWidth=3;ctx.setLineDash([8,6]);ctx.lineDashOffset=-B.t*50;
+      ctx.beginPath();ctx.ellipse(tg.x,tg.y-10,60+20*k,26+8*k,0,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.setLineDash([]);ctx.restore();
+      const ax=W/2+sx*Math.min(W*0.22,150),ay=H*0.82-70;arrowIcon(ax,ay,46+6*Math.sin(B.t*14),sd==='L'?180:0,'#9fffc0')}
     if(a.fl)drawFlurryRow(W/2,ty+34,col);
-    label(a.fl&&B.flurry?`${B.flurry.total}連撃 ${B.flurry.idx}/${B.flurry.total}！ ⚠${b_name()} 回避！`:`⚠ ${b_name()}！ 回避で避けろ`,col,ty);
+    const sdn=SIDE_NAME[safeSide(a)];
+    label(a.fl&&B.flurry?`${B.flurry.total}連撃 ${B.flurry.idx}/${B.flurry.total}！ ⚠${b_name()} ${sdn}へ回避！`:`⚠ ${b_name()}（${SIDE_NAME[a.side]}側）！ ${sdn}へ回避`,col,ty);
     return;
   }
   const inWin=a.t>=a.w-earlyWin()&&a.t<=a.w+LATE&&!a.fail;
@@ -1470,7 +1494,7 @@ function drawTelegraph(){
   ctx.globalAlpha=a.fail?0.3:0.35+0.4*inWin;ctx.fillStyle=col;ctx.beginPath();ctx.arc(pt.x,pt.y,rMin*0.6,0,Math.PI*2);ctx.fill();ctx.restore();
   if(a.fl)drawFlurryRow(W/2,ty+34,col);
   const name=hot?'強撃':a.kind==='delay'?'斬撃':'斬撃';
-  const tx=a.fail?'失敗… 回避なら間に合う！':a.cursed?'呪い！ いつもと【逆】へはじけ':a.fl&&B.flurry?`${B.flurry.total}連撃 ${B.flurry.idx}/${B.flurry.total}！`:`${name}！`;
+  const tx=a.fail?(a.noDodge?'ディレイに釣られた！ 回避もできない':B.noDodgeT>0?`失敗… ${B.noDodgeT.toFixed(1)}秒 回避できない`:'失敗… 今なら回避が間に合う！'):a.cursed?'呪い！ いつもと【逆】へはじけ':a.fl&&B.flurry?`${B.flurry.total}連撃 ${B.flurry.idx}/${B.flurry.total}！`:`${name}！`;
   label(tx,col,ty);
 }
 const GLYPH={R:'→',DR:'↘',D:'↓',DL:'↙',L:'←',UL:'↖',U:'↑',UR:'↗'};
@@ -1489,7 +1513,8 @@ function drawGimmickHUD(){
     if(g.storm>0){ctx.fillStyle='#dff8ff';ctx.fillText(`雷速モード 残り${Math.ceil(g.storm)}秒 — 雷光が走ったら向きが反対に！`,W/2,y-4);bar(W/2-bw/2,y+2,bw,5,g.storm/STORM_TIME,'#dff8ff')}
     else{ctx.fillStyle='#9fe8ff';ctx.fillText('雷ゲージ',W/2,y-4);bar(W/2-bw/2,y+2,bw,5,g.charge,'#9fe8ff')}}
   if(E.gimmick==='orbs'){ctx.fillStyle='#e8ff90';ctx.fillText(B.state==='orbs'?`鱗粉の玉 ${B.orbPop}/${ORB_N} 撃ち落とし`:'鱗粉の玉が出たら素早く撃ち落とせ',W/2,y)}
-  if(E.gimmick==='icicle'){ctx.fillStyle='#bff4ff';ctx.fillText(`落氷に注意 — つららは回避でのみ避けられる${B.hp<=B.maxHp*0.5?'（2本続けて落ちることも）':''}`,W/2,y)}
+  if(E.gimmick==='cold'){const m=coldMul();ctx.fillStyle=B.g.blizzard?'#ffffff':'#bff4ff';ctx.fillText(`${B.g.blizzard?'吹雪':'寒さ'} — パリィ・回避の受付 ×${m.toFixed(2)}`,W/2,y)}
+  {const hz=hazard();if(hz){ctx.fillStyle=hz.c;ctx.font="700 11px 'M PLUS 1p'";ctx.fillText(`${hz.name}に注意（回避でのみ避けられる）`,W/2,y+24)}}
   if(E.gimmick==='curse'){const core=B.parts.find(p=>p.id==='core');const t=[];if(!core.broken)t.push('冥核が再生中（破壊で停止）');if(g.phase2)t.push('第二形態');if(g.curse>0)t.push(`反転の呪い 残り${Math.ceil(g.curse)}秒`);
     ctx.fillStyle=g.curse>0?'#e090ff':'#ff9ab0';ctx.fillText(t.join('　'),W/2,y)}
 }
@@ -1501,7 +1526,7 @@ function drawFlurryRow(cx,yy,col){ // 連撃の並び（⚠はブレス／投擲
   ctx.fillStyle='rgba(0,0,0,0.55)';ctx.beginPath();ctx.roundRect(x0-sz/2-10,yy-sz/2-8,(n-1)*gap+sz+20,sz+16,10);ctx.fill();
   for(let i=0;i<n;i++){const cur=i===f.idx-1,done=i<f.idx-1,d=f.dirs[i];ctx.globalAlpha=done?0.3:1;
     if(cur){ctx.fillStyle='rgba(255,233,74,0.25)';ctx.fillRect(x0+i*gap-sz/2-3,yy-sz/2-3,sz+6,sz+6)}
-    if(d==='B')warnIcon(x0+i*gap,yy,cur?sz:sz*0.8,cur?col:'#ff3a3a');else{ctx.fillStyle=cur?col:'#ff8a3a';ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x0+i*gap,yy,(cur?sz:sz*0.8)*0.32,0,Math.PI*2);ctx.fill();ctx.stroke()}}
+    if(d[0]==='B'){warnIcon(x0+i*gap,yy,cur?sz:sz*0.8,cur?col:'#ff3a3a');ctx.fillStyle='#9fffc0';ctx.font="900 11px 'M PLUS 1p'";ctx.textAlign='center';ctx.fillText(d[1]==='L'?'→':'←',x0+i*gap,yy+sz*0.75)}else{ctx.fillStyle=cur?col:'#ff8a3a';ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x0+i*gap,yy,(cur?sz:sz*0.8)*0.32,0,Math.PI*2);ctx.fill();ctx.stroke()}}
   ctx.globalAlpha=1}
 
 function swordAngle(){
@@ -1565,7 +1590,7 @@ function drawFX(dt){
     ctx.lineWidth=(sl.small?2:5)*al;ctx.strokeStyle='#fff';ctx.stroke();ctx.restore()}
   fx.slashes=fx.slashes.filter(s=>s.life>0);
   // 雷
-  for(const b of fx.bolts){b.life-=dt;const h=headScreen(),p=PP(),al=b.life/b.max;ctx.save();ctx.globalAlpha=al;ctx.strokeStyle='#e8fbff';ctx.shadowColor='#7ad0ff';ctx.shadowBlur=30;
+  for(const b of fx.bolts){b.life-=dt;const h=headScreen(),p={x:b.x||W/2,y:PP().y},al=b.life/b.max;ctx.save();ctx.globalAlpha=al;ctx.strokeStyle='#e8fbff';ctx.shadowColor='#7ad0ff';ctx.shadowBlur=30;
     for(let j=0;j<3;j++){ctx.lineWidth=j?2:6;ctx.beginPath();ctx.moveTo(h.x,h.y);for(let i=1;i<=8;i++){const t=i/8;ctx.lineTo(h.x+(p.x-h.x)*t+(i<8?rand(-40,40):rand(-60,60)),h.y+(p.y-h.y)*t)}ctx.stroke()}ctx.restore()}
   fx.bolts=fx.bolts.filter(b=>b.life>0);
   for(const z of fx.zaps){z.life-=dt;const al=Math.max(0,z.life/z.max);ctx.save();ctx.globalAlpha=al;ctx.strokeStyle='#f2fdff';ctx.shadowColor='#8fe0ff';ctx.shadowBlur=24;ctx.lineCap='round';
@@ -1604,6 +1629,7 @@ function cancelBreak(msg){
   B.posture=0;B.bonus=0;B.flurry=null;B.combo=0;B.state='idle';B.timer=1.4;B.roar=1.2;ptr&&(ptr.acc=0);
 }
 // ===== 妖蛾ルミナス：鱗粉の玉 =====
+const ORB_CD=[8,11];   // 鱗粉の玉が出る間隔（秒）
 const ORB_N=7,ORB_LIFE=1.6,ORB_GAP=0.14,ORB_R=26;   // 玉の数／1個が破裂するまでの秒数／出現の間隔／半径
 function spawnOrbs(){B.state='orbs';B.orbs=[];B.orbHit=0;B.orbPop=0;sfx('orbSpawn');
   float('鱗粉の玉！ タップ／スワイプで撃ち落とせ',W/2,H*0.3,'#e8ff90',24,1.6);
@@ -1617,7 +1643,7 @@ function updateOrbs(dt){let left=0;
     if(o.t>=ORB_LIFE){o.done=true;B.orbHit++;sfx('orbBoom');burst(o.x,o.y,'#c8ff60',26,420,true);
       const dmg=Math.round(B.E.dmg*0.35*rand(0.9,1.1)*100/(100+armStat().def));B.php-=dmg;B.hurt=0.3;B.shake=Math.max(B.shake,8);
       float('-'+dmg,o.x,o.y,'#ff5a4a',24,0.8);if(B.php<=0){B.php=0;B.over=true;bgm(null);setTimeout(died,900);return}}}
-  if(left===0){B.g.orbCD=rand(13,17);
+  if(left===0){B.g.orbCD=rand(ORB_CD[0],ORB_CD[1]);
     if(B.orbPop===ORB_N){B.posture+=PT;sfx('bonus');float(`全部撃ち落とした！ 体勢+${PT}`,W/2,H*0.26,'#e8ff90',26,1.4)}
     else float(`${B.orbPop}/${ORB_N}個 撃ち落とした`,W/2,H*0.26,'#cdb89a',20,1.2);
     if(B.posture>=needNow())enterBroken();else{B.state='recover';B.timer=0.6}}}
@@ -1627,37 +1653,78 @@ function drawOrbs(){if(!B.orbs||!B.orbs.length)return;
     g.addColorStop(0,'rgba(255,255,220,0.95)');g.addColorStop(0.45,rgba(k>0.65?'#ffb040':'#d8ff70',0.75));g.addColorStop(1,'rgba(160,255,80,0)');
     ctx.fillStyle=g;ctx.beginPath();ctx.arc(o.x,o.y,r*1.8,0,Math.PI*2);ctx.fill();ctx.restore();
     ctx.lineWidth=4;ctx.strokeStyle=k>0.65?'#ff7a3a':'#f4ffb0';ctx.beginPath();ctx.arc(o.x,o.y,ORB_R+8,-Math.PI/2,-Math.PI/2+Math.PI*2*(1-k));ctx.stroke()}}
-// ===== 氷霊獣グラシエル：落氷（ボスの攻撃とは別に降るつらら。回避でしか避けられない） =====
-const ICE_WARN=1.15,ICE_DMG=1.5;   // 落ちるまでの予兆の秒数／被弾ダメージ倍率（通常攻撃比）
-function spawnIcicle(delay=0){const x=W/2+rand(-0.18,0.18)*Math.min(W,600);B.icicles.push({x,t:-delay,w:ICE_WARN*rand(0.95,1.08),landed:false,life:0});sfx('creak')}
-function updateIcicles(dt){
-  for(const ic of B.icicles){if(ic.landed){ic.life+=dt;continue}ic.t+=dt;
-    if(ic.t>=ic.w+LATE){ic.landed=true;const win=DODGEWIN*perk('dodge'),ok=B.dodgeAt>=B.t-LATE-win&&B.dodgeAt<=B.t;const pp=PP();
-      sfx('iceCrash');burst(ic.x,pp.y-30,'#e8f8ff',30,480,true);B.shake=Math.max(B.shake,12);
-      if(ok){float('つららを回避！',W/2,H*0.62,'#bff4ff',26,0.9);const dg=dodgeGain();if(dg>0)addPosture(dg,W/2,H*0.62+30,'見切り')}
-      else{const dmg=Math.round(B.E.dmg*ICE_DMG*rand(0.9,1.1)*100/(100+armStat().def));sfx('hurt',true);B.php-=dmg;B.hurt=0.5;B.shake=20;B.posture=Math.max(0,B.posture-PT);
-        float('つららが直撃！ -'+dmg,W/2,H*0.74,'#ff5a4a',34,1.0);if(B.php<=0){B.php=0;B.over=true;bgm(null);setTimeout(died,900)}}}}
-  B.icicles=B.icicles.filter(ic=>!ic.landed||ic.life<0.4)}
-function drawIcicles(){if(!B.icicles||!B.icicles.length)return;const pp=PP(),gy=pp.y-20;
-  for(const ic of B.icicles){if(ic.t<0)continue;
-    if(ic.landed){ctx.globalAlpha=Math.max(0,1-ic.life/0.4);ctx.fillStyle='#e8f8ff';for(let i=0;i<6;i++){const a=i*1.05;ctx.beginPath();ctx.moveTo(ic.x+Math.cos(a)*10,gy+Math.sin(a)*6);ctx.lineTo(ic.x+Math.cos(a)*(30+ic.life*120),gy+Math.sin(a)*(12+ic.life*40)-ic.life*60);ctx.lineTo(ic.x+Math.cos(a+0.3)*10,gy);ctx.fill()}ctx.globalAlpha=1;continue}
-    const k=Math.min(1,ic.t/ic.w),fall=ic.t>ic.w-0.3?Math.min(1,(ic.t-(ic.w-0.3))/0.3):0;
-    const top=150,y=top+fall*fall*(gy-top),shk=fall>0?0:Math.sin(B.t*60)*3*k;
-    // 足元の影（だんだん濃く大きく）
-    ctx.fillStyle=`rgba(120,200,255,${0.15+0.45*k})`;ctx.beginPath();ctx.ellipse(ic.x,gy+10,20+40*k,6+8*k,0,0,Math.PI*2);ctx.fill();
-    const dw=DODGEWIN*perk('dodge'),inWin=ic.t>=ic.w-dw;
-    ctx.save();ctx.translate(ic.x+shk,y);ctx.shadowColor=inWin?'#ff4af0':'#bff4ff';ctx.shadowBlur=inWin?24:12;
-    const L=70+30*k,Wd=18;const g=ctx.createLinearGradient(0,-L,0,0);g.addColorStop(0,'#ffffff');g.addColorStop(1,'#7ac8f0');
-    ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(-Wd,-L*0.6);ctx.lineTo(Wd,-L*0.6);ctx.lineTo(0,L*0.4);ctx.closePath();ctx.fill();
-    ctx.strokeStyle='rgba(255,255,255,0.8)';ctx.lineWidth=2;ctx.stroke();ctx.restore();
-    if(!fall)warnIcon(ic.x+46,top-20,26+3*Math.sin(B.t*20),inWin?'#ff4af0':'#7ad0ff')}
-  if(B.icicles.some(ic=>!ic.landed&&ic.t>=0))label('❄ 落氷！ 落ちる瞬間に回避',DODGEWIN*perk('dodge')>=Math.min(...B.icicles.filter(i=>!i.landed&&i.t>=0).map(i=>i.w-i.t))?'#ff4af0':'#9fe0ff',H*0.4)}
+// ===== 落下物（ダンジョンごと）：ボスや雑魚の攻撃とは別に頭上から降ってくる。パリィ不可、回避でのみ避けられる =====
+//   every＝ボス戦での平均の間隔（秒）。雑魚戦は ×HZ_MINION_MUL でゆっくり。dbl＝2連続で降る確率
+const HAZARDS={
+  d1:{type:'rock',name:'落石',every:15,dbl:0,c:'#c8a070'},
+  d2:{type:'bolt',name:'落雷',every:13,dbl:0,c:'#fff27a'},
+  g1:{type:'ice',name:'落氷',every:10,dbl:0.25,c:'#bff4ff'},
+  d3:{type:'dark',name:'闇の光線',every:7.5,dbl:0,c:'#c060ff'},
+};
+const HZ_WARN=1.15,HZ_DMG=1.5,HZ_MINION_MUL=1.5;   // 落ちるまでの予兆の秒数／被弾ダメージ倍率（通常攻撃比）／雑魚戦の間隔倍率
+const hazard=()=>RUN&&HAZARDS[RUN.D.id];
+const hzEvery=()=>hazard().every*(isBossFloor()?1:HZ_MINION_MUL);
+function spawnHazard(delay=0){const hz=hazard();const x=W/2+rand(-0.18,0.18)*Math.min(W,600);
+  B.hz.push({x,t:-delay,w:HZ_WARN*rand(0.95,1.08),landed:false,life:0,type:hz.type,warned:false})}
+function updateHazards(dt){const hz=hazard();
+  for(const ic of B.hz){if(ic.landed){ic.life+=dt;continue}ic.t+=dt;
+    if(ic.t>=0&&!ic.warned){ic.warned=true;sfx({rock:'rumble',bolt:'zap',ice:'creak',dark:'curse'}[ic.type])}
+    if(ic.t>=ic.w+LATE){ic.landed=true;const win=dodgeWin(),ok=B.dodgeAt>=B.t-LATE-win&&B.dodgeAt<=B.t;const pp=PP();
+      sfx({rock:'rock',bolt:'thunder',ice:'iceCrash',dark:'darkBeam'}[ic.type]);burst(ic.x,pp.y-30,hz.c,30,480,true);B.shake=Math.max(B.shake,12);
+      if(ic.type==='bolt'||ic.type==='dark')fx.flash={c:hz.c,life:0.2,max:0.2};
+      if(ok){float(`${hz.name}を回避！`,W/2,H*0.62,'#bff4ff',26,0.9);const dg=dodgeGain();if(dg>0)addPosture(dg,W/2,H*0.62+30,'見切り')}
+      else{const dmg=Math.round(B.E.dmg*HZ_DMG*rand(0.9,1.1)*100/(100+armStat().def));sfx('hurt',true);B.php-=dmg;B.hurt=0.5;B.shake=20;B.posture=Math.max(0,B.posture-PT);
+        float(`${hz.name}が直撃！ -${dmg}`,W/2,H*0.74,'#ff5a4a',34,1.0);if(B.php<=0){B.php=0;B.over=true;bgm(null);setTimeout(died,900)}}}}
+  B.hz=B.hz.filter(ic=>!ic.landed||ic.life<0.4)}
+function drawHazards(){if(!B.hz||!B.hz.length)return;const hz=hazard();if(!hz)return;const pp=PP(),gy=pp.y-20,top=150;
+  for(const ic of B.hz){if(ic.t<0)continue;const T=ic.type;
+    if(ic.landed){const al=Math.max(0,1-ic.life/0.4);ctx.globalAlpha=al;
+      if(T==='bolt'||T==='dark'){ctx.save();ctx.globalCompositeOperation='lighter';
+        if(T==='bolt'){ctx.strokeStyle='#fffbe0';ctx.shadowColor='#fff27a';ctx.shadowBlur=30;ctx.lineWidth=6;ctx.beginPath();let x=ic.x,y=0;ctx.moveTo(x,y);let r=7;const rnd=()=>((r=(r*9301+49297)%233280)/233280);while(y<gy){y+=28;x=ic.x+(rnd()-0.5)*50;ctx.lineTo(x,y)}ctx.stroke()}
+        else{const g=ctx.createLinearGradient(ic.x-40,0,ic.x+40,0);g.addColorStop(0,'rgba(120,0,200,0)');g.addColorStop(0.5,'rgba(230,160,255,0.95)');g.addColorStop(1,'rgba(120,0,200,0)');ctx.fillStyle=g;ctx.fillRect(ic.x-40,0,80,gy+20)}
+        ctx.restore()}
+      ctx.fillStyle=hz.c;for(let i=0;i<6;i++){const a=i*1.05;ctx.beginPath();ctx.moveTo(ic.x+Math.cos(a)*10,gy+Math.sin(a)*6);ctx.lineTo(ic.x+Math.cos(a)*(30+ic.life*120),gy+Math.sin(a)*(12+ic.life*40)-ic.life*60);ctx.lineTo(ic.x+Math.cos(a+0.3)*10,gy);ctx.fill()}
+      ctx.globalAlpha=1;continue}
+    const k=Math.min(1,ic.t/ic.w),fall=ic.t>ic.w-0.3?Math.min(1,(ic.t-(ic.w-0.3))/0.3):0,inWin=ic.t>=ic.w-dodgeWin();
+    const y=top+fall*fall*(gy-top),shk=fall>0?0:Math.sin(B.t*60)*3*k;
+    // 足元の印（だんだん濃く大きく）
+    ctx.fillStyle=rgba(T==='rock'?'#2a1a0a':hz.c,T==='rock'?0.2+0.4*k:0.15+0.45*k);ctx.beginPath();ctx.ellipse(ic.x,gy+10,20+40*k,6+8*k,0,0,Math.PI*2);ctx.fill();
+    ctx.save();ctx.shadowColor=inWin?'#ff4af0':hz.c;ctx.shadowBlur=inWin?24:12;
+    if(T==='ice'){ctx.translate(ic.x+shk,y);const L=70+30*k,Wd=18;const g=ctx.createLinearGradient(0,-L,0,0);g.addColorStop(0,'#ffffff');g.addColorStop(1,'#7ac8f0');
+      ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(-Wd,-L*0.6);ctx.lineTo(Wd,-L*0.6);ctx.lineTo(0,L*0.4);ctx.closePath();ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.8)';ctx.lineWidth=2;ctx.stroke()}
+    else if(T==='rock'){ctx.translate(ic.x+shk,y);ctx.rotate(fall*2);const r=26+10*k;ctx.fillStyle='#7a5e40';ctx.beginPath();
+      for(let i=0;i<9;i++){const an=i/9*Math.PI*2,rr=r*(0.8+0.25*Math.sin(i*2.3));ctx.lineTo(Math.cos(an)*rr,Math.sin(an)*rr)}ctx.closePath();ctx.fill();
+      ctx.strokeStyle='#3a2a18';ctx.lineWidth=3;ctx.stroke();ctx.fillStyle='rgba(255,230,190,0.25)';ell(-r*0.3,-r*0.3,r*0.3,r*0.2);ctx.fill();
+      if(!fall&&Math.random()<0.3)burst(ic.x+rand(-20,20),top-10,'#a88058',1,80)}
+    else if(T==='bolt'){ctx.translate(ic.x,top-40);ctx.fillStyle=`rgba(30,36,60,${0.6+0.3*k})`;for(let i=0;i<5;i++){ell((i-2)*22,Math.sin(i*1.7)*6,30,18);ctx.fill()}
+      if(Math.random()<0.2+0.6*k){ctx.strokeStyle='#fffbd0';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(rand(-40,40),8);ctx.lineTo(rand(-20,20),30);ctx.lineTo(rand(-30,30),50);ctx.stroke()}
+      if(fall){ctx.strokeStyle='#fffbe0';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(0,10);ctx.lineTo(0,10+fall*(gy-top+30));ctx.stroke()}}
+    else{ctx.translate(ic.x,gy+10);ctx.rotate(B.t*1.5);ctx.strokeStyle=rgba('#e0a0ff',0.4+0.5*k);ctx.lineWidth=2.5;const r=26+34*k;   // 闇の光線：足元の魔法陣と細い照準
+      ctx.beginPath();ctx.ellipse(0,0,r,r*0.3,0,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.ellipse(0,0,r*0.7,r*0.21,0,0,Math.PI*2);ctx.stroke();ctx.restore();ctx.save();
+      ctx.strokeStyle=rgba('#c060ff',0.15+0.5*k);ctx.lineWidth=2+6*k+fall*20;ctx.beginPath();ctx.moveTo(ic.x,0);ctx.lineTo(ic.x,gy+10);ctx.stroke()}
+    ctx.restore();
+    if(!fall)warnIcon(ic.x+46,top-20,26+3*Math.sin(B.t*20),inWin?'#ff4af0':hz.c)}
+  const live=B.hz.filter(i=>!i.landed&&i.t>=0);
+  if(live.length)label(`⚠ ${hz.name}！ 落ちる瞬間に回避`,dodgeWin()>=Math.min(...live.map(i=>i.w-i.t))?'#ff4af0':hz.c,H*0.4)}
+// ★4 寒さの画面効果：受付が短くなるほど画面のふちが白く凍る。吹雪中は雪が横に流れる
+function drawCold(){if(!B||B.E.gimmick!=='cold'||B.dying)return;const k=1-coldMul();if(k<=0.01)return;
+  const big=Math.hypot(W,H)/2,g=ctx.createRadialGradient(W/2,H/2,big*(0.95-k*0.9),W/2,H/2,big*1.05);
+  g.addColorStop(0,'rgba(200,240,255,0)');g.addColorStop(1,`rgba(220,245,255,${Math.min(0.75,k*1.6)})`);ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  if(B.g.blizzard){ctx.strokeStyle='rgba(240,250,255,0.55)';ctx.lineWidth=2;ctx.beginPath();
+    for(let i=0;i<70;i++){const x=W-((i*97.3+B.t*700*(1+(i%3)*0.3))%(W+200))+100,y=(i*53.7+B.t*90)%H;ctx.moveTo(x,y);ctx.lineTo(x+26,y-6)}ctx.stroke()}}
 function gimmicks(dt){
   const E=B.E,g=B.g;
   if(E.gimmick==='orbs'){if(B.state==='orbs')updateOrbs(dt);else if(B.state==='idle'&&!B.flurry){g.orbCD-=dt;if(g.orbCD<=0&&B.timer>0.3){spawnOrbs();return}}}
-  if(E.gimmick==='icicle'){updateIcicles(dt);if(B.over)return;
-    if(B.state!=='broken'&&!B.icicles.length){g.icCD-=dt;const low=B.hp<=B.maxHp*0.5;
-      if(g.icCD<=0){spawnIcicle(0);if(low&&Math.random()<0.5){spawnIcicle(0.8);float('つららが2本！',W/2,H*0.3,'#bff4ff',22,1.2)}g.icCD=low?rand(4.5,6.5):rand(6.5,9)}}}
+  const hz=hazard();
+  if(hz){updateHazards(dt);if(B.over)return;
+    if(B.state!=='broken'&&B.state!=='orbs'&&!B.hz.length){g.hzCD-=dt;
+      if(g.hzCD<=0){spawnHazard(0);
+        // 2連続：ダンジョンごとの確率。氷霊獣グラシエルはHP50%以下で50%
+        const dbl=E.id==='glacier'&&B.hp<=B.maxHp*0.5?0.5:hz.dbl;
+        if(Math.random()<dbl){spawnHazard(0.8);float(`${hz.name}が2連続！`,W/2,H*0.3,hz.c,22,1.2)}
+        g.hzCD=hzEvery()*rand(0.8,1.2)}}}
+  if(E.gimmick==='cold'&&!g.blizzard&&B.hp<=B.maxHp*0.5){g.blizzard=true;sfx('blizzard');fx.flash={c:'#e8f8ff',life:0.5,max:0.5};B.shake=14;
+    float('吹雪！ さらに凍える',W/2,H*0.28,'#e8f8ff',30,1.8);float('パリィ・回避の受付がもっと短くなった',W/2,H*0.28+30,'#bff4ff',18,1.8)}
   if(E.gimmick==='armor'&&!g.armorDone&&(B.hp<=B.maxHp*0.6||g.trig)){g.armorDone=true;g.armor=g.armorMax;
     sfx('armor');float('岩鎧をまとった！',W/2,H*0.28,'#d8c8b0',30,1.8);float('体勢崩し3回目で砕ける',W/2,H*0.28+30,'#d8c8b0',18,1.8);B.shake=16;burst(B.tf.x,B.tf.y,'#9a8a78',40,500);cancelBreak()}
   if(E.gimmick==='storm'){
@@ -1680,7 +1747,7 @@ function gimmicks(dt){
 }
 function update(dt){
   B.t+=dt;
-  for(const k of['lunge','recoil','hurt','bounce','dodgeCD','roar'])B[k]=Math.max(0,B[k]-dt);
+  for(const k of['lunge','recoil','hurt','bounce','dodgeCD','roar','noDodgeT','lockMsg'])B[k]=Math.max(0,B[k]-dt);
   B.shake=Math.max(0,B.shake-dt*40);
   for(const p of B.parts)p.flash=Math.max(0,p.flash-dt);
   if(B.pAnim){B.pAnim.t+=dt;if(B.pAnim.t>B.pAnim.dur+0.12)B.pAnim=null}
@@ -1688,8 +1755,13 @@ function update(dt){
   if(fx.flash){fx.flash.life-=dt;if(fx.flash.life<=0)fx.flash=null}
   if(B.dying)B.fade=Math.max(0,B.fade-dt*0.7);
   const a=B.atk;
-  dodgeBtn.classList.toggle('warn',!!(((B.state==='windup'&&a&&(a.kind==='breath'||a.fail))||(B.icicles&&B.icicles.some(i=>!i.landed&&i.t>=0)))&&!B.over));
-  dodgeBtn.classList.toggle('cd',B.dodgeCD>0);
+  const locked=B.noDodgeT>0||!!(B.state==='windup'&&a&&a.noDodge);
+  const hzLive=!!(B.hz&&B.hz.some(i=>!i.landed&&i.t>=0)),br=B.state==='windup'&&a&&a.kind==='breath';
+  for(const d of['L','R']){const bt=dodgeBtns[d];
+    bt.classList.toggle('lock',locked&&!B.over);
+    // 光らせるのは「よけるべき側」のボタン。落下物とパリィ失敗はどちらでもよいので両方
+    bt.classList.toggle('warn',!locked&&!B.over&&(hzLive||(br&&safeSide(a)===d)||(B.state==='windup'&&a&&a.fail&&a.kind!=='breath')));
+    bt.classList.toggle('cd',B.dodgeCD>0)}
   if(B.over)return;
   { // 瀕死の鼓動（体力35%未満で、減るほど速く）
     const r=B.php/B.pmax;if(r<0.35&&r>0){B.hb=(B.hb||0)-dt;if(B.hb<=0){sfx('heart');B.hb=60/(70+(0.35-r)*240)}}}
@@ -1701,7 +1773,7 @@ function update(dt){
     if(a.warpAt&&!a.warped&&a.t>=a.warpAt){const p0=attackPoint(a);a.warped=true;a.dir=OPP[a.dir];const p1=attackPoint(a),t=B.tf; // 雷光転移：向きが反対へ
       fx.flash={c:'#e8fbff',life:0.12,max:0.12};fx.zaps.push({a:p0,b:p1,life:0.28,max:0.28});sfx('zap');burst(p1.x,p1.y,'#e8fbff',22,420,true);B.shake=Math.max(B.shake,6)}
     // 冥炎：着弾前から炎を吐く
-    if(a.kind==='breath'&&B.E.breath.type==='fire'&&a.t>a.w-Math.min(0.45,a.w*0.75)&&a.t<a.w+0.1){const h=headScreen(),p=PP();
+    if(a.kind==='breath'&&B.E.breath.type==='fire'&&a.t>a.w-Math.min(0.45,a.w*0.75)&&a.t<a.w+0.1){const h=headScreen(),p=breathTarget(a);
       for(let i=0;i<3;i++){const ang=Math.atan2(p.y-h.y,p.x-h.x)+rand(-0.25,0.25),sp=rand(700,1000);fx.parts.push({x:h.x,y:h.y,vx:Math.cos(ang)*sp,vy:Math.sin(ang)*sp,life:rand(0.35,0.55),max:0.55,c:Math.random()<0.5?B.E.breath.c:shade(B.E.breath.c,0.4),r:rand(8,18),add:true,round:true,drag:0.97,grav:0})}}
     if(a.kind==='breath'&&B.E.breath.type==='bolt'&&a.t<a.w&&Math.random()<0.5){const h=headScreen();burst(h.x,h.y,'#e8fbff',1,120,true)}
     if(!a.lunged&&a.t>=a.w){a.lunged=true;if(!a.res)impact()}
@@ -1715,7 +1787,7 @@ function loop(now){
   const dt=Math.min(0.05,(now-last)/1000);last=now;
   if(B){update(dt);
     ctx.save();if(B.shake>0)ctx.translate((Math.random()-0.5)*B.shake,(Math.random()-0.5)*B.shake);
-    drawBG();drawEnemy();drawBreath();drawTelegraph();drawPlayer();drawIcicles();drawFX(dt);ctx.restore();drawOrbs();drawLowHP();drawHUD();drawGimmickHUD();
+    drawBG();drawEnemy();drawBreath();drawTelegraph();drawPlayer();drawHazards();drawFX(dt);ctx.restore();drawOrbs();drawCold();drawLowHP();drawHUD();drawGimmickHUD();
     if(B.g.curse>0){const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.3,W/2,H/2,Math.max(W,H)*0.7);g.addColorStop(0,'rgba(120,0,200,0)');g.addColorStop(1,'rgba(120,0,200,0.35)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
     if(fx.flash){ctx.fillStyle=rgba(fx.flash.c,0.45*fx.flash.life/fx.flash.max);ctx.fillRect(0,0,W,H)}
     if(B.hurt>0){const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.3,W/2,H/2,Math.max(W,H)*0.7);g.addColorStop(0,'rgba(255,0,0,0)');g.addColorStop(1,`rgba(220,20,10,${B.hurt})`);ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
