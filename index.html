@@ -21,6 +21,7 @@ h1{font-weight:900;font-size:30px;letter-spacing:.06em;text-align:center;color:#
 .tabs{display:flex;gap:6px;margin-bottom:14px}
 .tabs button{flex:1;padding:11px 0;font:700 15px 'M PLUS 1p';color:#c9b597;background:#24190f;border:1px solid #47331f;border-radius:10px;cursor:pointer}
 .card.equipped{border-color:#5a9a4a}.prow.equipped{background:rgba(90,154,74,0.08)}
+.inv2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.inv2 .card.prow{margin:0;border-top:1px solid #4a3522;padding:10px;gap:8px}.inv2 .prow .ico{width:44px;height:44px}.inv2 .prow .ico img{width:40px;height:40px}.inv2 .pst{display:block;margin:2px 0 0}.inv2 .tag{white-space:nowrap;display:inline-block}
 .subtabs{display:flex;gap:6px;margin:0 0 10px}.subtabs button{flex:1;padding:8px 0;font:700 14px 'M PLUS 1p';color:#c9b597;background:#1c140d;border:1px solid #47331f;border-radius:20px;cursor:pointer}
 .subtabs button.on{background:#5a3a18;color:#fff0d0;border-color:#c98a3a}.hint{font-size:12px;color:#a89478;text-align:center;margin:6px 0 14px}
 .tabs button.on{background:linear-gradient(#b9772a,#8a4f15);color:#fff6e0;border-color:#e0a050}
@@ -867,10 +868,10 @@ function renderHub(){
           ${eq?'':`<div class="row"><button class="btn sub2" data-act="equip" data-k="w" data-id="${w.id}">装備する</button></div>`}</div></div></div>`}
     }else if(invTab==='a'){
       const as=armStat();h+=`<div class="buildbox"><b>いまの防具</b>　防御 ${as.def}　／　体力 +${as.hp}</div>`;
-      for(const sl of SLOTS){h+=`<div class="sect">— ${sl.n} —</div><div class="card">`;
+      for(const sl of SLOTS){h+=`<div class="sect">— ${sl.n} —</div><div class="inv2">`;
         const list=ARMORS.filter(p=>p.slot===sl.k&&S.armors[p.id]!==undefined);
         for(const it of list){const lv=S.armors[it.id],eq=S.eq[sl.k]===it.id,st=aStat(it,lv);
-          h+=`<div class="prow ${eq?'equipped':''}"><div class="ico"><img src="${armorIcon(it)}"></div><div class="body">
+          h+=`<div class="card prow ${eq?'equipped':''}"><div class="ico"><img src="${armorIcon(it)}"></div><div class="body">
             <div class="pn"><b>${it.name} +${lv}</b> ${eq?'<span class="tag ok">装備中</span>':''} ${buildTag(it.set.build)} <span class="pst">防御 ${st.def} / 体力 +${st.hp}</span>${it.perk?` <span class="tag perk" style="opacity:.85">✦ ${perkText(it.perk)}</span>`:''}</div>
             ${eq?'':`<div class="row"><button class="btn sub2 mini" data-act="equip" data-k="a" data-id="${it.id}">装備</button></div>`}</div></div>`}
         h+='</div>'}
