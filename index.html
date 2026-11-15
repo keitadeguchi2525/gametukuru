@@ -100,8 +100,8 @@ h1{font-weight:900;font-size:30px;letter-spacing:.06em;text-align:center;color:#
 <div id="battle" class="hidden">
   <canvas id="cv"></canvas>
   <button id="mute"></button>
-  <button id="dodgeL" class="dodgebtn">← 回避<small>Shift+←</small></button>
-  <button id="dodgeR" class="dodgebtn">回避 →<small>Shift+→</small></button>
+  <button id="dodgeL" class="dodgebtn">← 回避<small>A</small></button>
+  <button id="dodgeR" class="dodgebtn">回避 →<small>D</small></button>
   <div id="result" class="hidden"><div class="box" id="resultBox"></div></div>
 </div>
 <div id="toast"></div>
@@ -209,7 +209,7 @@ function variant(baseId,o){const b=ENEMIES.find(e=>e.id===baseId);
 function makeBoss(baseId,o){const b=ENEMIES.find(e=>e.id===baseId);return {...b,...o,parts:o.parts?o.parts.map(p=>({...p})):reskin(b,o,0.62)}}
 ENEMIES.push(
   makeBoss('volga',{id:'lumina',name:'妖蛾ルミナス',stars:2,tint:'#8a4ac8',gimmick:'orbs',
-    gdesc:'【鱗粉の玉】ときどき攻撃をやめて、画面のあちこちに光る鱗粉の玉を7個まき散らす。玉はすぐ破裂するので、タップかスワイプで素早く撃ち落とそう。破裂した玉の数だけダメージ。全部撃ち落とすと体勢+25。',
+    gdesc:'【鱗粉の玉】ときどき攻撃をやめて、画面のあちこちに光る鱗粉の玉を7個まき散らす。玉はすぐ破裂するので、タップかスワイプで素早く撃ち落とそう。破裂した玉は毒になり、HPがじわじわ減る（3個破裂すると満タンからでも倒れる）。全部撃ち落とすと体勢+25。',
     desc:'月光に舞う巨大な蛾。まき散らす鱗粉の玉を撃ち落とせ。',
     hp:2000,need:[3,6],needEvery:24,breakTime:3.6,windup:0.95,idle:[0.8,1.4],combo:2,
     moves:[['slash',5],['heavy',2],['delay',2],['breath',2]],breath:{type:'fire',name:'鱗粉の嵐',c:'#d8ff70'},
@@ -644,6 +644,7 @@ const SFX={
   heart:()=>{tone(60,0.12,{vol:0.45,to:40});tone(55,0.14,{vol:0.35,to:38,at:0.16})},
   escape:()=>noise(0.6,{vol:0.2,f:400,to:2000}),
   orbSpawn:()=>[76,83,88,95].forEach((m,i)=>tone(mf(m),0.2,{type:'sine',vol:0.1,at:i*0.05})),
+  poison:()=>{noise(0.4,{vol:0.18,f:600,q:6,attack:0.05});tone(mf(50),0.35,{type:'sawtooth',vol:0.06,to:mf(44)})},
   pop:()=>{tone(mf(96),0.08,{type:'triangle',vol:0.18,to:mf(103)});noise(0.06,{vol:0.15,f:6000,ftype:'highpass'})},
   orbBoom:()=>{noise(0.3,{vol:0.35,f:900,to:300});tone(160,0.2,{vol:0.25,to:70})},
   rumble:()=>{noise(0.9,{vol:0.3,f:220,ftype:'lowpass',attack:0.15});tone(45,0.8,{vol:0.25,attack:0.2})},
@@ -770,7 +771,7 @@ function renderHub(){
     <li>パリィに失敗すると<b>0.5秒間は回避できない</b>（回避ボタンに✕が出る）。</li>
     <li>ダンジョンによっては、敵の攻撃とは別に<b>頭上から何かが降ってくる</b>（落石・落雷など）。パリィはできないので、落ちる瞬間に回避（左右どちらでもOK）！</li>
     <li><b>連撃</b>は2〜5発の連続攻撃。上に並ぶ矢印の順に素早く弾こう。<b>⚠マークはブレス／投擲</b>なので回避。全部さばくと体勢+25ボーナス。</li>
-    <li><b>⚠マーク</b>のブレス・投擲はパリィ不可。<b>画面の左側か右側</b>に飛んでくるので、<b>反対側へ回避</b>（左側に来たら右回避）。回避ボタンは左右に2つ（PCは Shift＋←／→）。普通の攻撃も回避できるが、体勢ポイントが入るのは<b>回避ビルド</b>の装備のときだけ。</li>
+    <li><b>⚠マーク</b>のブレス・投擲はパリィ不可。<b>画面の左側か右側</b>に飛んでくるので、<b>反対側へ回避</b>（左側に来たら右回避）。回避ボタンは左右に2つ（PCは A＝左／D＝右）。普通の攻撃も回避できるが、体勢ポイントが入るのは<b>回避ビルド</b>の装備のときだけ。</li>
     <li>敵には<b>体勢ポイント</b>の必要量がある。パリィ1回で<b>25pt</b>（PERFECTは+5pt、被弾すると-25pt）。必要量に届くと<b>体勢が崩れる</b>。必要量は戦闘が長引くほど増えていく。</li>
     <li><b>ビルド</b>：装備で戦い方が変わる。<b>パリィ特化</b>＝1回のパリィで入るptが多いが攻撃力が低め。<b>クリティカル</b>＝会心が出やすく強いが、パリィのptが少なく崩しにくい。<b>回避</b>＝回避でもptが入るが、回避の受付がシビア。<b>バランス</b>＝クセがない。工房の「いまのビルド」で数値を確認できる。</li>
     <li>体勢崩し中は、<b>敵の部位を押したまま、こするように動かす</b>と連続攻撃。速くこするほど強い。</li>
@@ -778,7 +779,7 @@ function renderHub(){
     <li>防具は<b>頭・胴・手・足</b>の4部位。シリーズごとに作って組み合わせられる（レアシリーズは特定の部位に特殊効果）。</li>
     <li>倒すと討伐素材と、確率で<b>レア素材</b>がドロップ。レア素材で特殊効果つきの装備が作れる。</li>
     <li><b>ダンジョン</b>は階層制。HPは階をまたいで持ち越し（次の階へ進むとき最大HPの5%だけ回復）。各階の後に<b>帰還</b>すれば戦利品を持ち帰れるが、<b>倒れると全ロスト</b>。最奥のボスを倒すと踏破＆全部持ち帰り。<b>倒れると装備中の武器・防具5つのうちランダムに1〜3つも失う</b>（1つ33%・2つ33%・3つ34%。工房で作り直せる）。</li>
-    <li>PCキー：パリィは矢印キー／WASD、斜めは Q・E・Z・C。回避は Shift＋← ／ Shift＋→（Shift＋A／D でも可）。</li></ul></div>`;
+    <li>PC：パリィはマウスでスワイプ（ドラッグ）。回避は <b>A＝左</b>／<b>D＝右</b>。</li></ul></div>`;
   }
   $('#panel').innerHTML=h;
 }
@@ -824,8 +825,8 @@ function startFloor(){
   B={E,hp:E.hp,maxHp:E.hp,parts:E.parts.map((p,k)=>({...p,maxHp:p.hp||0,hp:p.hp||0,broken:false,flash:0,seed:k*13+5})),
      posture:0,state:'idle',timer:2.0,atk:null,combo:0,brokenT:0,brokenMax:1,bonus:0,php:RUN.php,pmax:RUN.pmax,loot:{},over:false,
      shake:0,lunge:0,recoil:0,pAnim:null,dAnim:null,hurt:0,t:0,fade:1,tf:{x:0,y:0,rot:0,sc:1,u:1},bounce:0,dodgeAt:-9,dodgeCD:0,lastNeed:0,deathT:0,flurry:null,roar:0,
-     g:{charge:0,storm:0,armor:0,armorMax:3,armorDone:false,phase2:false,curse:0,curseCD:5,regenAcc:0,orbCD:6,hzCD:0,blizzard:false}};
-  B.orbs=[];B.hz=[];if(hazard())B.g.hzCD=hzEvery()*rand(0.6,0.9);
+     g:{charge:0,storm:0,armor:0,armorMax:3,armorDone:false,phase2:false,curse:0,curseCD:5,regenAcc:0,orbCD:ORB_FIRST,hzCD:0,blizzard:false}};
+  B.orbs=[];B.hz=[];B.poison=[];B.poisonAcc=0;if(hazard())B.g.hzCD=hzEvery()*rand(0.6,0.9);
   B.lastNeed=needNow();
   fx={parts:[],floats:[],trails:[],slashes:[],bolts:[],zaps:[],icons:[],flash:null};
   $('#hub').classList.add('hidden');$('#battle').classList.remove('hidden');$('#result').classList.add('hidden');
@@ -1081,13 +1082,11 @@ let qTimes=[];
 addEventListener('keydown',e=>{if(B||tab!=='how'||e.repeat||e.key.toLowerCase()!=='q')return;
   const now=performance.now();qTimes=[...qTimes.filter(t=>now-t<1500),now];
   if(qTimes.length>=5){qTimes=[];for(const D of DUNGEONS)S.cleared[D.id]=true;for(const k in MATS)addMat(k,100);save();sfx('rare');toast('隠しコマンド：全ダンジョン解放＆全素材 +100個！')}});
-const KEYDIR={ArrowLeft:'L',ArrowRight:'R',ArrowUp:'U',ArrowDown:'D',a:'L',d:'R',w:'U',s:'D',q:'UL',e:'UR',z:'DL',c:'DR'};
+// PCキー：A＝左へ回避、D＝右へ回避（パリィはマウス／タッチのスワイプだけ）
+const DODGEKEY={a:'L',d:'R'};
 addEventListener('keydown',e=>{if(!B||B.over)return;
-  if(e.key==='Shift'){e.preventDefault();return}
-  if(e.shiftKey){const k=e.key.length===1?e.key.toLowerCase():e.key;const d=k==='ArrowLeft'||k==='a'?'L':k==='ArrowRight'||k==='d'?'R':null;
-    if(d){e.preventDefault();if(!e.repeat)doDodge(d);return}}
-  const m=KEYDIR[e.key.length===1?e.key.toLowerCase():e.key];
-  if(m){e.preventDefault();if(B.state==='windup'&&!B.atk.res&&!B.atk.fail)tryParry(DIRS[m])}});
+  const d=DODGEKEY[e.key.length===1?e.key.toLowerCase():''];
+  if(d){e.preventDefault();if(!e.repeat)doDodge(d)}});
 
 // --- 座標変換 ---
 function toScreen(x,y){const t=B.tf,c=Math.cos(t.rot),s=Math.sin(t.rot);x*=t.sc;y*=t.sc;return {x:t.x+x*c-y*s,y:t.y+x*s+y*c}}
@@ -1576,7 +1575,10 @@ function drawHUD(){
     ctx.fillStyle=isBossFloor()?'#ff8a6a':'#ffd58a';ctx.font="900 15px 'M PLUS 1p'";ctx.fillText(`${RUN.floor+1}F / ${RUN.D.floors.length}F${isBossFloor()?' BOSS':''}`,10,70);
     const n=Object.values(RUN.loot).reduce((a,b)=>a+b,0)+Object.values(B.loot).reduce((a,b)=>a+b,0);ctx.fillStyle='#ffb0a0';ctx.font="700 11px 'M PLUS 1p'";ctx.fillText(`未確定の戦利品 ${n}個`,10,86)}
   const pw=Math.min(W*0.4,240);ctx.textAlign='left';ctx.fillStyle='#e8d4b4';ctx.font="700 12px 'M PLUS 1p'";ctx.fillText(`HP ${Math.ceil(B.php)} / ${B.pmax}`,12,H-34);
-  bar(12,H-26,pw,8,B.php/B.pmax,B.php/B.pmax<0.3?'#ff5a4a':'#5ad06a');
+  const psn=B.poison&&B.poison.length;bar(12,H-26,pw,8,B.php/B.pmax,psn?'#a0e030':B.php/B.pmax<0.3?'#ff5a4a':'#5ad06a');
+  if(psn){const tot=B.poison.reduce((a,p)=>a+p.dps*p.left,0),lft=Math.max(...B.poison.map(p=>p.left));ctx.fillStyle='#b0ff40';ctx.font="900 12px 'M PLUS 1p'";ctx.textAlign='left';
+    ctx.fillText(`☠ 毒×${B.poison.length} あと${Math.ceil(lft)}秒で -${Math.round(tot)}`,12+ctx.measureText(`HP ${Math.ceil(B.php)} / ${B.pmax}`).width+30,H-34);
+    const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.35,W/2,H/2,Math.max(W,H)*0.75);g.addColorStop(0,'rgba(120,200,0,0)');g.addColorStop(1,`rgba(110,190,0,${Math.min(0.35,0.12*B.poison.length)})`);ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
 }
 
 function drawFX(dt){
@@ -1629,7 +1631,9 @@ function cancelBreak(msg){
   B.posture=0;B.bonus=0;B.flurry=null;B.combo=0;B.state='idle';B.timer=1.4;B.roar=1.2;ptr&&(ptr.acc=0);
 }
 // ===== 妖蛾ルミナス：鱗粉の玉 =====
-const ORB_CD=[8,11];   // 鱗粉の玉が出る間隔（秒）
+const ORB_CD=[7,9],ORB_FIRST=3;   // 鱗粉の玉が出る間隔（秒）／戦闘開始から最初の玉まで
+// 破裂した玉は毒：1個につき最大HPの POISON_PER 分を POISON_TIME 秒かけて削る（重ねがけ。3個破裂で満タンからでも倒れる）
+const POISON_PER=0.34,POISON_TIME=8;
 const ORB_N=7,ORB_LIFE=1.6,ORB_GAP=0.14,ORB_R=26;   // 玉の数／1個が破裂するまでの秒数／出現の間隔／半径
 function spawnOrbs(){B.state='orbs';B.orbs=[];B.orbHit=0;B.orbPop=0;sfx('orbSpawn');
   float('鱗粉の玉！ タップ／スワイプで撃ち落とせ',W/2,H*0.3,'#e8ff90',24,1.6);
@@ -1640,9 +1644,8 @@ function popOrbAt(x,y){if(!B||B.state!=='orbs'||B.over)return;
   for(const o of B.orbs)if(!o.done&&o.t>=0&&Math.hypot(o.x-x,o.y-y)<=ORB_R+16){o.done=o.popped=true;B.orbPop++;sfx('pop');burst(o.x,o.y,'#eaff9a',16,320,true)}}
 function updateOrbs(dt){let left=0;
   for(const o of B.orbs){if(o.done)continue;o.t+=dt;left++;
-    if(o.t>=ORB_LIFE){o.done=true;B.orbHit++;sfx('orbBoom');burst(o.x,o.y,'#c8ff60',26,420,true);
-      const dmg=Math.round(B.E.dmg*0.35*rand(0.9,1.1)*100/(100+armStat().def));B.php-=dmg;B.hurt=0.3;B.shake=Math.max(B.shake,8);
-      float('-'+dmg,o.x,o.y,'#ff5a4a',24,0.8);if(B.php<=0){B.php=0;B.over=true;bgm(null);setTimeout(died,900);return}}}
+    if(o.t>=ORB_LIFE){o.done=true;B.orbHit++;sfx('orbBoom');sfx('poison');burst(o.x,o.y,'#b0ff40',26,420,true);B.hurt=0.3;B.shake=Math.max(B.shake,8);
+      B.poison.push({dps:B.pmax*POISON_PER/POISON_TIME,left:POISON_TIME});float('毒！',o.x,o.y,'#b0ff40',26,0.9)}}
   if(left===0){B.g.orbCD=rand(ORB_CD[0],ORB_CD[1]);
     if(B.orbPop===ORB_N){B.posture+=PT;sfx('bonus');float(`全部撃ち落とした！ 体勢+${PT}`,W/2,H*0.26,'#e8ff90',26,1.4)}
     else float(`${B.orbPop}/${ORB_N}個 撃ち落とした`,W/2,H*0.26,'#cdb89a',20,1.2);
@@ -1714,7 +1717,7 @@ function drawCold(){if(!B||B.E.gimmick!=='cold'||B.dying)return;const k=1-coldMu
     for(let i=0;i<70;i++){const x=W-((i*97.3+B.t*700*(1+(i%3)*0.3))%(W+200))+100,y=(i*53.7+B.t*90)%H;ctx.moveTo(x,y);ctx.lineTo(x+26,y-6)}ctx.stroke()}}
 function gimmicks(dt){
   const E=B.E,g=B.g;
-  if(E.gimmick==='orbs'){if(B.state==='orbs')updateOrbs(dt);else if(B.state==='idle'&&!B.flurry){g.orbCD-=dt;if(g.orbCD<=0&&B.timer>0.3){spawnOrbs();return}}}
+  if(E.gimmick==='orbs'){if(B.state==='orbs')updateOrbs(dt);else if(B.state!=='broken'){g.orbCD-=dt;if(g.orbCD<=0&&B.state==='idle'&&!B.flurry){spawnOrbs();return}}}
   const hz=hazard();
   if(hz){updateHazards(dt);if(B.over)return;
     if(B.state!=='broken'&&B.state!=='orbs'&&!B.hz.length){g.hzCD-=dt;
@@ -1767,6 +1770,10 @@ function update(dt){
     const r=B.php/B.pmax;if(r<0.35&&r>0){B.hb=(B.hb||0)-dt;if(B.hb<=0){sfx('heart');B.hb=60/(70+(0.35-r)*240)}}}
   const n=needNow();if(n>B.lastNeed){B.lastNeed=n;sfx('warn');float(`敵が警戒を強めた！ 必要ポイント +${PT}`,W/2,H*0.2,'#ff9a6a',20,1.6)}
   gimmicks(dt);if(B.over)return;
+  if(B.poison.length){ // 毒の継続ダメージ（防御では減らない）
+    let d=0;for(const p of B.poison){const k=Math.min(dt,p.left);d+=p.dps*k;p.left-=dt}B.poison=B.poison.filter(p=>p.left>0);
+    B.php-=d;B.poisonAcc+=d;if(B.poisonAcc>=4){float('-'+Math.round(B.poisonAcc),W/2+rand(-30,30),H*0.78,'#b0ff40',18,0.7);B.poisonAcc=0}
+    if(B.php<=0){B.php=0;B.over=true;bgm(null);setTimeout(died,900);return}}
   if(B.state==='idle'){B.timer-=dt;if(B.timer<=0)beginAttack()}
   else if(B.state==='windup'){
     if(a.holdLeft>0&&a.t>=a.holdAt)a.holdLeft-=dt;else a.t+=dt;
