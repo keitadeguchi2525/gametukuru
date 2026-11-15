@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>パリィ・ハンター</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+1p:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:#120e0b;color:#f1e6d2;font-family:'M PLUS 1p',sans-serif;overflow:hidden;user-select:none;-webkit-user-select:none}
+.hidden{display:none!important}
+#hub{position:fixed;inset:0;overflow-y:auto;background:radial-gradient(ellipse at 50% -10%,#3b2a1c 0%,#1a120c 55%,#0d0907 100%)}
+.wrap{max-width:780px;margin:0 auto;padding:20px 16px 60px}
+h1{font-weight:900;font-size:30px;letter-spacing:.06em;text-align:center;color:#ffd58a;text-shadow:0 2px 0 #6b3d10,0 0 18px rgba(255,170,60,.35)}
+.sub{text-align:center;font-size:13px;color:#b9a68a;margin:4px 0 18px}
+.equip{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;font-size:13px;margin-bottom:14px}
+.equip span{display:flex;align-items:center;gap:6px;background:#2a1e15;border:1px solid #4d3826;border-radius:24px;padding:3px 12px 3px 4px}
+.equip img{width:34px;height:34px}
+.equip b{color:#ffd58a}
+.tabs{display:flex;gap:6px;margin-bottom:14px}
+.tabs button{flex:1;padding:11px 0;font:700 15px 'M PLUS 1p';color:#c9b597;background:#24190f;border:1px solid #47331f;border-radius:10px;cursor:pointer}
+.tabs button.on{background:linear-gradient(#b9772a,#8a4f15);color:#fff6e0;border-color:#e0a050}
+.card{background:linear-gradient(#2b1f15,#211710);border:1px solid #4a3522;border-radius:14px;padding:14px 16px;margin-bottom:12px}
+.card h3{font-size:18px;font-weight:900;color:#ffe2ad;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.card p{font-size:13px;color:#bba78a;margin:6px 0}
+.card.rare{border-color:#9a6ad0;box-shadow:0 0 14px rgba(160,100,255,.18) inset}
+.item{display:flex;gap:14px;align-items:flex-start}
+.item .ico{width:84px;height:84px;flex:none;border-radius:12px;background:radial-gradient(circle at 50% 40%,#3d2c1e,#160f09);border:1px solid #4a3522;display:flex;align-items:center;justify-content:center}
+.item .ico img{width:76px;height:76px}
+.item .body{flex:1;min-width:0}
+.tag{font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:#3d2b1b;color:#e9c690}
+.tag.ok{background:#2c4a24;color:#bdf0a8}
+.tag.perk{background:#3a2458;color:#e0c0ff}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:12px;background:#1a120c;border:1px solid #3c2b1c;border-radius:8px;padding:2px 8px 2px 3px}
+.chip img{width:22px;height:22px}
+.chip.ng{color:#ff8f7a;border-color:#6b2a20}
+.chip.r1{border-color:#4a8ad0;color:#bfe0ff}.chip.r2{border-color:#b070ff;color:#e6ccff}.chip.r3{border-color:#ffcf40;color:#fff0b0;box-shadow:0 0 8px rgba(255,200,60,.35)}
+.btn{font:700 14px 'M PLUS 1p';padding:9px 18px;border-radius:10px;border:none;cursor:pointer;color:#2a1606;background:linear-gradient(#ffd27a,#e59a2f);box-shadow:0 3px 0 #8a4f15}
+.btn:active{transform:translateY(2px);box-shadow:0 1px 0 #8a4f15}
+.btn.sub2{background:linear-gradient(#5d4a37,#46372a);color:#f1e6d2;box-shadow:0 3px 0 #2a1e14}
+.btn:disabled{opacity:.4;cursor:default}
+.locked{opacity:.5}
+.mats{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}
+.mat{display:flex;align-items:center;gap:8px;background:#1d140d;border:1px solid #3c2b1c;border-radius:10px;padding:6px 10px 6px 6px;font-size:14px}
+.mat img{width:40px;height:40px}
+.mat b{margin-left:auto;color:#ffd58a}
+.mat.r1{border-color:#4a8ad0}.mat.r2{border-color:#b070ff}.mat.r3{border-color:#ffcf40;box-shadow:0 0 10px rgba(255,200,60,.3)}
+.how li{font-size:14px;margin:6px 0 6px 18px;color:#d8c6aa}
+.sect{font-size:13px;font-weight:700;color:#e0a050;margin:16px 0 8px;letter-spacing:.1em}
+.rt{font-size:12px;color:#a89478;margin-top:8px}
+.prow{display:flex;gap:10px;align-items:flex-start;border-top:1px solid #3a2a1c;padding:10px 0 4px;margin-top:8px}
+.prow .ico{width:56px;height:56px;flex:none;border-radius:10px;background:radial-gradient(circle at 50% 40%,#3d2c1e,#160f09);border:1px solid #4a3522;display:flex;align-items:center;justify-content:center}
+.prow .ico img{width:52px;height:52px}.prow .body{flex:1;min-width:0}.prow .pn{font-size:14px;color:#ffe2ad}.prow .pst{font-size:12px;color:#bba78a;margin-left:4px}
+.btn.mini{padding:5px 12px;font-size:12px;box-shadow:0 2px 0 #8a4f15}.btn.sub2.mini{box-shadow:0 2px 0 #2a1e14}
+#battle{position:fixed;inset:0;touch-action:none}
+#cv{display:block;touch-action:none}
+#retreat{position:absolute;left:8px;top:8px;font:700 12px 'M PLUS 1p';padding:5px 10px;border-radius:8px;border:1px solid #6b4a2a;background:rgba(30,20,12,.7);color:#e8d4b4;cursor:pointer}
+#dodge{position:absolute;right:16px;bottom:22px;width:84px;height:84px;border-radius:50%;border:3px solid #9fd8ff;background:radial-gradient(circle at 40% 35%,rgba(90,150,200,.55),rgba(20,40,70,.75));color:#e8f6ff;font:900 17px 'M PLUS 1p';cursor:pointer;touch-action:none;box-shadow:0 0 14px rgba(120,200,255,.35)}
+#dodge small{display:block;font-size:10px;font-weight:700;opacity:.7}
+#dodge.warn{border-color:#ff5a5a;background:radial-gradient(circle at 40% 35%,rgba(255,90,90,.7),rgba(90,10,10,.8));animation:pulse .35s infinite alternate}
+#dodge.cd{opacity:.45}
+@keyframes pulse{to{transform:scale(1.1);box-shadow:0 0 28px rgba(255,80,80,.8)}}
+#result{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(8,5,3,.72)}
+#result .box{background:linear-gradient(#2e2116,#1d140d);border:1px solid #7a5530;border-radius:16px;padding:22px 24px;min-width:280px;max-width:92vw;text-align:center}
+#result h2{font-size:30px;font-weight:900;margin-bottom:10px}
+#result .row{justify-content:center;margin:8px 0 16px}
+.rarebanner{font-weight:900;color:#fff0a0;text-shadow:0 0 12px #ffb020;margin-bottom:4px}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#3a2814;border:1px solid #c98a3a;color:#ffe2ad;padding:10px 18px;border-radius:12px;font-weight:700;font-size:14px;transition:opacity .3s;pointer-events:none;opacity:0;z-index:9}
+</style>
+</head>
+<body>
+<div id="hub"><div class="wrap">
+  <h1>⚔ パリィ・ハンター</h1>
+  <div class="sub">弾いて、崩して、斬り刻め。</div>
+  <div class="equip" id="equip"></div>
+  <div class="tabs">
+    <button data-tab="hunt" class="on">ダンジョン</button>
+    <button data-tab="forge">工房</button>
+    <button data-tab="mats">素材</button>
+    <button data-tab="how">遊び方</button>
+  </div>
+  <div id="panel"></div>
+</div></div>
+
+<div id="battle" class="hidden">
+  <canvas id="cv"></canvas>
+  <button id="retreat">脱出</button>
+  <button id="dodge">回避<small>Shift</small></button>
+  <div id="result" class="hidden"><div class="box" id="resultBox"></div></div>
+</div>
+<div id="toast"></div>
+
+<script>
+// ===================== 素材 =====================
+const MATS={
+  bone:{n:'獣骨',c:'#f4ead2',c2:'#a8977a',sh:'bone'},
+  shell:{n:'岩甲殻',c:'#c0a888',c2:'#5e4e3c',sh:'shell'},
+  hornG:{n:'岩角',c:'#eadbb4',c2:'#8a7650',sh:'horn'},
+  claw:{n:'岩爪',c:'#f6e2c6',c2:'#9a7048',sh:'claw'},
+  scale:{n:'雷鱗',c:'#9ccaff',c2:'#24529e',sh:'scale'},
+  horn:{n:'雷角',c:'#fff4a8',c2:'#c88c10',sh:'horn'},
+  wing:{n:'雷翼膜',c:'#b4dcff',c2:'#355e98',sh:'wing'},
+  tail:{n:'雷尾',c:'#78aaf4',c2:'#1a3870',sh:'tail'},
+  crystal:{n:'雷晶',c:'#effdff',c2:'#4aa8d8',sh:'crystal'},
+  shade:{n:'冥布',c:'#c49ce8',c2:'#45266a',sh:'cloth'},
+  crown:{n:'冥冠片',c:'#ffe88e',c2:'#a87818',sh:'crownp'},
+  core:{n:'冥核',c:'#faa8ff',c2:'#7a1aa8',sh:'orb'},
+  soul:{n:'魂片',c:'#e8e0ff',c2:'#6a58cc',sh:'wisp'},
+  // レア
+  heartstone:{n:'岩竜の心石',c:'#ffa060',c2:'#8a2a10',sh:'gem',rare:1},
+  amber:{n:'古代の琥珀',c:'#ffd868',c2:'#b05a0c',sh:'amber',rare:2},
+  goldhorn:{n:'黄金の岩角',c:'#fff4b0',c2:'#c88a08',sh:'horn',rare:3},
+  gekirin:{n:'雷竜の逆鱗',c:'#ffffff',c2:'#2a7cff',sh:'scale',rare:1},
+  thunderorb:{n:'天雷の宝珠',c:'#fffcd8',c2:'#d8a010',sh:'orb',rare:2},
+  dragoneye:{n:'蒼雷の竜眼',c:'#a8f4ff',c2:'#0c4898',sh:'eye',rare:3},
+  soulstone:{n:'冥王の魂石',c:'#e8a8ff',c2:'#4a1478',sh:'gem',rare:1},
+  voidcrystal:{n:'虚無の結晶',c:'#4a4a66',c2:'#b070ff',sh:'crystal',rare:2},
+  scepter:{n:'冥界の王笏',c:'#ffe070',c2:'#6a189a',sh:'scepter',rare:3},
+};
+const RARE_NAME={1:'レア',2:'激レア',3:'超激レア'};
+
+// ===================== 敵 =====================
+const ENEMIES=[
+  {id:'golm',name:'岩甲獣ゴルム',stars:1,gimmick:'armor',gdesc:'【岩鎧】HPが60%を切ると岩鎧をまとい、与えるダメージが1/5に。岩鎧は形態変化後3回目の体勢崩しで砕け、大ダメージが入る。それまでの2回の崩しは硬い鎧の上から削ることになる。',desc:'鈍重な岩の獣。重い一撃と岩石投げに注意。パリィの練習相手。',
+   hp:900,need:[3,5],needEvery:25,breakTime:3.8,windup:1.05,dmg:15,idle:[0.9,1.5],combo:2,
+   moves:[['slash',6],['heavy',2],['delay',1],['breath',2]],breath:{type:'rock',name:'岩石投げ',c:'#c89a60'},
+   bg:['#4a3826','#20160d'],eye:'#ffb040',glow:'#ff8a30',
+   drops:[['bone',3,5],['shell',2,3],['claw',1,1],['hornG',1,1]],
+   rares:[['heartstone',0.25],['amber',0.05],['goldhorn',0.005]],
+   parts:[
+    {id:'body',body:true,x:0,y:0.15,rx:0.78,ry:0.52,c:'#6e5e4c'},
+    {id:'back',name:'背甲',x:0,y:-0.1,rx:0.55,ry:0.25,c:'#544638',hp:180,mat:[['shell',2]],deco:'rocks'},
+    {id:'legR',name:'右前脚',x:-0.58,y:0.5,rx:0.17,ry:0.28,c:'#5e4f40',hp:140,mat:[['claw',2]],deco:'claws',limb:1},
+    {id:'legL',name:'左前脚',x:0.58,y:0.5,rx:0.17,ry:0.28,c:'#5e4f40',hp:140,mat:[['claw',2]],deco:'claws',limb:1},
+    {id:'head',name:'岩角',x:0,y:-0.42,rx:0.27,ry:0.22,c:'#8c7b64',hp:170,mat:[['hornG',2]],deco:'horns2',eyes:true},
+   ]},
+  {id:'volga',name:'雷竜ヴォルガ',stars:2,gimmick:'storm',gdesc:'【雷鳴乱舞】雷ゲージが満タンになると、5連撃の順番を一瞬だけ見せてから超高速で放つ。全部パリィすると即体勢崩し（+2秒）。雷角を折るとゲージの溜まりが半分に。',desc:'雷をまとう飛竜。ディレイ攻撃と、パリィ不能の雷ブレスを使う。',
+   hp:2600,need:[4,7],needEvery:22,breakTime:3.5,windup:0.85,dmg:28,idle:[0.7,1.3],combo:2,
+   moves:[['slash',5],['heavy',2],['delay',2],['breath',2]],breath:{type:'bolt',name:'雷ブレス',c:'#9fe8ff'},
+   bg:['#22324e','#0b1120'],eye:'#fff27a',glow:'#7ad0ff',
+   drops:[['scale',3,5],['crystal',1,2],['horn',1,1],['wing',1,1],['tail',1,1]],
+   rares:[['gekirin',0.15],['thunderorb',0.03],['dragoneye',0.003]],
+   parts:[
+    {id:'wingR',name:'右翼',x:-0.78,y:-0.18,rx:0.45,ry:0.3,c:'#3e6aa5',hp:400,mat:[['wing',2]],deco:'wing',limb:1},
+    {id:'wingL',name:'左翼',x:0.78,y:-0.18,rx:0.45,ry:0.3,c:'#3e6aa5',hp:400,mat:[['wing',2]],deco:'wing',limb:1},
+    {id:'tail',name:'尾',x:0.42,y:0.62,rx:0.36,ry:0.12,c:'#2c4f80',hp:360,mat:[['tail',2],['crystal',1]],deco:'spikes'},
+    {id:'body',body:true,x:0,y:0.08,rx:0.45,ry:0.55,c:'#2f5288'},
+    {id:'head',name:'雷角',x:0,y:-0.6,rx:0.22,ry:0.2,c:'#3b67a8',hp:380,mat:[['horn',2]],deco:'horn1',eyes:true},
+   ]},
+  {id:'necros',name:'冥王ネクロス',stars:3,gimmick:'curse',gdesc:'【冥核再生／第二形態／反転の呪い】冥核が無事な間はHPが再生し続ける。HP50%で第二形態になり攻撃がさらに速くなる。第二形態では「反転の呪い」で、紫の輪の攻撃はいつもと逆方向にはじかないとパリィできない。',desc:'冥界の王。素早い3連撃と冥炎。胸の冥核が弱点。',
+   hp:5500,need:[5,9],needEvery:20,breakTime:3.3,windup:0.7,dmg:45,idle:[0.6,1.1],combo:3,
+   moves:[['slash',5],['heavy',2],['delay',3],['breath',3]],breath:{type:'fire',name:'冥炎',c:'#d070ff'},
+   bg:['#2c1a3a','#0b0612'],eye:'#ff4fd8',glow:'#c060ff',
+   drops:[['shade',3,5],['soul',2,3],['core',1,1],['crown',1,1]],
+   rares:[['soulstone',0.10],['voidcrystal',0.01],['scepter',0.001]],
+   parts:[
+    {id:'body',body:true,x:0,y:0.1,rx:0.42,ry:0.62,c:'#3a2a4a',deco:'robe'},
+    {id:'armR',name:'右腕',x:-0.6,y:0.05,rx:0.2,ry:0.42,c:'#4a3460',hp:800,mat:[['shade',2]],deco:'blade',limb:1},
+    {id:'armL',name:'左腕',x:0.6,y:0.05,rx:0.2,ry:0.42,c:'#4a3460',hp:800,mat:[['shade',2]],deco:'blade',limb:1},
+    {id:'core',name:'冥核',x:0,y:0.05,rx:0.15,ry:0.15,c:'#b040e0',hp:650,mat:[['core',1],['soul',2]],deco:'core',weak:1.4},
+    {id:'head',name:'冥冠',x:0,y:-0.66,rx:0.22,ry:0.21,c:'#d8d0e0',hp:750,mat:[['crown',2]],deco:'crown',eyes:true},
+   ]},
+];
+
+// ===================== 雑魚（ボスの色違い）とダンジョン =====================
+function mixHex(a,b,t){const p=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));const x=p(a),y=p(b);return '#'+x.map((v,i)=>Math.round(v+(y[i]-v)*t).toString(16).padStart(2,'0')).join('')}
+function variant(baseId,o){const b=ENEMIES.find(e=>e.id===baseId);
+  return {...b,gimmick:null,gdesc:'',...o,minion:true,parts:b.parts.map(p=>({...p,c:mixHex(p.c,o.tint,0.45),hp:p.hp?Math.round(p.hp*o.partMul):undefined}))}}
+const MINIONS=[
+  variant('golm',{id:'pebble',name:'石ころ獣',tint:'#b0b098',size:0.72,hp:260,need:[2,3],needEvery:25,windup:1.15,dmg:10,combo:1,partMul:0.35,
+    moves:[['slash',6],['heavy',1],['breath',1]],breath:{type:'rock',name:'小石投げ',c:'#c8b080'},drops:[['bone',2,3],['shell',1,1]],rares:[['heartstone',0.03]]}),
+  variant('golm',{id:'moss',name:'苔岩獣',tint:'#4a8a3a',size:0.85,hp:420,need:[2,4],needEvery:25,windup:1.1,dmg:13,combo:2,partMul:0.5,
+    moves:[['slash',6],['heavy',2],['delay',1],['breath',1]],breath:{type:'rock',name:'苔岩投げ',c:'#8ac070'},drops:[['bone',2,3],['shell',1,1],['claw',0,1],['hornG',0,1]],rares:[['amber',0.01]]}),
+  variant('volga',{id:'sparkling',name:'雷仔竜',tint:'#3ab0a0',size:0.72,hp:700,need:[3,4],needEvery:22,windup:0.95,dmg:18,combo:1,partMul:0.4,
+    moves:[['slash',6],['heavy',1],['delay',1],['breath',1]],breath:{type:'bolt',name:'小雷',c:'#9ff0e0'},drops:[['scale',2,3],['wing',0,1]],rares:[['gekirin',0.03]]}),
+  variant('volga',{id:'stormwyv',name:'嵐飛竜',tint:'#7a6ad0',size:0.85,hp:1100,need:[3,5],needEvery:22,windup:0.9,dmg:22,combo:2,partMul:0.55,
+    moves:[['slash',5],['heavy',2],['delay',2],['breath',2]],breath:{type:'bolt',name:'嵐のブレス',c:'#c8b8ff'},drops:[['scale',2,3],['crystal',0,1],['tail',0,1]],rares:[['thunderorb',0.005]]}),
+  variant('necros',{id:'wraith',name:'亡霊騎士',tint:'#3a7a7a',size:0.8,hp:1600,need:[3,5],needEvery:20,windup:0.8,dmg:30,combo:2,partMul:0.4,
+    moves:[['slash',5],['heavy',2],['delay',2],['breath',2]],breath:{type:'fire',name:'怨念の炎',c:'#70e0d0'},drops:[['shade',2,3],['soul',1,1]],rares:[['soulstone',0.02]]}),
+  variant('necros',{id:'lich',name:'骸骨魔導士',tint:'#b0a880',size:0.85,hp:2300,need:[4,6],needEvery:20,windup:0.75,dmg:36,combo:3,partMul:0.5,
+    moves:[['slash',5],['heavy',2],['delay',3],['breath',3]],breath:{type:'fire',name:'呪炎',c:'#c0ff90'},drops:[['shade',2,3],['soul',1,2],['crown',0,1]],rares:[['voidcrystal',0.003]]}),
+];
+const FLURRY={golm:[2,3],volga:[3,4],necros:[4,5],pebble:[2,2],moss:[2,3],sparkling:[2,3],stormwyv:[3,4],wraith:[3,4],lich:[3,5]};
+for(const e of[...ENEMIES,...MINIONS]){e.flurry=FLURRY[e.id];e.moves=[...e.moves,['combo',e.minion?1.5:2.5]]}
+// 敵の体力。部位体力は本体の33%（目安：普通の武器で2か所、狙い続ければ3か所）
+const ENEMY_HP={pebble:400,moss:650,golm:1300,sparkling:900,stormwyv:1350,volga:3000,wraith:2000,lich:2600,necros:6000};
+const PART_RATIO=0.33;
+// 敵の攻撃力：適正防具で通常攻撃1発 ≒ 最大HPの1/3
+//  岩窟=岩甲一式+0 / 峡谷=雷鱗一式+0 / 冥界=雷鱗一式+3 を「適正」とした値（雑魚は階層補正込みで同程度）
+const ENEMY_DMG={pebble:37,moss:35,golm:40,sparkling:42,stormwyv:40,volga:45,wraith:52,lich:48,necros:55};
+for(const e of[...ENEMIES,...MINIONS]){e.dmg=ENEMY_DMG[e.id];e.hp=ENEMY_HP[e.id];e.parts=e.parts.map(p=>p.hp?{...p,hp:Math.round(e.hp*PART_RATIO)}:p)}
+const EN=id=>ENEMIES.find(e=>e.id===id)||MINIONS.find(e=>e.id===id);
+const DUNGEONS=[
+  {id:'d1',name:'岩窟の迷宮',stars:1,desc:'岩の獣が棲む洞窟。最奥に岩甲獣ゴルムが待つ。',floors:['pebble','pebble','moss','moss','golm']},
+  {id:'d2',name:'雷鳴の峡谷',stars:2,desc:'雷が鳴りやまない峡谷。最奥に雷竜ヴォルガ。',floors:['sparkling','sparkling','stormwyv','stormwyv','volga']},
+  {id:'d3',name:'冥界の塔',stars:3,desc:'亡者がさまよう塔。頂上に冥王ネクロス。',floors:['wraith','wraith','lich','lich','lich','necros']},
+];
+
+// ===================== 素材の必要量（ダンジョン踏破回数で決める） =====================
+// 1回踏破したときの素材の期待値：全階の討伐ドロップ（平均）＋ 1戦につき部位破壊1か所（部位はランダムとして平均）
+const PARTS_PER_FIGHT=1,SLACK=0.85;           // SLACK: 運が悪くても目安回数で届くよう少し少なめに
+const WEAPON_CLEARS=2,ARMOR_SET_CLEARS=3;      // 武器＝約2回、防具一式＝約3回
+const YIELD=DUNGEONS.map(D=>{const y={};for(const id of D.floors){const E=EN(id);
+  for(const[k,a,b]of E.drops)y[k]=(y[k]||0)+(a+b)/2;
+  const ps=E.parts.filter(p=>!p.body);for(const p of ps)for(const[k,q]of p.mat)y[k]=(y[k]||0)+q*PARTS_PER_FIGHT/ps.length}
+  return y});
+function recipe(d,mats,clears,ratio=1){const c={};for(const m of mats)c[m]=Math.max(1,Math.round(clears*YIELD[d][m]*SLACK*ratio));return c}
+const TOPMAT=d=>Object.entries(YIELD[d]).sort((a,b)=>b[1]-a[1])[0][0];
+const upgRecipe=(d,m,k)=>({[m]:Math.max(1,Math.round(YIELD[d][m]*k))});
+
+// ===================== 装備 =====================
+const WEAPONS=[
+  {id:'w0',name:'木の剣',atk:15,cost:{},upg:upgRecipe(0,TOPMAT(0),0.08),shape:'wood',blade:'#b9844a',glow:'#ffd08a'},
+  {id:'w1',name:'骨砕きの大剣',atk:19,cost:recipe(0,['bone','claw'],WEAPON_CLEARS),upg:upgRecipe(0,TOPMAT(0),0.08),shape:'great',blade:'#efe4c8',glow:'#fff0d0'},
+  {id:'w2',name:'岩角の槍',atk:22,cost:recipe(0,['hornG','shell','bone'],WEAPON_CLEARS),upg:upgRecipe(0,TOPMAT(0),0.08),shape:'spear',blade:'#e6d6ac',glow:'#ffe0a0'},
+  {id:'r1',name:'琥珀剣アンバー',atk:25,cost:{...recipe(0,['hornG'],WEAPON_CLEARS),amber:1,heartstone:1},upg:upgRecipe(0,TOPMAT(0),0.08),shape:'amber',blade:'#ffb840',glow:'#ffcf60',perk:{parry:1.12},pdesc:'パリィ受付 +12%'},
+  {id:'w3',name:'雷鳴刀',atk:27,cost:recipe(1,['scale','horn','crystal'],WEAPON_CLEARS),upg:upgRecipe(1,TOPMAT(1),0.08),shape:'katana',blade:'#fff6b8',glow:'#7ad0ff'},
+  {id:'r2',name:'天雷槍ヴァジュラ',atk:31,cost:{...recipe(1,['horn'],WEAPON_CLEARS),thunderorb:1,gekirin:1},upg:upgRecipe(1,TOPMAT(1),0.08),shape:'vajra',blade:'#fff27a',glow:'#9fe8ff',perk:{part:1.2},pdesc:'部位ダメージ +20%'},
+  {id:'w4',name:'冥刃ネクロ',atk:33,cost:recipe(2,['shade','crown','core'],WEAPON_CLEARS),upg:upgRecipe(2,TOPMAT(2),0.08),shape:'dark',blade:'#a874e8',glow:'#d080ff'},
+  {id:'r3',name:'王笏剣ルクスフェル',atk:38,cost:{...recipe(2,['soul'],WEAPON_CLEARS),scepter:1,soulstone:2,voidcrystal:1},upg:upgRecipe(2,TOPMAT(2),0.08),shape:'royal',blade:'#fff6dc',glow:'#ffe070',perk:{crit:0.08},pdesc:'会心率 +8%'},
+];
+// 防具は「シリーズ」ごとに 頭・胴・手・足 の4部位。シリーズの防御/体力の合計を部位の比率で分ける
+const SLOTS=[{k:'head',n:'頭',r:0.25},{k:'body',n:'胴',r:0.35},{k:'hands',n:'手',r:0.15},{k:'legs',n:'足',r:0.25}];
+const ARMOR_SETS=[
+  {id:'a0',title:'旅人',names:['旅人の頭巾','旅人の服','旅人の手袋','旅人の靴'],def:0,hp:0,d:0,mats:[],style:'cloth',color:'#7a5a3e',trim:'#c9a070'},
+  {id:'a1',title:'岩甲',names:['岩甲の兜','岩甲の鎧','岩甲の籠手','岩甲の脚甲'],def:10,hp:8,d:0,mats:['shell','bone'],style:'plate',color:'#8f7a5e',trim:'#c9b48a'},
+  {id:'r4',title:'心石',names:['心石の額当て','心石の守り','心石の腕輪','心石の具足'],def:14,hp:12,d:0,mats:['shell','bone'],rare:{heartstone:1},perkSlot:'body',perk:{heal:2},pdesc:'パリィ成功でHP2回復',perkCost:{heartstone:2},style:'plate',color:'#9a5a3a',trim:'#ff9a5a'},
+  {id:'r5',title:'黄金角',names:['黄金角の兜','黄金角の胴鎧','黄金角の籠手','黄金角の脚甲'],def:20,hp:18,d:0,mats:['shell','hornG'],rare:{heartstone:1},perkSlot:'head',perk:{need:-1},pdesc:'体勢崩しの必要回数 -1',perkCost:{goldhorn:1},style:'gold',color:'#a88228',trim:'#fff0a0'},
+  {id:'a2',title:'雷鱗',names:['雷鱗の兜','雷鱗の鎧','雷鱗の籠手','雷鱗の脚甲'],def:18,hp:15,d:1,mats:['scale','wing','tail'],style:'scale',color:'#3e6aa5',trim:'#8cc4ff'},
+  {id:'r6',title:'逆鱗',names:['逆鱗の兜','逆鱗の鎧','逆鱗の籠手','逆鱗の脚甲'],def:24,hp:20,d:1,mats:['scale','tail'],rare:{gekirin:1},perkSlot:'legs',perk:{dodge:1.2},pdesc:'回避受付 +20%',perkCost:{gekirin:2},style:'scale',color:'#22448a',trim:'#ffffff'},
+  {id:'r7',title:'竜眼',names:['竜眼の兜','竜眼の蒼鎧','竜眼の籠手','竜眼の脚甲'],def:30,hp:26,d:1,mats:['scale','crystal'],rare:{gekirin:1},perkSlot:'hands',perk:{parry:1.1},pdesc:'パリィ受付 +10%',perkCost:{dragoneye:1,gekirin:1},style:'gold',color:'#1a5a9a',trim:'#a0f0ff'},
+  {id:'a3',title:'冥王',names:['冥王の冠帽','冥王の外套','冥王の手甲','冥王の長靴'],def:32,hp:25,d:2,mats:['shade','soul','core'],style:'cloak',color:'#5e3a82',trim:'#c060ff'},
+  {id:'r8',title:'魂石',names:['魂石の頭巾','魂石の衣','魂石の手甲','魂石の長靴'],def:38,hp:32,d:2,mats:['shade','soul'],rare:{soulstone:1},perkSlot:'body',perk:{heal:3},pdesc:'パリィ成功でHP3回復',perkCost:{soulstone:2},style:'cloak',color:'#3a1a5a',trim:'#e0a0ff'},
+];
+const ARMORS=[];
+for(const st of ARMOR_SETS){let dl=st.def,hl=st.hp;
+  const ps=SLOTS.map((sl,i)=>{const d=sl.k==='body'?0:Math.floor(st.def*sl.r),h=sl.k==='body'?0:Math.floor(st.hp*sl.r);dl-=d;hl-=h;
+    const cost=recipe(st.d,st.mats,ARMOR_SET_CLEARS,sl.r);
+    const isPerk=st.perkSlot===sl.k;Object.assign(cost,isPerk?st.perkCost:(st.rare||{}));
+    return {id:st.id+'_'+sl.k,set:st,slot:sl.k,name:st.names[i],def:d,hp:h,cost,upg:upgRecipe(st.d,TOPMAT(st.d),0.03),halfUpg:true,perk:isPerk?st.perk:null,pdesc:isPerk?st.pdesc:''}});
+  ps[1].def+=dl;ps[1].hp+=hl;ARMORS.push(...ps)}
+const MAXLV=5;
+
+// ===================== 方向 =====================
+const DIRS={R:0,DR:45,D:90,DL:135,L:180,UL:-135,U:-90,UR:-45};
+const DIRKEYS=Object.keys(DIRS);
+const DV={};for(const k in DIRS){const a=DIRS[k]*Math.PI/180;DV[k]={x:Math.cos(a),y:Math.sin(a)}}
+const DNAME={R:'右',L:'左',U:'上',D:'下',UR:'右上',UL:'左上',DR:'右下',DL:'左下'};
+const ATKNAME={R:'薙ぎ払い',L:'薙ぎ払い',U:'斬り上げ',D:'振り下ろし',UR:'逆袈裟',UL:'逆袈裟',DR:'袈裟斬り',DL:'袈裟斬り'};
+const angDiff=(a,b)=>{let d=Math.abs(a-b)%360;return d>180?360-d:d};
+
+// ===================== セーブ =====================
+const KEY='parryHunter_v1';
+function newSave(){return {mats:{},weapons:{w0:0},armors:{},eqW:'w0',cleared:{}}}
+function migrate(){ // 旧セーブ（防具1枠）→ 4部位へ
+  if(!S.eq){const old=S.armors||{};S.armors={};
+    for(const sid in old){if(ARMOR_SETS.find(x=>x.id===sid))for(const sl of SLOTS)S.armors[sid+'_'+sl.k]=old[sid];else if(ARMORS.find(x=>x.id===sid))S.armors[sid]=old[sid]}
+    const e=ARMOR_SETS.find(x=>x.id===S.eqA)?S.eqA:'a0';S.eq={};for(const sl of SLOTS){const id=e+'_'+sl.k;S.eq[sl.k]=id;if(S.armors[id]===undefined)S.armors[id]=0}delete S.eqA}
+  for(const sl of SLOTS){if(S.armors['a0_'+sl.k]===undefined)S.armors['a0_'+sl.k]=0;if(!S.eq[sl.k])S.eq[sl.k]='a0_'+sl.k}
+}
+let S=newSave();
+try{const d=JSON.parse(localStorage.getItem(KEY));if(d&&d.mats)S=Object.assign(newSave(),d)}catch(e){}
+migrate();
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+const W_=id=>WEAPONS.find(w=>w.id===id)||WEAPONS[0], A_=id=>ARMORS.find(a=>a.id===id)||ARMORS[0];
+function wStat(it,lv){return Math.round(it.atk*(1+0.04*lv))}
+function aStat(it,lv){return {def:it.def+lv,hp:it.hp+lv}}
+const atkStat=()=>wStat(W_(S.eqW),S.weapons[S.eqW]||0);
+const eqPieces=()=>SLOTS.map(sl=>A_(S.eq[sl.k]));
+const eqSets=()=>{const o={};for(const sl of SLOTS)o[sl.k]=A_(S.eq[sl.k]).set;return o};
+const armStat=()=>{let def=0,hp=0;for(const p of eqPieces()){const st=aStat(p,S.armors[p.id]||0);def+=st.def;hp+=st.hp}return {def,hp}};
+function perk(k){const mul=k==='parry'||k==='part'||k==='dodge';let v=mul?1:0;
+  for(const p of[W_(S.eqW).perk,...eqPieces().map(a=>a.perk)])if(p&&p[k]!=null)v=mul?v*p[k]:v+p[k];return v}
+function upgCost(it,lv){const c={};for(const[k,q]of Object.entries(it.upg))c[k]=q*(it.halfUpg?Math.ceil((lv+1)/2):(lv+1));return c}
+const has=c=>Object.entries(c).every(([k,q])=>(S.mats[k]||0)>=q);
+function pay(c){for(const[k,q]of Object.entries(c))S.mats[k]-=q}
+function addMat(k,q){S.mats[k]=(S.mats[k]||0)+q}
+const unlocked=i=>i===0||S.cleared[DUNGEONS[i-1].id]||S.cleared[DUNGEONS[i-1].floors.slice(-1)[0]];
+
+// ===================== 汎用描画 =====================
+function shade(hex,amt){let n=parseInt(hex.slice(1),16),r=n>>16,g=(n>>8)&255,b=n&255;
+  const f=v=>Math.max(0,Math.min(255,Math.round(amt>0?v+(255-v)*amt:v*(1+amt))));return `rgb(${f(r)},${f(g)},${f(b)})`}
+function rgba(hex,a){let n=parseInt(hex.slice(1),16);return `rgba(${n>>16},${(n>>8)&255},${n&255},${a})`}
+
+// --- 素材アイコン（SVG） ---
+function matSVG(k){const m=MATS[k],id='g'+k;
+  const def=`<defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${m.c}"/><stop offset="1" stop-color="${m.c2}"/></linearGradient>
+  <radialGradient id="${id}r" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#fff"/><stop offset=".3" stop-color="${m.c}"/><stop offset="1" stop-color="${m.c2}"/></radialGradient>
+  <radialGradient id="${id}g"><stop offset="0" stop-color="${m.rare===3?'#fff3a0':m.rare===2?'#e6b8ff':'#bfe0ff'}" stop-opacity=".75"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs>`;
+  const F=`fill="url(#${id})" stroke="${m.c2}" stroke-width="2" stroke-linejoin="round"`;
+  const L=`stroke="${m.c2}" stroke-width="2" fill="none" opacity=".6"`;
+  let b='';
+  switch(m.sh){
+    case'bone':b=`<g transform="rotate(-45 32 32)" ${F}><rect x="14" y="28" width="36" height="8" rx="3"/><circle cx="13" cy="27" r="6"/><circle cx="13" cy="37" r="6"/><circle cx="51" cy="27" r="6"/><circle cx="51" cy="37" r="6"/></g>`;break;
+    case'shell':b=`<polygon points="32,6 54,19 54,45 32,58 10,45 10,19" ${F}/><path d="M32 6V32M10 19L32 32L54 19M32 32V58" ${L}/>`;break;
+    case'horn':b=`<path d="M20 58 Q12 30 46 6 Q34 28 34 58 Z" ${F}/><path d="M21 48h13M19 38h15M22 28h11" ${L}/>`;break;
+    case'claw':b=`<path d="M10 56 Q14 22 50 8 Q34 26 28 56 Z" ${F}/><path d="M30 56 Q34 34 54 26 Q42 40 42 56Z" ${F}/>`;break;
+    case'scale':b=`<path d="M32 4 Q56 26 32 60 Q8 26 32 4Z" ${F}/><path d="M32 12V52M32 24l-8 6M32 24l8 6M32 36l-9 6M32 36l9 6" ${L}/>`;break;
+    case'wing':b=`<path d="M6 10 L58 18 L50 30 L56 44 L40 40 L32 58 L22 36 Z" ${F}/><path d="M6 10L40 40M6 10L50 30M6 10L32 58" ${L}/>`;break;
+    case'tail':b=`<g ${F}><circle cx="16" cy="46" r="11"/><circle cx="30" cy="35" r="9"/><circle cx="42" cy="25" r="7"/><path d="M47 21 L60 5 L52 25Z"/></g>`;break;
+    case'crystal':b=`<g ${F}><polygon points="14,20 22,30 22,58 12,58 8,32"/><polygon points="50,18 56,32 52,58 42,58 42,30"/><polygon points="32,4 42,22 38,58 26,58 22,22"/></g><path d="M32 4L32 58" stroke="#fff" stroke-width="1.5" opacity=".5"/>`;break;
+    case'cloth':b=`<path d="M8 12 Q20 6 32 12 T56 12 L52 54 Q40 60 30 52 T10 54 Z" ${F}/><path d="M20 14 L18 52M36 14 L38 52" ${L}/>`;break;
+    case'crownp':b=`<path d="M8 50 L12 18 L24 34 L32 10 L40 34 L52 18 L56 50 Z" ${F}/><circle cx="32" cy="42" r="5" fill="#c040ff"/>`;break;
+    case'orb':b=`<circle cx="32" cy="32" r="28" fill="none" stroke="${m.c}" stroke-width="2" opacity=".5"/><circle cx="32" cy="32" r="21" fill="url(#${id}r)" stroke="${m.c2}" stroke-width="2"/>`;break;
+    case'wisp':b=`<path d="M32 60 Q12 50 18 32 Q22 40 28 38 Q20 22 34 4 Q34 22 44 26 Q42 34 46 36 Q54 50 32 60Z" fill="url(#${id}r)" stroke="${m.c2}" stroke-width="2"/>`;break;
+    case'gem':b=`<polygon points="16,8 48,8 60,24 32,60 4,24" ${F}/><path d="M4 24H60M16 8L24 24L32 60L40 24L48 8M24 24L32 8L40 24" stroke="#fff" stroke-width="1.5" fill="none" opacity=".6"/>`;break;
+    case'amber':b=`<path d="M32 4 Q58 18 54 40 Q48 60 30 58 Q8 56 10 34 Q12 12 32 4Z" fill="url(#${id}r)" stroke="${m.c2}" stroke-width="2"/><g stroke="#4a2a08" stroke-width="2" opacity=".75" fill="#4a2a08"><ellipse cx="32" cy="34" rx="3.5" ry="7"/><path d="M29 30l-8-4M29 36l-8 2M35 30l8-4M35 36l8 2"/></g>`;break;
+    case'eye':b=`<path d="M4 32 Q32 4 60 32 Q32 60 4 32Z" fill="url(#${id})" stroke="${m.c2}" stroke-width="2"/><circle cx="32" cy="32" r="13" fill="url(#${id}r)"/><ellipse cx="32" cy="32" rx="3" ry="11" fill="#081830"/>`;break;
+    case'scepter':b=`<rect x="29" y="22" width="6" height="38" rx="2" fill="${m.c}" stroke="#8a6010" stroke-width="1.5"/><path d="M16 22 L32 27 L48 22 L43 13 L32 18 L21 13Z" fill="${m.c}" stroke="#8a6010" stroke-width="1.5"/><circle cx="32" cy="11" r="9" fill="url(#${id}r)" stroke="${m.c2}" stroke-width="2"/>`;break;
+  }
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">${def}${m.rare?`<circle cx="32" cy="32" r="31" fill="url(#${id}g)"/>`:''}${b}</svg>`;
+}
+const ICON={},IMG={};
+for(const k in MATS){ICON[k]='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(matSVG(k));const im=new Image();im.src=ICON[k];IMG[k]=im}
+
+// --- 武器の描画（バトル・アイコン共通）。原点=握り、+x方向が刃 ---
+function drawSword(c,w,len,s,glow){
+  c.save();c.lineJoin='round';c.lineCap='round';
+  const long=w.shape==='spear'||w.shape==='vajra';
+  c.fillStyle='#4a2a14';c.fillRect(-20*s,-3.5*s,22*s,7*s);
+  c.fillStyle=w.shape==='royal'?'#ffe070':'#b88a3a';c.beginPath();c.arc(-21*s,0,4.5*s,0,Math.PI*2);c.fill();
+  if(glow){c.shadowColor=w.glow;c.shadowBlur=glow}
+  const B=w.blade,E=shade(B,-0.4);c.fillStyle=B;c.strokeStyle=E;c.lineWidth=1.6*s;c.beginPath();
+  switch(w.shape){
+    case'wood':c.moveTo(4*s,-5*s);c.lineTo(len-8*s,-5*s);c.quadraticCurveTo(len,0,len-8*s,5*s);c.lineTo(4*s,5*s);break;
+    case'great':c.moveTo(4*s,-12*s);c.lineTo(len*0.82,-12*s);c.lineTo(len,0);c.lineTo(len*0.82,12*s);c.lineTo(len*0.5,12*s);c.lineTo(len*0.46,7*s);c.lineTo(len*0.42,12*s);c.lineTo(4*s,12*s);break;
+    case'katana':c.moveTo(4*s,-3*s);c.quadraticCurveTo(len*0.6,-8*s,len,-15*s);c.quadraticCurveTo(len*0.62,1*s,4*s,4*s);break;
+    case'dark':c.moveTo(4*s,-6*s);for(let i=1;i<6;i++)c.lineTo(4*s+(len-4*s)*i/6,-(i%2?13:6)*s);c.lineTo(len,0);for(let i=5;i>0;i--)c.lineTo(4*s+(len-4*s)*i/6,(i%2?6:10)*s);c.lineTo(4*s,6*s);break;
+    case'amber':c.moveTo(4*s,-7*s);c.lineTo(len*0.68,-13*s);c.lineTo(len,0);c.lineTo(len*0.68,13*s);c.lineTo(4*s,7*s);break;
+    case'royal':c.moveTo(4*s,-8*s);c.lineTo(len*0.9,-5*s);c.lineTo(len*1.04,0);c.lineTo(len*0.9,5*s);c.lineTo(4*s,8*s);break;
+    case'spear':case'vajra':{
+      c.closePath();c.save();c.shadowBlur=0;c.fillStyle=w.shape==='vajra'?'#c89a30':'#6e4c2a';c.fillRect(0,-3*s,len*0.8,6*s);c.restore();
+      c.beginPath();c.fillStyle=B;
+      if(w.shape==='spear'){c.moveTo(len*0.74,-9*s);c.lineTo(len*1.06,0);c.lineTo(len*0.74,9*s);c.lineTo(len*0.8,0)}
+      else{c.moveTo(len*0.76,-5*s);c.lineTo(len*1.1,0);c.lineTo(len*0.76,5*s);c.closePath();
+        for(const sg of[-1,1]){c.moveTo(len*0.76,sg*4*s);c.lineTo(len*0.86,sg*14*s);c.lineTo(len*0.9,sg*8*s);c.lineTo(len*0.98,sg*16*s);c.lineTo(len*0.88,sg*4*s);c.closePath()}}
+      break}
+  }
+  c.closePath();
+  if(w.shape==='amber')c.globalAlpha=0.9;
+  c.fill();c.stroke();c.globalAlpha=1;c.shadowBlur=0;
+  if(w.shape==='amber'||w.shape==='royal'){c.strokeStyle='rgba(255,255,255,0.55)';c.lineWidth=1.2*s;c.beginPath();c.moveTo(6*s,0);c.lineTo(len*0.95,0);c.stroke()}
+  if(w.shape==='katana'){c.strokeStyle='rgba(255,255,255,0.7)';c.lineWidth=1*s;c.beginPath();c.moveTo(6*s,0);c.quadraticCurveTo(len*0.6,-4*s,len*0.95,-12*s);c.stroke()}
+  if(!long){const gw=w.shape==='great'?18:w.shape==='royal'?15:12;c.fillStyle=w.shape==='royal'?'#ffe070':w.shape==='dark'?'#5a3a80':'#b88a3a';c.fillRect(-1*s,-gw*s,6*s,gw*2*s);
+    if(w.shape==='royal'){c.fillStyle='#b040ff';c.beginPath();c.arc(2*s,0,4*s,0,Math.PI*2);c.fill()}}
+  c.restore();
+}
+const swordLen=w=>({spear:165,vajra:165,great:140,royal:150,katana:140}[w.shape]||128);
+
+// --- 防具の描画（背中側） ---
+function drawLegs(c,a,x,gy,s){
+  const cloth=a.style==='cloth',cloak=a.style==='cloak';
+  c.fillStyle=cloth?'#2a1d14':shade(a.color,cloak?-0.45:-0.3);c.fillRect(x-30*s,gy-70*s,22*s,66*s);c.fillRect(x+8*s,gy-70*s,22*s,66*s);
+  if(!cloth){c.fillStyle=a.trim;for(const xx of[x-30*s,x+8*s]){c.beginPath();c.ellipse(xx+11*s,gy-42*s,12*s,7*s,0,0,Math.PI*2);c.fill()}}
+  c.fillStyle=cloth?'#1a120c':a.style==='gold'?a.trim:shade(a.color,-0.55);c.fillRect(x-33*s,gy-20*s,28*s,16*s);c.fillRect(x+5*s,gy-20*s,28*s,16*s);
+  if(a.style==='scale'){c.strokeStyle=rgba(a.trim,0.6);c.lineWidth=1.2*s;for(const xx of[x-19*s,x+19*s])for(let r=0;r<3;r++){c.beginPath();c.arc(xx,gy-64*s+r*8*s,6*s,0.2,Math.PI-0.2);c.stroke()}}
+}
+function drawGauntlet(c,a,x,y,s,ang=0){
+  const cloth=a.style==='cloth';c.save();c.translate(x,y);c.rotate(ang);
+  c.fillStyle=cloth?'#5a3e28':shade(a.color,-0.1);c.beginPath();c.roundRect(-8*s,-26*s,16*s,26*s,4*s);c.fill();
+  c.fillStyle=cloth?a.trim:a.trim;c.fillRect(-9*s,-26*s,18*s,5*s);
+  c.fillStyle=cloth?'#6a4a30':a.style==='gold'?a.trim:shade(a.color,0.15);c.beginPath();c.arc(0,3*s,9*s,0,Math.PI*2);c.fill();
+  if(a.style==='cloak'){c.strokeStyle=a.trim;c.lineWidth=1.5*s;c.shadowColor=a.trim;c.shadowBlur=6;c.stroke()}
+  c.restore();
+}
+function drawBody(c,a,x,gy,s,t=0){
+  const col=a.color,trim=a.trim;
+  const bottom=a.style==='cloak'?gy-28*s:gy-52*s;
+  const g=c.createLinearGradient(0,gy-170*s,0,bottom);g.addColorStop(0,shade(col,0.22));g.addColorStop(1,shade(col,-0.45));
+  c.fillStyle=g;c.beginPath();c.moveTo(x-38*s,gy-160*s);c.lineTo(x+38*s,gy-160*s);
+  if(a.style==='cloak'){const sw=Math.sin(t*3)*4*s;c.lineTo(x+60*s+sw,bottom);for(let i=6;i>=0;i--)c.lineTo(x-60*s+i*20*s+sw,bottom+(i%2?10:0)*s);}
+  else{c.lineTo(x+55*s,bottom);c.lineTo(x-55*s,bottom)}
+  c.closePath();c.fill();c.strokeStyle=a.style==='cloak'?trim:shade(col,-0.6);c.lineWidth=2;
+  if(a.style==='cloak'){c.shadowColor=trim;c.shadowBlur=10}c.stroke();c.shadowBlur=0;
+  if(a.style==='scale'){c.strokeStyle=rgba(trim,0.55);c.lineWidth=1.5*s;for(let r=0;r<5;r++)for(let i=-3;i<=3;i++){const yy=gy-145*s+r*18*s,xx=x+i*14*s+(r%2)*7*s;if(Math.abs(xx-x)>36*s+r*4*s)continue;c.beginPath();c.arc(xx,yy,7*s,0.1,Math.PI-0.1);c.stroke()}}
+  if(a.style==='plate'||a.style==='gold'){c.fillStyle=trim;c.fillRect(x-46*s,gy-90*s,92*s,8*s);
+    c.strokeStyle=rgba('#000000',0.3);c.lineWidth=2*s;c.beginPath();c.moveTo(x,gy-158*s);c.lineTo(x,gy-92*s);c.stroke()}
+  if(a.style==='gold'){c.strokeStyle=rgba('#ffffff',0.35);c.lineWidth=4*s;c.beginPath();c.moveTo(x-28*s,gy-150*s);c.lineTo(x-14*s,gy-100*s);c.stroke()}
+  if(a.style==='cloth'){c.strokeStyle=trim;c.lineWidth=2*s;c.beginPath();c.moveTo(x-50*s,gy-60*s);c.lineTo(x+50*s,gy-60*s);c.stroke()}
+  // 肩
+  if(a.style!=='cloth'){for(const sg of[-1,1]){const gr=c.createRadialGradient(x+sg*38*s,gy-164*s,2,x+sg*40*s,gy-158*s,24*s);gr.addColorStop(0,shade(trim,0.3));gr.addColorStop(1,a.style==='cloak'?shade(col,-0.2):shade(trim,-0.35));
+    c.fillStyle=gr;c.beginPath();c.ellipse(x+sg*40*s,gy-158*s,22*s,13*s,sg*0.25,0,Math.PI*2);c.fill()}}
+}
+function drawHead(c,a,x,gy,s){
+  if(a.style==='cloak'){c.fillStyle=shade(a.color,-0.25);c.beginPath();c.moveTo(x-30*s,gy-160*s);c.quadraticCurveTo(x-34*s,gy-215*s,x,gy-218*s);c.quadraticCurveTo(x+34*s,gy-215*s,x+30*s,gy-160*s);c.closePath();c.fill();
+    c.strokeStyle=a.trim;c.lineWidth=2;c.shadowColor=a.trim;c.shadowBlur=8;c.stroke();c.shadowBlur=0;return}
+  c.fillStyle='#3a2414';c.beginPath();c.ellipse(x,gy-182*s,24*s,25*s,0,0,Math.PI*2);c.fill();
+  if(a.style==='gold'||a.style==='plate'||a.style==='scale'){
+    c.fillStyle=a.style==='scale'?a.color:a.style==='gold'?a.color:shade(a.color,-0.1);c.beginPath();c.ellipse(x,gy-188*s,27*s,22*s,0,Math.PI,0);c.lineTo(x+27*s,gy-180*s);c.lineTo(x-27*s,gy-180*s);c.fill();
+    c.fillStyle=a.trim;c.fillRect(x-28*s,gy-184*s,56*s,5*s);
+    if(a.style==='gold'){c.fillStyle=a.trim;for(const sg of[-1,1]){c.beginPath();c.moveTo(x+sg*18*s,gy-200*s);c.quadraticCurveTo(x+sg*44*s,gy-215*s,x+sg*40*s,gy-238*s);c.lineTo(x+sg*30*s,gy-205*s);c.closePath();c.fill()}}
+  }else{c.fillStyle='#24160c';c.beginPath();c.ellipse(x,gy-190*s,26*s,18*s,0,0,Math.PI*2);c.fill()}
+}
+// アイコン生成（canvas → 画像）
+const EQICON={};
+function weaponIcon(w){if(EQICON[w.id])return EQICON[w.id];const c=document.createElement('canvas');c.width=c.height=128;const g=c.getContext('2d');
+  const L=swordLen(w),sc=158/(L*1.12+26);g.translate(12,116);g.rotate(-Math.PI/4);g.scale(sc,sc);g.translate(26,0);drawSword(g,w,L,1.35,6);
+  return EQICON[w.id]=c.toDataURL()}
+function armorIcon(p){if(EQICON[p.id])return EQICON[p.id];const c=document.createElement('canvas');c.width=c.height=128;const g=c.getContext('2d');const a=p.set;
+  if(p.slot==='head')drawHead(g,a,64,316,1.32);
+  else if(p.slot==='body')drawBody(g,a,64,165,0.82);
+  else if(p.slot==='legs')drawLegs(g,a,64,116,1.45);
+  else{drawGauntlet(g,a,44,88,1.9,-0.25);drawGauntlet(g,a,84,88,1.9,0.25)}
+  return EQICON[p.id]=c.toDataURL()}
+
+// ===================== 拠点UI =====================
+const $=s=>document.querySelector(s);
+let tab='hunt';
+function toast(t){const el=$('#toast');el.textContent=t;el.style.opacity=1;clearTimeout(toast.h);toast.h=setTimeout(()=>el.style.opacity=0,1600)}
+const chip=(k,txt,cls='')=>`<span class="chip ${cls} ${MATS[k].rare?'r'+MATS[k].rare:''}"><img src="${ICON[k]}">${txt}</span>`;
+function costChips(c){const e=Object.entries(c);if(!e.length)return '<span class="chip" style="padding:3px 8px">素材不要</span>';
+  return e.map(([k,q])=>{const h=S.mats[k]||0;return chip(k,`${MATS[k].n} ${h}/${q}`,h<q?'ng':'')}).join('')}
+const pct=p=>p>=0.01?Math.round(p*100)+'%':(p*100).toFixed(p>=0.001?1:2)+'%';
+function renderHub(){
+  const w=W_(S.eqW),as=armStat();
+  $('#equip').innerHTML=`<span><img src="${weaponIcon(w)}">武器 <b>${w.name}+${S.weapons[w.id]}</b>（攻撃 ${atkStat()}）</span><span>${eqPieces().map(p=>`<img src="${armorIcon(p)}" title="${p.name}+${S.armors[p.id]}">`).join('')}防具 合計 <b>防御 ${as.def} / 体力 +${as.hp}</b></span>`;
+  document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab));
+  let h='';
+  if(tab==='hunt'){
+    h+=`<div class="card" style="border-color:#7a2a20"><p style="color:#ffb0a0;margin:0">⚠ ダンジョンで手に入れた素材は<b>帰還するまで未確定</b>。倒れると<b>その探索の戦利品と、装備中の武器・防具をすべて失う</b>（初期装備は強化が+0に戻る）。階の合間に「帰還」か戦闘中の「脱出」なら装備は守れる。</p></div>`;
+    DUNGEONS.forEach((D,i)=>{const lock=!unlocked(i);const boss=EN(D.floors[D.floors.length-1]);
+      const mobs=[...new Set(D.floors.slice(0,-1))].map(EN);
+      h+=`<div class="card ${lock?'locked':''}"><h3>${'★'.repeat(D.stars)} ${D.name}（全${D.floors.length}階） ${S.cleared[D.id]?'<span class="tag ok">踏破済</span>':''}</h3>
+      <p>${lock?'🔒 前のダンジョンを踏破すると解放':D.desc}</p>
+      <p>${D.floors.map((id,f)=>`${f+1}F ${EN(id).name}`).join(' → ')}</p>
+      <div class="rt">道中の敵の素材</div><div class="row">${[...new Set(mobs.flatMap(m=>m.drops.map(d=>d[0])))].map(k=>chip(k,MATS[k].n)).join('')}${mobs.flatMap(m=>m.rares).map(([k,p])=>chip(k,`${MATS[k].n}（${pct(p)}）`)).join('')}</div>
+      <div class="rt">ボス「${boss.name}」の部位破壊報酬</div><div class="row">${boss.parts.filter(p=>!p.body).map(p=>p.mat.map(([k,q])=>chip(k,`${p.name}：${MATS[k].n}×${q}`)).join('')).join('')}</div>
+      <div class="rt">ボスのギミック</div><p style="color:#ffcf9a">${boss.gdesc}</p>
+      <div class="rt">ボスのレアドロップ</div><div class="row">${boss.rares.map(([k,p])=>chip(k,`${MATS[k].n}（${RARE_NAME[MATS[k].rare]} ${pct(p)}）`)).join('')}</div>
+      <div class="row" style="justify-content:flex-end"><button class="btn" data-act="hunt" data-i="${i}" ${lock?'disabled':''}>潜入する</button></div></div>`});
+  }else if(tab==='forge'){
+    const sec=(title,list,kind)=>{h+=`<div class="sect">${title}</div>`;
+      list.forEach(it=>{const own=kind==='w'?S.weapons:S.armors;const lv=own[it.id];const owned=lv!==undefined;
+        const eq=(kind==='w'?S.eqW:S.eqA)===it.id;const rare=Object.keys(it.cost).some(k=>MATS[k].rare);
+        const st=kind==='w'?`攻撃 ${wStat(it,lv||0)}`:(()=>{const s=aStat(it,lv||0);return `防御 ${s.def} / 体力 +${s.hp}`})();
+        h+=`<div class="card ${rare?'rare':''}"><div class="item"><div class="ico"><img src="${kind==='w'?weaponIcon(it):armorIcon(it)}"></div><div class="body">
+        <h3>${it.name}${owned?' +'+lv:''} ${eq?'<span class="tag ok">装備中</span>':''}${!owned?'<span class="tag">未作成</span>':''}</h3>
+        <p>${st} ${it.pdesc?`<span class="tag perk">✦ ${it.pdesc}</span>`:''}</p>`;
+        if(!owned){h+=`<div class="row">${costChips(it.cost)}</div><div class="row"><button class="btn" data-act="craft" data-k="${kind}" data-id="${it.id}" ${has(it.cost)?'':'disabled'}>作成する</button></div>`}
+        else{const c=upgCost(it,lv);
+          h+=`<div class="row">${lv<MAXLV?costChips(c):'<span class="chip" style="padding:3px 8px">強化MAX</span>'}</div><div class="row">
+          ${eq?'':`<button class="btn sub2" data-act="equip" data-k="${kind}" data-id="${it.id}">装備する</button>`}
+          ${lv<MAXLV?`<button class="btn" data-act="upg" data-k="${kind}" data-id="${it.id}" ${has(c)?'':'disabled'}>強化 +${lv}→+${lv+1}（${kind==='w'?'攻撃 '+wStat(it,lv+1):'防御 '+aStat(it,lv+1).def}）</button>`:''}</div>`}
+        h+='</div></div></div>'})};
+    sec(`— 武器 —（素材の目安：そのダンジョン約${WEAPON_CLEARS}回踏破分）`,WEAPONS,'w');
+    h+=`<div class="sect">— 防具（頭・胴・手・足） —</div><p style="font-size:12px;color:#a89478;margin:-4px 0 10px">シリーズの部位を全部そろえると合計：防御／体力。強化は1段ごとに 防御+1・体力+1。素材の目安：防具一式＝そのダンジョン約${ARMOR_SET_CLEARS}回踏破分</p>`;
+    ARMOR_SETS.forEach(st=>{const ps=ARMORS.filter(p=>p.set===st);const rare=!!st.rare||Object.keys(st.perkCost||{}).length>0;
+      h+=`<div class="card ${rare?'rare':''}"><h3>${st.title}シリーズ <span style="font-size:12px;color:#bba78a;font-weight:700">一式 防御${st.def} / 体力+${st.hp}</span>${st.pdesc?`<span class="tag perk">✦ ${SLOTS.find(x=>x.k===st.perkSlot).n}：${st.pdesc}</span>`:''}</h3>`;
+      ps.forEach(it=>{const lv=S.armors[it.id],owned=lv!==undefined,eq=S.eq[it.slot]===it.id,sn=SLOTS.find(x=>x.k===it.slot).n,stt=aStat(it,lv||0);
+        h+=`<div class="prow"><div class="ico"><img src="${armorIcon(it)}"></div><div class="body">
+          <div class="pn"><span class="tag">${sn}</span> <b>${it.name}${owned?' +'+lv:''}</b> ${eq?'<span class="tag ok">装備中</span>':''} <span class="pst">防御 ${stt.def} / 体力 +${stt.hp}</span>${it.pdesc?` <span class="tag perk">✦ ${it.pdesc}</span>`:''}</div>`;
+        if(!owned)h+=`<div class="row">${costChips(it.cost)}<button class="btn mini" data-act="craft" data-k="a" data-id="${it.id}" ${has(it.cost)?'':'disabled'}>作成</button></div>`;
+        else{const c=upgCost(it,lv);h+=`<div class="row">${eq?'':`<button class="btn sub2 mini" data-act="equip" data-k="a" data-id="${it.id}">装備</button>`}${lv<MAXLV?costChips(c)+`<button class="btn mini" data-act="upg" data-k="a" data-id="${it.id}" ${has(c)?'':'disabled'}>強化 +${lv+1}</button>`:'<span class="chip" style="padding:3px 8px">強化MAX</span>'}</div>`}
+        h+='</div></div>'});
+      h+='</div>'});
+  }else if(tab==='mats'){
+    const e=Object.entries(S.mats).filter(([k,q])=>q>0).sort((a,b)=>(MATS[a[0]].rare||0)-(MATS[b[0]].rare||0));
+    h+=e.length?`<div class="mats">${e.map(([k,q])=>`<div class="mat ${MATS[k].rare?'r'+MATS[k].rare:''}"><img src="${ICON[k]}"><div>${MATS[k].n}${MATS[k].rare?`<div style="font-size:10px;color:#e0c0ff">${RARE_NAME[MATS[k].rare]}</div>`:''}</div><b>×${q}</b></div>`).join('')}</div>`:'<div class="card"><p>まだ素材がありません。狩りに出て部位破壊・討伐で集めよう！</p></div>';
+    h+=`<div class="row" style="margin-top:24px"><button class="btn sub2" data-act="reset">データをリセット</button></div>`;
+  }else{
+    h+=`<div class="card how"><h3>遊び方</h3><ul>
+    <li>矢印は出ない。<b>敵のモーション</b>（振りかぶった手足・光る部位）から攻撃が来る方向を読み、<b>その方向へはじき返す</b>ようにスワイプでパリィ！（上からの攻撃→上へ、右下からの攻撃→右下へ。8方向）</li>
+    <li>タイミングの輪は<b>攻撃が来る場所</b>に出る。輪が縮んで<b>黄色</b>になった瞬間にはじこう。</li>
+    <li>輪がピッタリ重なる瞬間なら <b>PERFECT</b>。体勢崩しの時間が延びる。</li>
+    <li><b>強撃</b>（赤く光る大振り）はパリィで体勢ゲージ+2。被弾すると痛い。</li>
+    <li><b>ディレイ攻撃</b>は途中で溜めが止まる。焦って早くスワイプしないように！</li>
+    <li><b>連撃</b>は2〜5発の連続攻撃。上に並ぶ矢印の順に素早く弾こう。<b>⚠マークはブレス／投擲</b>なので回避。全部さばくと体勢+1ボーナス。</li>
+    <li><b>⚠マーク</b>のブレス・投擲はパリィ不可。<b>回避ボタン</b>（Shift）で着弾直前に避けよう。普通の攻撃も回避できるが体勢ゲージは増えない。</li>
+    <li>パリィを規定回数成功させると敵の<b>体勢が崩れる</b>。必要回数は戦闘が長引くほど増えていく。</li>
+    <li>体勢崩し中は、<b>敵の部位を押したまま、こするように動かす</b>と連続攻撃。速くこするほど強い。</li>
+    <li>部位の耐久をゼロにすると<b>部位破壊</b>！その部位の素材が手に入る。</li>
+    <li>防具は<b>頭・胴・手・足</b>の4部位。シリーズごとに作って組み合わせられる（レアシリーズは特定の部位に特殊効果）。</li>
+    <li>倒すと討伐素材と、確率で<b>レア素材</b>がドロップ。レア素材で特殊効果つきの装備が作れる。</li>
+    <li><b>ダンジョン</b>は階層制。HPは階をまたいで持ち越し（次の階へ進むとき最大HPの5%だけ回復）。各階の後に<b>帰還</b>すれば戦利品を持ち帰れるが、<b>倒れると全ロスト</b>。最奥のボスを倒すと踏破＆全部持ち帰り。<b>倒れると装備中の武器・防具も失う</b>（工房で作り直せる）。</li>
+    <li>PCキー：パリィは矢印キー／WASD、斜めは Q・E・Z・C。回避は Shift。</li></ul></div>`;
+  }
+  $('#panel').innerHTML=h;
+}
+document.querySelector('.tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b){tab=b.dataset.tab;renderHub()}});
+$('#panel').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled)return;const act=b.dataset.act;
+  if(act==='hunt')startDungeon(+b.dataset.i);
+  else if(act==='craft'){const it=(b.dataset.k==='w'?W_:A_)(b.dataset.id);if(!has(it.cost))return;pay(it.cost);(b.dataset.k==='w'?S.weapons:S.armors)[it.id]=0;
+    if(b.dataset.k==='w')S.eqW=it.id;else S.eq[it.slot]=it.id;save();toast(`${it.name} を作成して装備した！`);renderHub()}
+  else if(act==='upg'){const own=b.dataset.k==='w'?S.weapons:S.armors;const it=(b.dataset.k==='w'?W_:A_)(b.dataset.id);const c=upgCost(it,own[it.id]);if(!has(c))return;pay(c);own[it.id]++;save();toast(`${it.name} を +${own[it.id]} に強化！`);renderHub()}
+  else if(act==='equip'){if(b.dataset.k==='w')S.eqW=b.dataset.id;else{const it=A_(b.dataset.id);S.eq[it.slot]=it.id}save();renderHub()}
+  else if(act==='reset'){if(b.dataset.sure){S=newSave();migrate();save();toast('リセットしました');renderHub()}else{b.dataset.sure=1;b.textContent='本当にリセット？（もう一度押す）'}}
+});
+
+// ===================== バトル =====================
+const cv=$('#cv'),ctx=cv.getContext('2d');
+let W=0,H=0,DPR=1;
+function resize(){DPR=Math.min(2,window.devicePixelRatio||1);W=innerWidth;H=innerHeight;cv.width=W*DPR;cv.height=H*DPR;cv.style.width=W+'px';cv.style.height=H+'px';ctx.setTransform(DPR,0,0,DPR,0,0)}
+addEventListener('resize',resize);resize();
+
+let B=null,fx={parts:[],floats:[],trails:[],slashes:[],bolts:[],icons:[],flash:null};
+const rand=(a,b)=>a+Math.random()*(b-a),ri=(a,b)=>Math.floor(rand(a,b+1));
+const ease=k=>1-Math.pow(1-k,3);
+const BREATH_IN_FLURRY=0.3,BREATH_WINDUP=0.8;
+const LATE=0.12,PERFECT=0.085,DODGEWIN=0.3,RUB=42,RUBCD=95;
+const PC=()=>({x:W/2,y:H*0.62});           // パリィ判定の中心
+const PP=()=>({x:W/2,y:H*0.82});           // プレイヤー胸元
+
+let RUN=null;
+function startDungeon(i){const D=DUNGEONS[i];const pmax=100+armStat().hp;RUN={i,D,floor:0,loot:{},php:pmax,pmax};startFloor()}
+function floorEnemy(){const id=RUN.D.floors[RUN.floor],E=EN(id);if(!E.minion)return E;
+  const m=1+0.12*RUN.floor;
+  return {...E,hp:Math.round(E.hp*m),dmg:Math.round(E.dmg*(1+0.06*RUN.floor)),parts:E.parts.map(p=>p.hp?{...p,hp:Math.round(p.hp*m)}:p)}}
+const isBossFloor=()=>RUN.floor===RUN.D.floors.length-1;
+function startFloor(){
+  const E=floorEnemy();
+  B={E,hp:E.hp,maxHp:E.hp,parts:E.parts.map((p,k)=>({...p,maxHp:p.hp||0,hp:p.hp||0,broken:false,flash:0,seed:k*13+5})),
+     posture:0,state:'idle',timer:2.0,atk:null,combo:0,brokenT:0,brokenMax:1,bonus:0,php:RUN.php,pmax:RUN.pmax,loot:{},over:false,
+     shake:0,lunge:0,recoil:0,pAnim:null,dAnim:null,hurt:0,t:0,fade:1,tf:{x:0,y:0,rot:0,sc:1,u:1},bounce:0,dodgeAt:-9,dodgeCD:0,lastNeed:0,deathT:0,queue:[],chain:null,preview:null,flurry:null,roar:0,
+     g:{charge:0,armor:0,armorMax:3,armorDone:false,phase2:false,curse:0,curseCD:5,regenAcc:0}};
+  B.lastNeed=needNow();
+  fx={parts:[],floats:[],trails:[],slashes:[],bolts:[],icons:[],flash:null};
+  $('#hub').classList.add('hidden');$('#battle').classList.remove('hidden');$('#result').classList.add('hidden');
+  resize();
+  float(`${RUN.D.name}  ${RUN.floor+1}F`,W/2,H*0.46,'#ffd58a',30,1.6);
+  float(isBossFloor()?`BOSS ${E.name}`:E.name,W/2,H*0.53,isBossFloor()?'#ff7a5a':'#e8d4b4',isBossFloor()?34:24,1.6);
+}
+function endToHub(){B=null;RUN=null;$('#battle').classList.add('hidden');$('#hub').classList.remove('hidden');renderHub()}
+$('#retreat').onclick=()=>{if(!B)return;if(B.over){if($('#result').classList.contains('hidden'))return;endToHub();return}B.over=true;escapeRun()};
+function needNow(){const E=B.E;return Math.max(1,Math.min(E.need[1],E.need[0]+Math.floor(B.t/E.needEvery))+perk('need'))}
+
+function float(t,x,y,c,size=22,life=0.9){fx.floats.push({t,x,y,c,size,life,max:life})}
+function burst(x,y,c,n=14,sp=260,add=false){for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,s=rand(sp*0.3,sp);fx.parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:rand(0.25,0.6),max:0.6,c,r:rand(1.5,4),add})}}
+function dropIcon(k,x,y,delay=0){fx.icons.push({k,x,y,vx:rand(-120,120),vy:rand(-380,-260),t:-delay,life:1.6})}
+
+// --- 敵の攻撃 ---
+function pickMove(){const m=B.E.moves,tot=m.reduce((a,b)=>a+b[1],0);let r=Math.random()*tot;for(const[k,w]of m){if((r-=w)<0)return k}return 'slash'}
+const SPD=0.72,IDLE=0.5;   // 攻撃速度・頻度の全体倍率
+const OPP={R:'L',L:'R',U:'D',D:'U',UR:'DL',DL:'UR',UL:'DR',DR:'UL'};
+function nextAttack(){
+  const E=B.E;B.state='idle';
+  if(B.queue.length){B.timer=0.12;return}
+  if(B.flurry){B.timer=0.06;return}
+  if(B.combo>0){B.combo--;B.timer=0.16}else{B.combo=ri(0,E.combo);B.timer=rand(E.idle[0],E.idle[1])*IDLE*(B.g.phase2?0.7:1)}
+}
+function beginAttack(){
+  const E=B.E;let kind,dir,w,chain=false;
+  let fl=false;const ph=B.g.phase2?0.85:1;
+  if(B.queue.length){kind='slash';dir=B.queue.shift();w=0.62;chain=true;B.chain.idx++}
+  else if(B.flurry){const d=B.flurry.dirs[B.flurry.idx++];fl=true;
+    if(d==='B'){kind='breath';dir='D';w=Math.max(0.34,E.windup*SPD*0.5)*ph}else{kind='slash';dir=d;w=Math.max(0.36,E.windup*SPD*0.55)*ph}}
+  else{kind=pickMove();w=E.windup*SPD*rand(0.92,1.08)*ph;
+    if(kind==='combo'){const n=ri(E.flurry[0],E.flurry[1]);B.flurry={dirs:Array.from({length:n},(_,i)=>i>0&&Math.random()<BREATH_IN_FLURRY?'B':DIRKEYS[ri(0,7)]),idx:1,ok:0,total:n};
+      dir=B.flurry.dirs[0];kind='slash';fl=true;w*=1.15}
+    else dir=DIRKEYS[ri(0,7)]}
+  const a={kind,dir,t:0,w,res:false,fail:false,lunged:false,holdAt:0,holdLeft:0,impactAt:null,chain,fl,cursed:B.g.curse>0&&kind!=='breath'};
+  if(kind==='heavy')a.w*=1.4;
+  if(kind==='breath'&&!fl)a.w*=BREATH_WINDUP;   // ブレス/投擲は溜めを短く（以前は×1.35）
+  if(kind==='delay'){a.holdAt=a.w*rand(0.5,0.68);a.holdLeft=rand(0.3,0.55)}
+  B.atk=a;B.state='windup';
+}
+const earlyWin=()=>Math.min(0.3,B.atk.w*0.45)*perk('parry');
+const needDir=a=>a.cursed?a.dir:OPP[a.dir];   // 攻撃が来た方向へはじき返す（呪い中は逆）
+function enterBroken(extra=0){
+  B.state='broken';B.brokenMax=B.E.breakTime+B.bonus+extra;B.brokenT=B.brokenMax;B.bonus=0;B.combo=0;
+  float('体勢崩し！',W/2,H*0.32,'#ffd04a',46,1.4);B.shake=14;
+  // ゴルム：岩鎧は形態変化後3回目の体勢崩しで砕ける
+  const g=B.g;if(g.armor>0){g.armor--;const t=B.tf;
+    if(g.armor<=0){float('岩鎧が砕けた！',W/2,H*0.24,'#ffd04a',38,1.6);burst(t.x,t.y,'#d8c8b0',70,650);B.shake=22;
+      const bonus=atkStat()*3;B.hp-=bonus;float('-'+bonus,t.x,t.y,'#fff',30,1);if(B.hp<=0&&!B.over)victory()}
+    else{float(`岩鎧にヒビ！ あと${g.armor}回の崩しで砕ける`,W/2,H*0.24,'#d8c8b0',22,1.4);burst(t.x,t.y,'#b0a090',30,420)}}
+}
+function afterResolve(){ // 1回の攻撃が終わったあとの共通処理
+  const a=B.atk;
+  if(a.chain&&!B.queue.length){finishChain();return}
+  if(a.fl){if(B.flurry.idx>=B.flurry.total){finishFlurry();return}B.state='recover';B.timer=0.05;return}
+  if(!a.chain&&B.posture>=needNow()){enterBroken();return}
+  B.state='recover';B.timer=a.res?0.22:0.3;
+}
+function finishFlurry(){
+  const f=B.flurry;B.flurry=null;
+  if(f.ok===f.total){B.posture++;float(`${f.total}連撃 見切り！ 体勢+1`,W/2,H*0.26,'#9fe0ff',24,1.3)}
+  if(B.posture>=needNow())enterBroken();else{B.state='recover';B.timer=0.3}
+}
+function finishChain(){
+  const c=B.chain;B.chain=null;B.g.charge=0;
+  if(c.ok===c.total){float('雷鳴乱舞を完全に弾いた！',W/2,H*0.26,'#9fe8ff',26,1.6);B.posture=Math.max(B.posture,needNow());enterBroken(2)}
+  else{float(`雷鳴乱舞 ${c.ok}/${c.total} パリィ`,W/2,H*0.26,'#cdb89a',22,1.2);if(B.posture>=needNow())enterBroken();else{B.state='recover';B.timer=0.4}}
+}
+function tryParry(ang){
+  const a=B.atk,c=PC();
+  if(a.res||a.fail)return;
+  B.pAnim={ang,t:0,dur:0.16};
+  if(a.kind==='breath'){a.fail=true;float('パリィ不可！ 回避せよ',c.x,c.y-60,'#ff6a6a',24);return}
+  if(a.t<a.w-earlyWin()){a.fail=true;float(a.holdLeft>0||a.kind==='delay'?'ディレイに釣られた！':'早すぎ！',c.x,c.y-60,'#ff8f7a',26);return}
+  const nd=needDir(a);
+  if(angDiff(ang,DIRS[nd])>30){a.fail=true;float(a.cursed?`呪い！ 逆の${DNAME[nd]}だった`:`向きが違う！（${DNAME[nd]}）`,c.x,c.y-60,'#ff8f7a',24);return}
+  a.res=true;const perfect=Math.abs(a.t-a.w)<=PERFECT*perk('parry');
+  const gain=a.kind==='heavy'?2:1;B.posture+=gain;if(perfect)B.bonus+=0.6;
+  const heal=perk('heal');if(heal){B.php=Math.min(B.pmax,B.php+heal)}
+  float((a.kind==='heavy'?'強撃':'')+(perfect?'PERFECT!':'パリィ！'),c.x,c.y-60,perfect?'#fff27a':'#9fe0ff',perfect?40:32,0.9);
+  if(gain>1)float('体勢 +2',c.x,c.y-20,'#9fe0ff',20,0.9);
+  burst(c.x,c.y,perfect?'#fff27a':'#bfe8ff',perfect?34:20,perfect?440:300,true);
+  fx.slashes.push({ang:DIRS[a.dir],life:0.18,max:0.18,c:'#ffffff',parried:true});
+  B.recoil=0.3;B.shake=perfect?10:a.kind==='heavy'?9:5;
+  if(a.chain)B.chain.ok++;
+  if(a.fl)B.flurry.ok++;
+  afterResolve();
+}
+function doDodge(){
+  if(!B||B.over||B.dodgeCD>0)return;
+  B.dodgeCD=0.45;B.dodgeAt=B.t;B.dAnim={t:0,dur:0.38,side:Math.random()<0.5?-1:1};
+}
+function impact(){
+  const a=B.atk,E=B.E;a.impactAt=B.t;
+  if(a.kind==='breath'){const p=PP();
+    if(E.breath.type==='bolt')fx.bolts.push({life:0.32,max:0.32});
+    if(E.breath.type==='rock')burst(p.x,p.y-40,'#a88058',26,380);
+    fx.flash={c:E.breath.c,life:0.25,max:0.25};
+  }else{fx.slashes.push({ang:DIRS[a.dir],life:0.24,max:0.24,c:E.glow,heavy:a.kind==='heavy'});B.lunge=0.25}
+}
+function resolveHit(){
+  const a=B.atk;const win=DODGEWIN*perk('dodge');
+  if(B.dodgeAt>=a.impactAt-win&&B.dodgeAt<=a.impactAt+LATE){float('回避成功！',W/2,H*0.7,'#9fffc0',30,0.9);if(a.fl&&a.kind==='breath'&&B.flurry)B.flurry.ok++;return}
+  const mul=(a.kind==='heavy'?1.6:a.kind==='breath'?1.35:1)*(a.fl?0.6:1);
+  const raw=B.E.dmg*mul*rand(0.9,1.1);const def=armStat().def;const dmg=Math.round(raw*100/(100+def));
+  B.php-=dmg;B.hurt=0.4;B.shake=a.kind==='heavy'?20:14;B.posture=Math.max(0,B.posture-1);
+  float('-'+dmg,W/2,H*0.76,'#ff5a4a',a.kind==='heavy'?40:32,0.9);
+  if(B.php<=0){B.php=0;B.over=true;setTimeout(died,900)}
+}
+
+// --- プレイヤーの攻撃（こすり） ---
+function strike(p,f,x,y,ang){
+  let dmg=atkStat()*f*rand(0.9,1.1)*(p.weak&&!p.broken?p.weak:1)*(B.g.armor>0?0.2:1);
+  const crit=Math.random()<0.1+perk('crit');if(crit)dmg*=1.8;dmg=Math.max(1,Math.round(dmg));
+  B.hp-=dmg;guardPhase();p.flash=0.12;B.bounce=0.1;
+  B.pAnim={ang,t:0,dur:0.12};
+  float((crit?'会心 ':'')+dmg,x+rand(-14,14),y-10,crit?'#ff6a4a':'#fff',crit?28:20,0.7);
+  burst(x,y,crit?'#ff9a6a':'#ffcf8a',crit?14:7,crit?340:220);B.shake=Math.max(B.shake,crit?7:3);
+  fx.slashes.push({ang,life:0.14,max:0.14,c:W_(S.eqW).glow,at:{x,y},small:true});
+  if(!p.body&&!p.broken){p.hp-=Math.round(dmg*perk('part'));if(p.hp<=0)breakPart(p)}
+  if(B.hp<=0&&!B.over)victory();
+}
+function breakPart(p){
+  p.broken=true;p.hp=0;const bonus=atkStat()*2;B.hp-=bonus;guardPhase();
+  const t=B.tf,pt=toScreen(p.x*t.u,p.y*t.u);
+  burst(pt.x,pt.y,'#ffe08a',40,520,true);B.shake=16;
+  p.mat.forEach(([k,q],i)=>{B.loot[k]=(B.loot[k]||0)+q;for(let j=0;j<Math.min(q,3);j++)dropIcon(k,pt.x,pt.y,i*0.1+j*0.06)});
+  float(`${p.name} 破壊！`,pt.x,pt.y-30,'#ffd04a',34,1.4);
+  float(p.mat.map(([k,q])=>`${MATS[k].n}×${q}`).join('  ')+' 獲得',pt.x,pt.y+10,'#bdf0a8',20,1.6);
+}
+function victory(){
+  B.over=true;B.hp=0;B.dying=true;const drops={},rares={};
+  B.E.drops.forEach(([k,a,b])=>{const n=ri(a,b);if(n>0){drops[k]=n;B.loot[k]=(B.loot[k]||0)+n}});
+  B.E.rares.forEach(([k,p])=>{if(Math.random()<p){rares[k]=1;B.loot[k]=(B.loot[k]||0)+1}});
+  const t=B.tf;burst(t.x,t.y,B.E.glow,70,650,true);
+  let d=0;for(const k in drops){dropIcon(k,t.x,t.y,0.5+d);d+=0.08}
+  const rk=Object.keys(rares);
+  rk.forEach((k,i)=>{dropIcon(k,t.x,t.y,0.9+i*0.15);setTimeout(()=>{float(`${RARE_NAME[MATS[k].rare]}ドロップ！ ${MATS[k].n}`,W/2,H*0.45+i*44,'#fff0a0',30,1.6);burst(W/2,H*0.45+i*44,'#ffe070',40,500,true)},900+i*300)});
+  setTimeout(()=>floorCleared(rares),1700+rk.length*300);
+}
+const lootChips=o=>{const e=Object.entries(o);return e.length?e.sort((a,b)=>(MATS[b[0]].rare||0)-(MATS[a[0]].rare||0)).map(([k,q])=>chip(k,`${MATS[k].n} ×${q}`)).join(''):'<span class="chip" style="padding:3px 8px">なし</span>'};
+function addLoot(dst,src){for(const k in src)dst[k]=(dst[k]||0)+src[k]}
+function bankRun(){for(const k in RUN.loot)addMat(k,RUN.loot[k]);save()}
+function showBox(html){$('#resultBox').innerHTML=html;$('#result').classList.remove('hidden')}
+function floorCleared(rares){
+  addLoot(RUN.loot,B.loot);RUN.php=B.php;
+  const rk=Object.keys(rares);
+  const rareHtml=rk.length?`<div class="rarebanner">✦ レアドロップ ✦</div><div class="row">${rk.map(k=>chip(k,`${MATS[k].n}（${RARE_NAME[MATS[k].rare]}）`)).join('')}</div>`:'';
+  if(isBossFloor()){
+    bankRun();const D=RUN.D,first=!S.cleared[D.id];S.cleared[D.id]=true;save();
+    const next=DUNGEONS[RUN.i+1];
+    showBox(`<h2 style="color:#ffd58a">ダンジョン踏破！</h2>${rareHtml}
+      <div style="font-size:13px;color:#bba78a">持ち帰った戦利品</div><div class="row">${lootChips(RUN.loot)}</div>
+      ${first&&next?`<p style="color:#bdf0a8;font-weight:700;margin-bottom:14px">新ダンジョン「${next.name}」が解放された！</p>`:''}
+      <div class="row"><button class="btn" id="home">拠点へ戻る</button></div>`);
+    $('#home').onclick=endToHub;return;
+  }
+  const heal=Math.round(RUN.pmax*0.05);
+  showBox(`<h2 style="color:#ffd58a">${RUN.floor+1}F 突破！</h2>${rareHtml}
+    <div style="font-size:13px;color:#bba78a">この階の戦利品</div><div class="row">${lootChips(B.loot)}</div>
+    <div style="font-size:13px;color:#ffb0a0">未確定の戦利品（倒れると失う）</div><div class="row">${lootChips(RUN.loot)}</div>
+    <p style="font-size:14px;margin-bottom:6px">HP ${Math.ceil(RUN.php)} / ${RUN.pmax}　次は <b>${RUN.floor+2}F ${isLast2()?'BOSS ':''}${EN(RUN.D.floors[RUN.floor+1]).name}</b></p>
+    <div class="row"><button class="btn sub2" id="goHome">帰還する（持ち帰る）</button><button class="btn" id="goNext">次の階へ（HP+${heal}）</button></div>`);
+  $('#goHome').onclick=()=>{bankRun();showBox(`<h2 style="color:#bdf0a8">無事に帰還した</h2><div style="font-size:13px;color:#bba78a">持ち帰った戦利品</div><div class="row">${lootChips(RUN.loot)}</div><div class="row"><button class="btn" id="home">拠点へ戻る</button></div>`);$('#home').onclick=endToHub};
+  $('#goNext').onclick=()=>{RUN.php=Math.min(RUN.pmax,RUN.php+heal);RUN.floor++;startFloor()};
+}
+const isLast2=()=>RUN.floor+1===RUN.D.floors.length-1;
+function loseEquipment(){
+  const out=[];const w=W_(S.eqW);
+  if(S.eqW==='w0'){if(S.weapons.w0>0)out.push({t:`${w.name}+${S.weapons.w0} → +0`,i:weaponIcon(w)});S.weapons.w0=0}
+  else{out.push({t:`${w.name}+${S.weapons[S.eqW]}`,i:weaponIcon(w)});delete S.weapons[S.eqW];S.eqW='w0';if(S.weapons.w0===undefined)S.weapons.w0=0}
+  for(const sl of SLOTS){const p=A_(S.eq[sl.k]),lv=S.armors[p.id]||0;
+    if(p.set.id==='a0'){if(lv>0)out.push({t:`${p.name}+${lv} → +0`,i:armorIcon(p)});S.armors[p.id]=0}
+    else{out.push({t:`${p.name}+${lv}`,i:armorIcon(p)});delete S.armors[p.id];S.eq[sl.k]='a0_'+sl.k;if(S.armors['a0_'+sl.k]===undefined)S.armors['a0_'+sl.k]=0}}
+  save();return out;
+}
+function died(){
+  const lost={};addLoot(lost,RUN.loot);addLoot(lost,B.loot);const eq=loseEquipment();
+  showBox(`<h2 style="color:#ff8f7a">力尽きた…</h2><p style="color:#ffb0a0;font-weight:700">${RUN.D.name} ${RUN.floor+1}F で倒れ、装備と戦利品をすべて失った</p>
+    <div style="font-size:13px;color:#bba78a">失った装備</div><div class="row" style="opacity:.6;filter:grayscale(.6)">${eq.length?eq.map(o=>`<span class="chip"><img src="${o.i}">${o.t}</span>`).join(''):'<span class="chip" style="padding:3px 8px">なし</span>'}</div>
+    <div style="font-size:13px;color:#bba78a">失った戦利品</div><div class="row" style="opacity:.6;filter:grayscale(.6)">${lootChips(lost)}</div>
+    <div class="row"><button class="btn" id="home">拠点へ戻る</button></div>`);
+  $('#home').onclick=endToHub;
+}
+function escapeRun(){
+  bankRun();
+  showBox(`<h2 style="color:#e8d4b4">脱出した</h2><p style="font-size:13px;color:#ffb0a0">この階（${RUN.floor+1}F）で得た戦利品は置いてきた</p>
+    <div style="font-size:13px;color:#bba78a">持ち帰った戦利品（${RUN.floor}F までの分）</div><div class="row">${lootChips(RUN.loot)}</div>
+    <div class="row"><button class="btn" id="home">拠点へ戻る</button></div>`);
+  $('#home').onclick=endToHub;
+}
+
+// --- 入力 ---
+let ptr=null;
+cv.addEventListener('pointerdown',e=>{if(!B)return;const now=performance.now();
+  ptr={sx:e.clientX,sy:e.clientY,lx:e.clientX,ly:e.clientY,t:now,acc:0,lastHit:now-RUBCD,accT:now,used:false,pts:[{x:e.clientX,y:e.clientY}],blocked:false};
+  try{cv.setPointerCapture(e.pointerId)}catch(_){}});
+cv.addEventListener('pointermove',e=>{if(!ptr||!B)return;const now=performance.now(),x=e.clientX,y=e.clientY;
+  const seg=Math.hypot(x-ptr.lx,y-ptr.ly);ptr.pts.push({x,y});if(ptr.pts.length>24)ptr.pts.shift();
+  if(B.state==='broken'&&!B.over){
+    ptr.acc+=seg;
+    if(seg>2)fx.trails.push({pts:[{x:ptr.lx,y:ptr.ly},{x,y}],life:0.22,max:0.22,c:'#ffe0a0'});
+    if(ptr.acc>=RUB&&now-ptr.lastHit>=RUBCD){
+      const p=hitTest(x,y);
+      if(p){const speed=ptr.acc/Math.max(0.03,(now-ptr.accT)/1000);const f=0.3+Math.min(0.4,speed/5000);
+        strike(p,f,x,y,Math.atan2(y-ptr.ly,x-ptr.lx)*180/Math.PI)}
+      ptr.acc=0;ptr.lastHit=now;ptr.accT=now;
+    }
+  }else if(!ptr.used){
+    const dx=x-ptr.sx,dy=y-ptr.sy;
+    if(Math.hypot(dx,dy)>=45){ptr.used=true;gesture(dx,dy)}
+  }
+  ptr.lx=x;ptr.ly=y});
+cv.addEventListener('pointerup',e=>{if(!ptr)return;const p=ptr;ptr=null;if(!B)return;
+  const dx=e.clientX-p.sx,dy=e.clientY-p.sy;
+  if(B.state!=='broken'&&!p.used&&Math.hypot(dx,dy)>=28)gesture(dx,dy);
+  if(B.state!=='broken'&&Math.hypot(dx,dy)>28)fx.trails.push({pts:[...p.pts,{x:e.clientX,y:e.clientY}],life:0.28,max:0.28,c:'#a8e4ff'})});
+cv.addEventListener('pointercancel',()=>ptr=null);
+cv.addEventListener('contextmenu',e=>e.preventDefault());
+function gesture(dx,dy){
+  if(!B||B.over)return;const ang=Math.atan2(dy,dx)*180/Math.PI;
+  if(B.state==='windup'&&!B.atk.res&&!B.atk.fail){tryParry(ang);return}
+  if(hitTest(ptr?ptr.sx:W/2,ptr?ptr.sy:H/2)){const c=PC();burst(c.x,c.y-120,'#ccc',8,160);float('ガキン！ 弾かれた',W/2,H*0.3,'#cfc4b4',18,0.8);float('まず体勢を崩せ！',W/2,H*0.25,'#ffb070',18,1)}
+}
+const dodgeBtn=$('#dodge');
+dodgeBtn.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();doDodge()});
+const KEYDIR={ArrowLeft:'L',ArrowRight:'R',ArrowUp:'U',ArrowDown:'D',a:'L',d:'R',w:'U',s:'D',q:'UL',e:'UR',z:'DL',c:'DR'};
+addEventListener('keydown',e=>{if(!B||B.over)return;
+  if(e.key==='Shift'){e.preventDefault();if(!e.repeat)doDodge();return}
+  const m=KEYDIR[e.key.length===1?e.key.toLowerCase():e.key];
+  if(m){e.preventDefault();if(B.state==='windup'&&!B.atk.res&&!B.atk.fail)tryParry(DIRS[m])}});
+
+// --- 座標変換 ---
+function toScreen(x,y){const t=B.tf,c=Math.cos(t.rot),s=Math.sin(t.rot);x*=t.sc;y*=t.sc;return {x:t.x+x*c-y*s,y:t.y+x*s+y*c}}
+function hitTest(px,py){
+  const t=B.tf;let dx=px-t.x,dy=py-t.y;const c=Math.cos(-t.rot),s=Math.sin(-t.rot);
+  let x=(dx*c-dy*s)/t.sc,y=(dx*s+dy*c)/t.sc;
+  for(let i=B.parts.length-1;i>=0;i--){const p=B.parts[i];const k=p.broken?0.85:1;
+    const nx=(x-p.x*t.u)/(p.rx*t.u*k*1.15),ny=(y-p.y*t.u)/(p.ry*t.u*k*1.15);if(nx*nx+ny*ny<=1)return p}
+  return null;
+}
+
+// ===================== 描画 =====================
+function ell(x,y,rx,ry){ctx.beginPath();ctx.ellipse(x,y,Math.max(1,rx),Math.max(1,ry),0,0,Math.PI*2)}
+function drawBG(){
+  const E=B.E,g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,E.bg[1]);g.addColorStop(0.45,E.bg[0]);g.addColorStop(1,E.bg[1]);
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  const hz=H*0.5;ctx.strokeStyle='rgba(255,255,255,0.05)';ctx.lineWidth=1;
+  for(let i=-10;i<=10;i++){ctx.beginPath();ctx.moveTo(W/2+i*W*0.04,hz);ctx.lineTo(W/2+i*W*0.35,H);ctx.stroke()}
+  for(let i=1;i<9;i++){const y=hz+(H-hz)*Math.pow(i/9,1.8);ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+  // 漂う粒子
+  ctx.fillStyle=rgba(E.glow,0.25);for(let i=0;i<24;i++){const x=(i*97+B.t*12*(1+i%3))%W,y=H*0.1+((i*53+Math.sin(B.t+i)*20)%(H*0.5));ctx.fillRect(x,y,2,2)}
+  const v=ctx.createRadialGradient(W/2,H*0.45,Math.min(W,H)*0.2,W/2,H*0.5,Math.max(W,H)*0.75);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.65)');ctx.fillStyle=v;ctx.fillRect(0,0,W,H);
+}
+function activeLimb(p,a){if(!p.limb||!a||a.kind==='breath')return false;const v=DV[a.dir];return Math.abs(v.x)<0.3||Math.sign(p.x)===-Math.sign(v.x)}
+function partOff(p,u){
+  let ox=0,oy=0;const a=B.atk;
+  if(p.limb){ox+=Math.sin(B.t*2+p.x*3)*u*0.012;oy+=Math.cos(B.t*2.4+p.x*3)*u*0.018}
+  if(B.state==='windup'&&a){
+    if(a.kind!=='breath'&&p.limb){
+      const v=DV[a.dir];
+      if(activeLimb(p,a)){
+        if(a.t<a.w){const k=ease(Math.min(1,a.t/a.w));ox+=-v.x*u*0.4*k;oy+=-v.y*u*0.42*k-(a.kind==='heavy'?u*0.18*k:0)}
+        else{const k=1-Math.min(1,(a.t-a.w)/0.18);ox+=v.x*u*0.4*k;oy+=v.y*u*0.4*k}
+      }
+      if(a.holdLeft>0&&a.t>=a.holdAt){ox+=(Math.random()-0.5)*u*0.03}
+    }
+    if(a.kind==='breath'&&p.id==='head'){if(a.t<a.w){const k=ease(a.t/a.w);oy-=u*0.12*k;ox+=Math.sin(B.t*30)*u*0.01*k}else oy+=u*0.1}
+  }
+  return {ox,oy};
+}
+function drawEnemy(){
+  const E=B.E,u=Math.min(W*0.34,H*0.22)*(E.size||1);let x=W/2,y=H*0.38+(1-(E.size||1))*H*0.12,rot=0,sc=1,glow=0;
+  y+=Math.sin(B.t*2.2)*u*0.015;sc+=Math.sin(B.t*2.2)*0.006;
+  const a=B.atk;
+  if(B.state==='windup'&&a){const p=Math.min(1,a.t/a.w);glow=p;
+    if(a.kind==='breath'){y-=u*0.05*p;sc=1+0.03*p}
+    else{const v=DV[a.dir];x-=v.x*u*0.16*p;y-=v.y*u*0.1*p+u*0.03*p;sc=1+0.05*p;rot=-v.x*0.08*p;
+      if(a.kind==='heavy'){y-=u*0.14*p;sc+=0.06*p}}
+    if(a.holdLeft>0&&a.t>=a.holdAt){x+=(Math.random()-0.5)*4}
+  }
+  if(B.lunge>0){const k=B.lunge/0.25;sc+=0.12*k;y+=u*0.15*k}
+  if(B.recoil>0){const k=B.recoil/0.3;y-=u*0.08*k;sc-=0.04*k;rot+=Math.sin(B.recoil*40)*0.03}
+  if(B.bounce>0){sc-=0.03*(B.bounce/0.1);x+=(Math.random()-0.5)*4}
+  if(B.state==='broken'&&!B.dying){rot=0.13*Math.sin(B.t*2.4);y+=u*0.07}
+  if(B.roar>0){sc+=0.07*Math.sin(B.roar*30)*(B.roar/1.2);y-=u*0.06*(B.roar/1.2);glow=Math.max(glow,B.roar/1.2)}
+  if(B.dying){B.deathT+=1/60;rot=Math.min(0.5,B.deathT*0.4);y+=u*0.4*Math.min(1,B.deathT*0.8)}
+  B.tf={x,y,rot,sc,u};
+  ctx.save();ctx.globalAlpha=B.fade;
+  ctx.fillStyle='rgba(0,0,0,0.4)';ell(W/2,H*0.38+u*0.82,u*0.9*sc,u*0.12);ctx.fill();
+  if(B.roar>0){const k=1-B.roar/1.2;for(let i=0;i<2;i++){const kk=(k*1.6+i*0.3)%1;ctx.strokeStyle=rgba(E.glow,(1-kk)*0.7);ctx.lineWidth=6*(1-kk)+1;ctx.beginPath();ctx.arc(x,y,u*(0.4+kk*1.6),0,Math.PI*2);ctx.stroke()}}
+  ctx.translate(x,y);ctx.rotate(rot);ctx.scale(sc,sc);
+  const heavyCol=a&&a.kind==='heavy'?'#ff3a2a':E.glow;
+  if(glow>0){ctx.shadowColor=heavyCol;ctx.shadowBlur=40*glow}
+  const aw=B.state==='windup'&&a&&!a.chain;
+  for(const p of B.parts){const o=partOff(p,u);ctx.save();ctx.translate(o.ox,o.oy);
+    if(glow>0){const act=aw&&(activeLimb(p,a)||(a.kind==='breath'&&p.id==='head'));ctx.shadowColor=heavyCol;ctx.shadowBlur=act?60*glow:12*glow}
+    drawPart(p,u,glow);if(B.g.armor>0)drawArmor(p,u);ctx.restore()}
+  ctx.shadowBlur=0;
+  if(B.state==='broken'&&!B.over)for(const p of B.parts){if(p.body||p.broken)continue;
+    const bw=u*0.32,bx=p.x*u-bw/2,by=p.y*u-p.ry*u-12;
+    ctx.fillStyle='rgba(0,0,0,0.6)';ctx.fillRect(bx-1,by-1,bw+2,7);ctx.fillStyle='#ffb84a';ctx.fillRect(bx,by,bw*p.hp/p.maxHp,5)}
+  if(B.state==='broken'&&!B.dying){const hd=B.parts.find(p=>p.id==='head');for(let i=0;i<3;i++){const an=B.t*3+i*2.1;
+    drawStar(hd.x*u+Math.cos(an)*u*0.3,hd.y*u-u*0.3+Math.sin(an)*u*0.08,7,'#ffe46a')}}
+  ctx.restore();
+}
+function drawStar(x,y,r,c){ctx.fillStyle=c;ctx.beginPath();for(let i=0;i<10;i++){const a=i*Math.PI/5-Math.PI/2,rr=i%2?r*0.45:r;ctx.lineTo(x+Math.cos(a)*rr,y+Math.sin(a)*rr)}ctx.closePath();ctx.fill()}
+
+function drawPart(p,u,glow){
+  const E=B.E,k=p.broken?0.85:1,cx=p.x*u,cy=p.y*u,rx=p.rx*u*k,ry=p.ry*u*k;
+  const base=p.broken?shade(p.c,-0.35):p.c;
+  if(p.deco==='wing'&&!p.broken){const s=p.x<0?-1:1;const flap=Math.sin(B.t*3)*ry*0.15;ctx.fillStyle=shade(base,-0.25);ctx.beginPath();ctx.moveTo(cx-s*rx*0.8,cy);
+    ctx.lineTo(cx+s*rx*1.05,cy-ry*1.25+flap);ctx.lineTo(cx+s*rx*1.15,cy+ry*0.2);ctx.lineTo(cx+s*rx*0.5,cy+ry*0.9);ctx.closePath();ctx.fill()}
+  if(p.deco==='horns2'){ctx.fillStyle=p.broken?'#5a4a3a':'#e8dcc0';for(const s of[-1,1]){ctx.beginPath();ctx.moveTo(cx+s*rx*0.45,cy-ry*0.5);
+    const L=p.broken?0.35:1;ctx.quadraticCurveTo(cx+s*rx*1.3,cy-ry*1.4*L,cx+s*rx*0.9,cy-ry*2.3*L);ctx.lineTo(cx+s*rx*0.75,cy-ry*0.7);ctx.closePath();ctx.fill()}}
+  if(p.deco==='horn1'){ctx.fillStyle=p.broken?'#6a6040':'#ffe060';const sb=ctx.shadowBlur;ctx.shadowColor='#ffe060';ctx.shadowBlur=p.broken?0:18;const L=p.broken?0.4:1;
+    ctx.beginPath();ctx.moveTo(cx-rx*0.3,cy-ry*0.6);ctx.lineTo(cx+rx*0.1,cy-ry*(0.6+2.4*L));ctx.lineTo(cx+rx*0.05,cy-ry*(0.6+1.2*L));ctx.lineTo(cx+rx*0.45,cy-ry*(0.6+1.9*L));ctx.lineTo(cx+rx*0.3,cy-ry*0.6);ctx.closePath();ctx.fill();ctx.shadowBlur=sb}
+  if(p.deco==='crown'){ctx.fillStyle=p.broken?'#6a5a30':'#ecc860';ctx.beginPath();const n=p.broken?3:5;ctx.moveTo(cx-rx*0.95,cy-ry*0.4);
+    for(let i=0;i<n;i++){const t0=-0.95+i*1.9/n,t1=t0+0.95/n;ctx.lineTo(cx+rx*t1,cy-ry*(p.broken?1.1:1.9));ctx.lineTo(cx+rx*(t0+1.9/n),cy-ry*0.9)}
+    ctx.lineTo(cx-0.95*rx+rx*1.9*(p.broken?0.6:1),cy-ry*0.4);ctx.closePath();ctx.fill()}
+  if(p.deco==='blade'&&!p.broken){const s=p.x<0?-1:1;ctx.fillStyle='#d8ccf0';ctx.beginPath();ctx.moveTo(cx+s*rx*0.3,cy+ry*0.7);ctx.lineTo(cx+s*rx*1.6,cy+ry*1.5);ctx.lineTo(cx+s*rx*0.7,cy+ry*0.55);ctx.closePath();ctx.fill()}
+  const g=ctx.createRadialGradient(cx-rx*0.35,cy-ry*0.45,0,cx,cy,Math.max(rx,ry)*1.1);
+  g.addColorStop(0,shade(base,0.28));g.addColorStop(0.6,base);g.addColorStop(1,shade(base,-0.45));
+  ctx.fillStyle=g;ell(cx,cy,rx,ry);ctx.fill();ctx.lineWidth=2;ctx.strokeStyle=shade(base,-0.6);ctx.stroke();
+  const sb=ctx.shadowBlur;ctx.shadowBlur=0;
+  if(p.deco==='rocks'){ctx.fillStyle=shade(base,-0.25);for(let i=0;i<5;i++){const t=(i-2)/2.5;ctx.beginPath();ctx.moveTo(cx+t*rx-rx*0.12,cy-ry*0.2);ctx.lineTo(cx+t*rx,cy-ry*(p.broken?0.6:1.25));ctx.lineTo(cx+t*rx+rx*0.12,cy-ry*0.2);ctx.fill()}}
+  if(p.deco==='claws'&&!p.broken){ctx.fillStyle='#efe2c8';for(let i=-1;i<=1;i++){ctx.beginPath();ctx.moveTo(cx+i*rx*0.55-5,cy+ry*0.85);ctx.lineTo(cx+i*rx*0.6,cy+ry*1.2);ctx.lineTo(cx+i*rx*0.55+5,cy+ry*0.85);ctx.fill()}}
+  if(p.deco==='spikes'){ctx.fillStyle=p.broken?'#556':'#9fd8ff';for(let i=0;i<4;i++){const t=-0.6+i*0.4;ctx.beginPath();ctx.moveTo(cx+t*rx-6,cy-ry*0.6);ctx.lineTo(cx+t*rx,cy-ry*(p.broken?0.9:1.7));ctx.lineTo(cx+t*rx+6,cy-ry*0.6);ctx.fill()}}
+  if(p.deco==='wing'){ctx.strokeStyle=shade(base,-0.5);ctx.lineWidth=2;const s=p.x<0?-1:1;for(let i=0;i<4;i++){ctx.beginPath();ctx.moveTo(cx-s*rx*0.8,cy+ry*0.2);ctx.lineTo(cx+s*rx*(0.9-i*0.35),cy-ry*0.85+i*ry*0.35);ctx.stroke()}}
+  if(p.deco==='robe'){ctx.fillStyle=shade(base,-0.3);ctx.beginPath();ctx.moveTo(cx-rx,cy+ry*0.4);for(let i=0;i<=6;i++){ctx.lineTo(cx-rx+i*rx/3,cy+ry*(i%2?1.25:0.95)+Math.sin(B.t*3+i)*4)}ctx.lineTo(cx+rx,cy+ry*0.4);ctx.fill()}
+  if(p.deco==='core'&&!p.broken){const pl=0.5+0.5*Math.sin(B.t*5);ctx.fillStyle=`rgba(255,160,255,${0.35+0.4*pl})`;ell(cx,cy,rx*0.55,ry*0.55);ctx.fill()}
+  if(p.eyes){const ec=E.eye,b=0.6+0.4*glow;ctx.fillStyle=ec;ctx.shadowColor=ec;ctx.shadowBlur=12+20*glow;
+    if(B.state==='broken'||B.dying){ctx.strokeStyle=ec;ctx.lineWidth=3;for(const s of[-1,1]){const ex=cx+s*rx*0.38,ey=cy+ry*0.05;ctx.beginPath();ctx.moveTo(ex-6,ey-6);ctx.lineTo(ex+6,ey+6);ctx.moveTo(ex+6,ey-6);ctx.lineTo(ex-6,ey+6);ctx.stroke()}}
+    else for(const s of[-1,1]){ctx.globalAlpha*=b;ell(cx+s*rx*0.38,cy+ry*0.05,rx*0.14,ry*0.11*(Math.sin(B.t*1.3)>0.97?0.15:1));ctx.fill();ctx.globalAlpha/=b}
+    ctx.shadowBlur=0;
+    // ブレスの溜め：口元に光
+    const a=B.atk;if(B.state==='windup'&&a&&a.kind==='breath'&&a.t<a.w){const k=a.t/a.w,bc=E.breath.c;const gr=ctx.createRadialGradient(cx,cy+ry*0.6,0,cx,cy+ry*0.6,ry*1.2*k+4);gr.addColorStop(0,'#fff');gr.addColorStop(0.3,bc);gr.addColorStop(1,rgba(bc.length===7?bc:'#ffffff',0));ctx.fillStyle=gr;ell(cx,cy+ry*0.6,ry*1.2*k+4,ry*1.2*k+4);ctx.fill()}}
+  if(p.broken){ctx.strokeStyle='rgba(20,10,5,0.8)';ctx.lineWidth=2.5;let r=p.seed;const rnd=()=>((r=(r*9301+49297)%233280)/233280);
+    for(let j=0;j<2;j++){ctx.beginPath();let px=cx+(rnd()-0.5)*rx,py=cy-ry*0.8;ctx.moveTo(px,py);for(let i=0;i<4;i++){px+=(rnd()-0.5)*rx*0.6;py+=ry*0.4;ctx.lineTo(px,py)}ctx.stroke()}}
+  if(p.flash>0){ctx.fillStyle=`rgba(255,255,255,${p.flash/0.12*0.7})`;ell(cx,cy,rx,ry);ctx.fill()}
+  ctx.shadowBlur=sb;
+}
+function headScreen(){const h=B.parts.find(p=>p.id==='head'),u=B.tf.u,o=partOff(h,u);return toScreen(h.x*u+o.ox,h.y*u+o.oy+h.ry*u*0.6)}
+
+function drawBreath(){
+  const a=B.atk;if(B.state!=='windup'||!a||a.kind!=='breath')return;
+  const E=B.E,b=E.breath,h=headScreen(),p=PP();
+  const ld=Math.min(0.4,a.w*0.75);if(b.type==='rock'&&a.t>a.w-ld&&a.t<a.w){const k=(a.t-(a.w-ld))/ld;const x=h.x+(p.x-h.x)*k,y=h.y+(p.y-60-h.y)*k-Math.sin(k*Math.PI)*60,r=12+60*k*k;
+    ctx.save();ctx.translate(x,y);ctx.rotate(B.t*8);ctx.fillStyle='#7a6248';ctx.strokeStyle='#3a2a1a';ctx.lineWidth=3;ctx.beginPath();
+    for(let i=0;i<9;i++){const an=i/9*Math.PI*2,rr=r*(0.8+0.2*Math.sin(i*2.7));ctx.lineTo(Math.cos(an)*rr,Math.sin(an)*rr)}ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,0.15)';ell(-r*0.3,-r*0.3,r*0.35,r*0.25);ctx.fill();ctx.restore()}
+}
+
+// 攻撃が「来る場所」（はじく方向）＝ 振りの逆側。ブレスは口元
+function attackPoint(a){
+  if(a.kind==='breath')return headScreen();
+  const t=B.tf,o=DV[OPP[a.dir]];
+  return {x:Math.max(70,Math.min(W-70,t.x+o.x*t.u*1.0)),y:Math.max(120,Math.min(H*0.7,t.y+o.y*t.u*0.8-t.u*0.05))};
+}
+function label(tx,col,y){const fs=Math.round(Math.min(24,W*0.055));ctx.font=`900 ${fs}px 'M PLUS 1p'`;ctx.textAlign='center';ctx.lineWidth=4;ctx.strokeStyle='rgba(0,0,0,0.75)';ctx.strokeText(tx,W/2,y);ctx.fillStyle=col;ctx.fillText(tx,W/2,y)}
+function drawTelegraph(){
+  const a=B.atk;if(B.state!=='windup'||!a||B.over)return;
+  const c=PC(),ty=c.y+10;
+  const rMin=20,rMax=78,r=rMin+(rMax-rMin)*Math.max(0,1-a.t/a.w);
+  if(a.chain){ // 雷鳴乱舞：場所も方向も出さない（記憶勝負）
+    const inWin=a.t>=a.w-earlyWin()&&a.t<=a.w+LATE&&!a.fail,col=a.fail?'#888':inWin?'#ffe94a':'#9fe8ff';
+    ctx.save();ctx.lineWidth=5;ctx.strokeStyle=col;ctx.shadowColor=col;ctx.shadowBlur=16;ctx.beginPath();ctx.arc(c.x,c.y,r,0,Math.PI*2);ctx.stroke();
+    ctx.fillStyle=col;ctx.font="900 40px 'M PLUS 1p'";ctx.textAlign='center';ctx.fillText('?',c.x,c.y+14);ctx.restore();
+    label(`雷鳴乱舞 ${B.chain.idx}/${B.chain.total} — 覚えた順にはじけ！`,col,c.y-rMax-20);return}
+  const pt=attackPoint(a);
+  if(a.kind==='breath'){
+    const dw=DODGEWIN*perk('dodge'),inWin=a.t>=a.w-dw&&a.t<=a.w+LATE,col=inWin?'#ff4af0':'#ff3a3a';
+    ctx.save();ctx.lineWidth=5;ctx.strokeStyle=col;ctx.shadowColor=col;ctx.shadowBlur=18;ctx.setLineDash([10,7]);ctx.lineDashOffset=-B.t*60;
+    ctx.beginPath();ctx.arc(pt.x,pt.y,r,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);ctx.restore();
+    warnIcon(pt.x,pt.y,30+4*Math.sin(B.t*20),col);
+    if(a.fl)drawFlurryRow(W/2,ty+34,col);
+    label(a.fl&&B.flurry?`${B.flurry.total}連撃 ${B.flurry.idx}/${B.flurry.total}！ ⚠${b_name()} 回避！`:`⚠ ${b_name()}！ 回避で避けろ`,col,ty);
+    return;
+  }
+  const inWin=a.t>=a.w-earlyWin()&&a.t<=a.w+LATE&&!a.fail;
+  const hot=a.kind==='heavy';
+  const col=a.fail?'#888':a.cursed?(inWin?'#ff80ff':'#a040ff'):inWin?'#ffe94a':hot?'#ff4a3a':'#ff8a3a';
+  // タイミングリング：攻撃が来る場所に表示
+  ctx.save();ctx.lineWidth=hot?7:5;ctx.strokeStyle=col;ctx.shadowColor=col;ctx.shadowBlur=16;ctx.globalAlpha=a.fail?0.4:1;
+  ctx.beginPath();ctx.arc(pt.x,pt.y,r,0,Math.PI*2);ctx.stroke();
+  ctx.lineWidth=2;ctx.globalAlpha=0.7;ctx.strokeStyle='#fff';ctx.beginPath();ctx.arc(pt.x,pt.y,rMin,0,Math.PI*2);ctx.stroke();
+  ctx.globalAlpha=a.fail?0.3:0.35+0.4*inWin;ctx.fillStyle=col;ctx.beginPath();ctx.arc(pt.x,pt.y,rMin*0.6,0,Math.PI*2);ctx.fill();ctx.restore();
+  if(a.fl)drawFlurryRow(W/2,ty+34,col);
+  const name=hot?'強撃':a.kind==='delay'?'斬撃':'斬撃';
+  const tx=a.fail?'失敗… 回避なら間に合う！':a.cursed?'呪い！ いつもと【逆】へはじけ':a.fl&&B.flurry?`${B.flurry.total}連撃 ${B.flurry.idx}/${B.flurry.total}！`:`${name}！`;
+  label(tx,col,ty);
+}
+const GLYPH={R:'→',DR:'↘',D:'↓',DL:'↙',L:'←',UL:'↖',U:'↑',UR:'↗'};
+function arrowIcon(x,y,sz,deg,col){ctx.save();ctx.translate(x,y);ctx.rotate(deg*Math.PI/180);ctx.fillStyle=col;ctx.strokeStyle='#fff';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(-sz*0.45,-sz*0.12);ctx.lineTo(sz*0.05,-sz*0.12);ctx.lineTo(sz*0.05,-sz*0.35);ctx.lineTo(sz*0.5,0);ctx.lineTo(sz*0.05,sz*0.35);ctx.lineTo(sz*0.05,sz*0.12);ctx.lineTo(-sz*0.45,sz*0.12);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore()}
+function drawChainPreview(){
+  if(B.state!=='preview'||!B.preview)return;
+  const c=PC(),n=B.preview.length,sz=Math.min(56,(W-40)/n-8),gap=sz+10,x0=W/2-(n-1)*gap/2;
+  ctx.save();ctx.fillStyle='rgba(5,15,30,0.75)';ctx.strokeStyle='#9fe8ff';ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(x0-sz/2-14,c.y-sz/2-40,(n-1)*gap+sz+28,sz+64,14);ctx.fill();ctx.stroke();
+  ctx.fillStyle='#9fe8ff';ctx.font="900 15px 'M PLUS 1p'";ctx.textAlign='center';ctx.fillText(`雷鳴乱舞：はじく方向の順番 — あと${B.timer.toFixed(1)}秒`,W/2,c.y-sz/2-16);
+  B.preview.forEach((d,i)=>{ctx.fillStyle='rgba(255,255,255,0.08)';ctx.fillRect(x0+i*gap-sz/2,c.y-sz/2+4,sz,sz);
+    arrowIcon(x0+i*gap,c.y+4,sz*0.85,DIRS[OPP[d]],'#ffe94a');ctx.fillStyle='#9fe8ff';ctx.font="700 11px 'M PLUS 1p'";ctx.fillText(i+1,x0+i*gap,c.y+sz/2+18)});
+  ctx.restore();
+}
+function drawArmor(p,u){const k=p.broken?0.85:1,cx=p.x*u,cy=p.y*u,rx=p.rx*u*k*1.08,ry=p.ry*u*k*1.08,g=B.g;
+  ctx.save();ctx.shadowBlur=0;ell(cx,cy,rx,ry);ctx.fillStyle='rgba(118,108,96,0.86)';ctx.fill();ctx.strokeStyle='#2e261e';ctx.lineWidth=3;ctx.stroke();ctx.clip();
+  ctx.strokeStyle='rgba(40,32,24,0.6)';ctx.lineWidth=2;for(let i=-3;i<=3;i++){ctx.beginPath();ctx.moveTo(cx+i*rx*0.35,cy-ry);ctx.lineTo(cx+i*rx*0.35+rx*0.2,cy+ry);ctx.stroke()}
+  ctx.strokeStyle='rgba(255,240,210,0.85)';ctx.lineWidth=2.5;let r=p.seed+7;const rnd=()=>((r=(r*9301+49297)%233280)/233280);
+  for(let j=0;j<g.armorMax-g.armor;j++){ctx.beginPath();let px=cx+(rnd()-0.5)*rx*1.5,py=cy-ry;ctx.moveTo(px,py);for(let i=0;i<5;i++){px+=(rnd()-0.5)*rx*0.7;py+=ry*0.45;ctx.lineTo(px,py)}ctx.stroke()}
+  ctx.restore()}
+function drawGimmickHUD(){
+  const E=B.E,g=B.g,y=110;ctx.textAlign='center';ctx.font="700 12px 'M PLUS 1p'";
+  if(E.gimmick==='armor'&&g.armor>0){ctx.fillStyle='#e0d0b8';ctx.fillText(`岩鎧 ${'■'.repeat(g.armor)}${'□'.repeat(g.armorMax-g.armor)}　ダメージ1/5・あと${g.armor}回の体勢崩しで砕ける`,W/2,y)}
+  if(E.gimmick==='storm'){const bw=150;ctx.fillStyle='#9fe8ff';ctx.fillText(B.chain||B.state==='preview'?'雷鳴乱舞！':g.charge>=1?'雷ゲージ MAX — 乱舞が来る！':'雷ゲージ',W/2,y-4);bar(W/2-bw/2,y+2,bw,5,B.chain?0:g.charge,'#9fe8ff')}
+  if(E.gimmick==='curse'){const core=B.parts.find(p=>p.id==='core');const t=[];if(!core.broken)t.push('冥核が再生中（破壊で停止）');if(g.phase2)t.push('第二形態');if(g.curse>0)t.push(`反転の呪い 残り${Math.ceil(g.curse)}秒`);
+    ctx.fillStyle=g.curse>0?'#e090ff':'#ff9ab0';ctx.fillText(t.join('　'),W/2,y)}
+}
+const b_name=()=>B.E.breath.name;
+function warnIcon(x,y,sz,col){ctx.save();ctx.fillStyle=col;ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x,y-sz*0.45);ctx.lineTo(x+sz*0.48,y+sz*0.38);ctx.lineTo(x-sz*0.48,y+sz*0.38);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.fillStyle='#200';ctx.font=`900 ${Math.round(sz*0.5)}px 'M PLUS 1p'`;ctx.textAlign='center';ctx.fillText('!',x,y+sz*0.3);ctx.restore()}
+function drawFlurryRow(cx,yy,col){ // 連撃の並び（⚠はブレス／投擲）
+  if(!B.flurry)return;const f=B.flurry,n=f.total,sz=30,gap=38,x0=cx-(n-1)*gap/2;
+  ctx.fillStyle='rgba(0,0,0,0.55)';ctx.beginPath();ctx.roundRect(x0-sz/2-10,yy-sz/2-8,(n-1)*gap+sz+20,sz+16,10);ctx.fill();
+  for(let i=0;i<n;i++){const cur=i===f.idx-1,done=i<f.idx-1,d=f.dirs[i];ctx.globalAlpha=done?0.3:1;
+    if(cur){ctx.fillStyle='rgba(255,233,74,0.25)';ctx.fillRect(x0+i*gap-sz/2-3,yy-sz/2-3,sz+6,sz+6)}
+    if(d==='B')warnIcon(x0+i*gap,yy,cur?sz:sz*0.8,cur?col:'#ff3a3a');else{ctx.fillStyle=cur?col:'#ff8a3a';ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x0+i*gap,yy,(cur?sz:sz*0.8)*0.32,0,Math.PI*2);ctx.fill();ctx.stroke()}}
+  ctx.globalAlpha=1}
+
+function swordAngle(){
+  if(!B.pAnim)return -66;
+  const a=B.pAnim,k=ease(Math.min(1,a.t/a.dur));const to=a.ang,from=to+180;
+  // 上側を通るように回す
+  const mid1=from+90,mid2=from-90;const d1=angDiff(mid1,-90),d2=angDiff(mid2,-90);
+  const delta=d1<d2?-180:180;return from+delta*k;
+}
+function drawPlayer(){
+  const s=Math.min(1,H/900,W/480),gy=H*0.99,a=eqSets(),w=W_(S.eqW);
+  let x=W/2;
+  if(B.dAnim){const k=Math.min(1,B.dAnim.t/B.dAnim.dur);const off=B.dAnim.side*Math.sin(k*Math.PI)*110*s;
+    for(let i=1;i<=2;i++){ctx.save();ctx.globalAlpha=0.18*i;drawPlayerAt(x+off*(i/3),gy,s,a,w);ctx.restore()}x+=off}
+  if(B.hurt>0)x+=(Math.random()-0.5)*10;
+  drawPlayerAt(x,gy+(B.hurt>0?B.hurt*20:0),s,a,w);
+}
+function drawPlayerAt(x,gy,s,a,w){
+  ctx.fillStyle='rgba(0,0,0,0.45)';ell(x,gy-4*s,70*s,14*s);ctx.fill();
+  const br=Math.sin(B.t*2.5)*2*s;
+  drawLegs(ctx,a.legs,x,gy,s);
+  drawBody(ctx,a.body,x,gy+br*0.3,s,B.t);
+  const pv={x:x+30*s,y:gy-130*s+br};const ang=swordAngle()*Math.PI/180;
+  const hc=a.hands.style==='cloth'?shade(a.body.color,-0.2):shade(a.hands.color,-0.15);
+  ctx.strokeStyle=hc;ctx.lineWidth=14*s;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(x+30*s,gy-150*s);ctx.lineTo(pv.x,pv.y);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(x-30*s,gy-150*s);ctx.lineTo(x-42*s,gy-105*s);ctx.stroke();
+  drawGauntlet(ctx,a.hands,x-42*s,gy-100*s,s*0.8,0.25);
+  ctx.save();ctx.translate(pv.x,pv.y);ctx.rotate(ang);drawSword(ctx,w,swordLen(w)*s,s,B.pAnim?28:(B.state==='broken'?18:8));ctx.restore();
+  ctx.fillStyle=a.hands.style==='cloth'?'#6a4a30':a.hands.style==='gold'?a.hands.trim:shade(a.hands.color,0.15);ctx.beginPath();ctx.arc(pv.x,pv.y,8*s,0,Math.PI*2);ctx.fill();
+  drawHead(ctx,a.head,x,gy+br,s);
+}
+
+function bar(x,y,w,h,r,c,bg='rgba(0,0,0,0.55)'){ctx.fillStyle=bg;ctx.fillRect(x-2,y-2,w+4,h+4);ctx.fillStyle=c;ctx.fillRect(x,y,w*Math.max(0,r),h)}
+function drawHUD(){
+  const E=B.E,bw=Math.min(W*0.62,520),bx=(W-bw)/2;
+  ctx.textAlign='center';ctx.fillStyle='#ffe2ad';ctx.font="900 16px 'M PLUS 1p'";ctx.fillText(E.name,W/2,24);
+  bar(bx,32,bw,10,B.hp/B.maxHp,'#d8402a');
+  if(B.state==='broken'){bar(bx,50,bw,8,B.brokenT/B.brokenMax,'#ffcc3a');ctx.fillStyle='#ffd04a';ctx.font="900 15px 'M PLUS 1p'";ctx.fillText('体勢崩し中！ 部位を押したまま こすって攻撃',W/2,80)}
+  else{const n=needNow(),sp=Math.min(26,(bw-40)/n),sx=W/2-(n-1)*sp/2;ctx.font="700 12px 'M PLUS 1p'";ctx.fillStyle='#cdb89a';ctx.textAlign='right';ctx.fillText('体勢',sx-14,58);ctx.textAlign='center';
+    for(let i=0;i<n;i++){ctx.beginPath();ctx.arc(sx+i*sp,54,Math.min(8,sp*0.35),0,Math.PI*2);ctx.fillStyle=i<B.posture?'#9fe0ff':'rgba(255,255,255,0.12)';ctx.fill();ctx.strokeStyle='#6a8aa0';ctx.lineWidth=1.5;ctx.stroke()}
+    if(n<E.need[1]+perk('need')){const left=E.needEvery-(B.t%E.needEvery);ctx.fillStyle='#a89478';ctx.font="700 11px 'M PLUS 1p'";ctx.fillText(`${Math.ceil(left)}秒後に必要回数+1（最大${Math.max(1,E.need[1]+perk('need'))}）`,W/2,76)}
+    if(B.bonus>0){ctx.fillStyle='#fff27a';ctx.font="700 12px 'M PLUS 1p'";ctx.fillText(`崩し時間 +${B.bonus.toFixed(1)}秒`,W/2,92)}}
+  if(RUN){ctx.textAlign='left';ctx.font="700 12px 'M PLUS 1p'";ctx.fillStyle='#e8d4b4';ctx.fillText(`${RUN.D.name}`,10,52);
+    ctx.fillStyle=isBossFloor()?'#ff8a6a':'#ffd58a';ctx.font="900 15px 'M PLUS 1p'";ctx.fillText(`${RUN.floor+1}F / ${RUN.D.floors.length}F${isBossFloor()?' BOSS':''}`,10,70);
+    const n=Object.values(RUN.loot).reduce((a,b)=>a+b,0)+Object.values(B.loot).reduce((a,b)=>a+b,0);ctx.fillStyle='#ffb0a0';ctx.font="700 11px 'M PLUS 1p'";ctx.fillText(`未確定の戦利品 ${n}個`,10,86)}
+  const pw=Math.min(W*0.4,240);ctx.textAlign='left';ctx.fillStyle='#e8d4b4';ctx.font="700 12px 'M PLUS 1p'";ctx.fillText(`HP ${Math.ceil(B.php)} / ${B.pmax}`,12,H-26);
+  bar(12,H-18,pw,8,B.php/B.pmax,B.php/B.pmax<0.3?'#ff5a4a':'#5ad06a');
+}
+
+function drawFX(dt){
+  const c=PC();
+  // 敵の斬撃エフェクト
+  for(const sl of fx.slashes){sl.life-=dt;const k=1-sl.life/sl.max,al=sl.life/sl.max;
+    ctx.save();const o=sl.at||c;ctx.translate(o.x,o.y);ctx.rotate(sl.ang*Math.PI/180);ctx.globalAlpha=al;
+    const L=sl.small?60:Math.min(W*0.45,300)*(sl.heavy?1.25:1);ctx.strokeStyle=sl.c;ctx.shadowColor=sl.c;ctx.shadowBlur=20;
+    ctx.lineWidth=(sl.small?6:sl.heavy?26:16)*al+2;ctx.lineCap='round';
+    const sw=Math.min(1,k*3);ctx.beginPath();ctx.moveTo(-L,-L*0.2);ctx.quadraticCurveTo(0,L*0.3,L,-L*0.2);ctx.setLineDash([L*2.6*sw,L*3]);ctx.stroke();ctx.setLineDash([]);
+    ctx.lineWidth=(sl.small?2:5)*al;ctx.strokeStyle='#fff';ctx.stroke();ctx.restore()}
+  fx.slashes=fx.slashes.filter(s=>s.life>0);
+  // 雷
+  for(const b of fx.bolts){b.life-=dt;const h=headScreen(),p=PP(),al=b.life/b.max;ctx.save();ctx.globalAlpha=al;ctx.strokeStyle='#e8fbff';ctx.shadowColor='#7ad0ff';ctx.shadowBlur=30;
+    for(let j=0;j<3;j++){ctx.lineWidth=j?2:6;ctx.beginPath();ctx.moveTo(h.x,h.y);for(let i=1;i<=8;i++){const t=i/8;ctx.lineTo(h.x+(p.x-h.x)*t+(i<8?rand(-40,40):rand(-60,60)),h.y+(p.y-h.y)*t)}ctx.stroke()}ctx.restore()}
+  fx.bolts=fx.bolts.filter(b=>b.life>0);
+  // パーティクル
+  for(const p of fx.parts){p.life-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=p.drag||0.92;p.vy=p.vy*(p.drag||0.92)+(p.grav!=null?p.grav:300)*dt;
+    ctx.globalAlpha=Math.max(0,p.life/p.max);if(p.add)ctx.globalCompositeOperation='lighter';ctx.fillStyle=p.c;
+    if(p.round){ctx.beginPath();ctx.arc(p.x,p.y,p.r*(0.5+p.life/p.max),0,Math.PI*2);ctx.fill()}else ctx.fillRect(p.x-p.r,p.y-p.r,p.r*2,p.r*2);
+    ctx.globalCompositeOperation='source-over'}
+  ctx.globalAlpha=1;fx.parts=fx.parts.filter(p=>p.life>0);
+  // スワイプの軌跡
+  for(const t of fx.trails){t.life-=dt;const a=t.life/t.max;ctx.strokeStyle=t.c;ctx.globalAlpha=a;ctx.lineCap='round';ctx.lineJoin='round';
+    ctx.lineWidth=10*a+2;ctx.shadowColor=t.c;ctx.shadowBlur=16;ctx.beginPath();t.pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.stroke()}
+  ctx.shadowBlur=0;ctx.globalAlpha=1;fx.trails=fx.trails.filter(t=>t.life>0);
+  // 素材アイコン
+  for(const ic of fx.icons){ic.t+=dt;if(ic.t<0)continue;ic.x+=ic.vx*dt;ic.y+=ic.vy*dt;ic.vy+=700*dt;if(ic.y>H*0.62&&ic.vy>0){ic.vy*=-0.45;ic.vx*=0.6;ic.y=H*0.62}
+    const al=Math.min(1,(ic.life-ic.t)*2),sz=MATS[ic.k].rare?54:40;ctx.globalAlpha=Math.max(0,al);
+    if(MATS[ic.k].rare){ctx.save();ctx.translate(ic.x,ic.y);ctx.rotate(B.t*2);ctx.strokeStyle='#ffe070';ctx.lineWidth=2;for(let i=0;i<8;i++){ctx.rotate(Math.PI/4);ctx.beginPath();ctx.moveTo(sz*0.5,0);ctx.lineTo(sz*0.85,0);ctx.stroke()}ctx.restore()}
+    if(IMG[ic.k].complete)ctx.drawImage(IMG[ic.k],ic.x-sz/2,ic.y-sz/2,sz,sz)}
+  ctx.globalAlpha=1;fx.icons=fx.icons.filter(i=>i.t<i.life);
+  // 文字
+  ctx.textAlign='center';
+  for(const f of fx.floats){f.life-=dt;f.y-=30*dt;const a=Math.min(1,f.life/f.max*2.5);ctx.globalAlpha=Math.max(0,a);ctx.font=`900 ${f.size}px 'M PLUS 1p'`;
+    ctx.lineWidth=4;ctx.strokeStyle='rgba(0,0,0,0.75)';ctx.strokeText(f.t,f.x,f.y);ctx.fillStyle=f.c;ctx.fillText(f.t,f.x,f.y)}
+  ctx.globalAlpha=1;fx.floats=fx.floats.filter(f=>f.life>0);
+}
+
+function startPreview(){
+  B.preview=Array.from({length:5},()=>DIRKEYS[ri(0,7)]);B.state='preview';B.timer=2.4;
+  float('雷鳴乱舞！ 順番を覚えろ！',W/2,H*0.24,'#9fe8ff',26,2);fx.flash={c:'#9fe8ff',life:0.3,max:0.3};
+}
+function guardPhase(){ // 形態変化・岩鎧の境目を一撃で飛び越えさせない
+  const E=B.E,g=B.g;
+  if(E.gimmick==='curse'&&!g.phase2&&B.hp<=B.maxHp*0.5){B.hp=B.maxHp*0.5;g.trig=true}
+  if(E.gimmick==='armor'&&!g.armorDone&&B.hp<=B.maxHp*0.6){B.hp=B.maxHp*0.6;g.trig=true}
+}
+function cancelBreak(msg){
+  if(B.state==='broken')float(msg||'崩しが解除された！',W/2,H*0.34,'#ff9a6a',24,1.6);
+  B.posture=0;B.bonus=0;B.flurry=null;B.combo=0;B.state='idle';B.timer=1.4;B.roar=1.2;ptr&&(ptr.acc=0);
+}
+function gimmicks(dt){
+  const E=B.E,g=B.g;
+  if(E.gimmick==='armor'&&!g.armorDone&&(B.hp<=B.maxHp*0.6||g.trig)){g.armorDone=true;g.armor=g.armorMax;
+    float('岩鎧をまとった！',W/2,H*0.28,'#d8c8b0',30,1.8);float('体勢崩し3回目で砕ける',W/2,H*0.28+30,'#d8c8b0',18,1.8);B.shake=16;burst(B.tf.x,B.tf.y,'#9a8a78',40,500);cancelBreak()}
+  if(E.gimmick==='storm'&&!B.chain&&B.state!=='preview'){const head=B.parts.find(p=>p.id==='head');
+    g.charge=Math.min(1,g.charge+dt/16*(head.broken?0.5:1));
+    if(g.charge>0.6&&Math.random()<g.charge*0.35){const t=B.tf;burst(t.x+rand(-1,1)*t.u*0.6,t.y+rand(-1,1)*t.u*0.5,'#bff0ff',1,150,true)}}
+  if(E.gimmick==='curse'){
+    const core=B.parts.find(p=>p.id==='core');
+    if(!core.broken){for(const p of B.parts)if(!p.body&&!p.broken)p.hp=Math.min(p.maxHp,p.hp+p.maxHp*0.004*dt)}
+    if(!core.broken&&B.hp<B.maxHp){const r=B.maxHp*0.004*dt;B.hp=Math.min(B.maxHp,B.hp+r);g.regenAcc+=r;
+      if(g.regenAcc>=40){const t=B.tf,pt=toScreen(core.x*t.u,core.y*t.u);float('+'+Math.round(g.regenAcc)+' 再生',pt.x+40,pt.y,'#7aff9a',16,0.8);g.regenAcc=0}}
+    if(!g.phase2&&(B.hp<=B.maxHp*0.5||g.trig)){g.phase2=true;g.trig=false;cancelBreak();B.E={...B.E,glow:'#ff3050',eye:'#ff2030',bg:['#3a1020','#100408']};
+      float('冥王が真の姿を現した！',W/2,H*0.28,'#ff6a8a',30,2);B.shake=22;burst(B.tf.x,B.tf.y,'#ff3050',60,600,true)}
+    if(g.phase2){if(g.curse>0){g.curse-=dt;if(g.curse<=0)float('呪いが解けた',W/2,H*0.25,'#cdb89a',20,1)}
+      else{g.curseCD-=dt;if(g.curseCD<=0){g.curse=8;g.curseCD=14;float('反転の呪い！ 紫の輪は逆へはじけ！',W/2,H*0.25,'#d070ff',26,1.8);fx.flash={c:'#a040ff',life:0.4,max:0.4}}}}
+  }
+}
+function update(dt){
+  B.t+=dt;
+  for(const k of['lunge','recoil','hurt','bounce','dodgeCD','roar'])B[k]=Math.max(0,B[k]-dt);
+  B.shake=Math.max(0,B.shake-dt*40);
+  for(const p of B.parts)p.flash=Math.max(0,p.flash-dt);
+  if(B.pAnim){B.pAnim.t+=dt;if(B.pAnim.t>B.pAnim.dur+0.12)B.pAnim=null}
+  if(B.dAnim){B.dAnim.t+=dt;if(B.dAnim.t>B.dAnim.dur)B.dAnim=null}
+  if(fx.flash){fx.flash.life-=dt;if(fx.flash.life<=0)fx.flash=null}
+  if(B.dying)B.fade=Math.max(0,B.fade-dt*0.7);
+  const a=B.atk;
+  dodgeBtn.classList.toggle('warn',!!(B.state==='windup'&&a&&(a.kind==='breath'||a.fail)&&!B.over));
+  dodgeBtn.classList.toggle('cd',B.dodgeCD>0);
+  if(B.over)return;
+  const n=needNow();if(n>B.lastNeed){B.lastNeed=n;float('敵が警戒を強めた！ 必要パリィ +1',W/2,H*0.2,'#ff9a6a',20,1.6)}
+  gimmicks(dt);if(B.over)return;
+  if(B.state==='idle'){B.timer-=dt;if(B.timer<=0){if(B.E.gimmick==='storm'&&B.g.charge>=1&&!B.chain&&!B.queue.length&&!B.flurry)startPreview();else beginAttack()}}
+  else if(B.state==='preview'){B.timer-=dt;if(B.timer<=0){B.queue=[...B.preview];B.chain={seq:B.preview,idx:0,ok:0,total:B.preview.length};B.preview=null;B.state='idle';B.timer=0.2}}
+  else if(B.state==='windup'){
+    if(a.holdLeft>0&&a.t>=a.holdAt)a.holdLeft-=dt;else a.t+=dt;
+    // 冥炎：着弾前から炎を吐く
+    if(a.kind==='breath'&&B.E.breath.type==='fire'&&a.t>a.w-Math.min(0.45,a.w*0.75)&&a.t<a.w+0.1){const h=headScreen(),p=PP();
+      for(let i=0;i<3;i++){const ang=Math.atan2(p.y-h.y,p.x-h.x)+rand(-0.25,0.25),sp=rand(700,1000);fx.parts.push({x:h.x,y:h.y,vx:Math.cos(ang)*sp,vy:Math.sin(ang)*sp,life:rand(0.35,0.55),max:0.55,c:Math.random()<0.5?'#d070ff':'#ff70c0',r:rand(8,18),add:true,round:true,drag:0.97,grav:0})}}
+    if(a.kind==='breath'&&B.E.breath.type==='bolt'&&a.t<a.w&&Math.random()<0.5){const h=headScreen();burst(h.x,h.y,'#e8fbff',1,120,true)}
+    if(!a.lunged&&a.t>=a.w){a.lunged=true;if(!a.res)impact()}
+    if(!a.res&&a.t>=a.w+LATE){resolveHit();if(!B.over)afterResolve()}}
+  else if(B.state==='recover'){B.timer-=dt;if(B.timer<=0)nextAttack()}
+  else if(B.state==='broken'){B.brokenT-=dt;if(B.brokenT<=0){B.posture=0;B.state='idle';B.timer=1.0;B.combo=0;float('体勢を立て直した',W/2,H*0.25,'#cdb89a',20,1)}}
+}
+
+let last=performance.now();
+function loop(now){
+  const dt=Math.min(0.05,(now-last)/1000);last=now;
+  if(B){update(dt);
+    ctx.save();if(B.shake>0)ctx.translate((Math.random()-0.5)*B.shake,(Math.random()-0.5)*B.shake);
+    drawBG();drawEnemy();drawBreath();drawTelegraph();drawChainPreview();drawPlayer();drawFX(dt);ctx.restore();drawHUD();drawGimmickHUD();
+    if(B.g.curse>0){const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.3,W/2,H/2,Math.max(W,H)*0.7);g.addColorStop(0,'rgba(120,0,200,0)');g.addColorStop(1,'rgba(120,0,200,0.35)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
+    if(fx.flash){ctx.fillStyle=rgba(fx.flash.c,0.45*fx.flash.life/fx.flash.max);ctx.fillRect(0,0,W,H)}
+    if(B.hurt>0){const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.3,W/2,H/2,Math.max(W,H)*0.7);g.addColorStop(0,'rgba(255,0,0,0)');g.addColorStop(1,`rgba(220,20,10,${B.hurt})`);ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
+  }
+  requestAnimationFrame(loop);
+}
+renderHub();requestAnimationFrame(loop);
+</script>
+</body>
+</html>
