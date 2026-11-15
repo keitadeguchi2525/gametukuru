@@ -1,0 +1,14 @@
+start
+step1 import
+imported 120 objects
+step2 smooth
+step3 materials
+step4 pose
+step5 scene
+step6 render
+render 0
+render 90
+render 180
+render 270
+save
+done {"objects": 120, "meshes": 116, "armature": "Hips", "bones": ["Left_UpperLeg", "Left_LowerLeg", "Left_Foot", "Left_Toes", "Right_UpperLeg", "Right_LowerLeg", "Right_Foot", "Right_Toes", "Spine", "Chest", "UpperChest", "Left_Shoulder", "Left_UpperArm", "Left_LowerArm", "Left_Hand", "Left_IndexProximal", "Left_IndexIntermediate", "Left_IndexDistal", "Left_MiddleProximal", "Left_MiddleIntermediate", "Left_MiddleDistal", "Left_PinkyProximal", "Left_PinkyIntermediate", "Left_PinkyDistal", "Left_RingProximal", "Left_RingIntermediate", "Left_RingDistal", "Left_ThumbProximal", "Left_ThumbIntermediate", "Left_ThumbDistal", "Neck", "Head", "Jaw", "Left_Eye", "Right_Eye", "Neck_Twist_A", "Right_Shoulder", "Right_UpperArm", "Right_LowerArm", "Right_Hand", "Right_IndexProximal", "Right_IndexIntermediate", "Right_IndexDistal", "Right_MiddleProximal", "Right_MiddleIntermediate", "Right_MiddleDistal", "Right_PinkyProximal", "Right_PinkyIntermediate", "Right_PinkyDistal", "Right_RingProximal", "Right_RingIntermediate", "Right_RingDistal", "Right_ThumbProximal", "Right_ThumbIntermediate", "Right_ThumbDistal"], "parenting": {"KyahanL": ["Hips", "BONE", "Left_LowerLeg"], "SuneateL": ["Hips", "BONE", "Left_LowerLeg"], "TateageL": ["Hips", "BONE", "Left_LowerLeg"], "HakamaL": ["Hips", "BONE", "Left_UpperLeg"], "HaidateL0": ["Hips", "BONE", "Left_UpperLeg"], "HaidateL1": ["Hips", "BONE", "Left_UpperLeg"], "HaidateL2": ["Hips", "BONE", "Left_UpperLeg"], "HaidateL3": ["Hips", "BONE", "Left_UpperLeg"], "KyahanR": ["Hips", "BONE", "Right_LowerLeg"], "SuneateR": ["Hips", "BONE", "Right_LowerLeg"], "TateageR": ["Hips", "BONE", "Right_LowerLeg"], "HakamaR": ["Hips", "BONE", "Right_UpperLeg"]}, "body": "Armature_Mesh", "materials": ["S_Aka", "S_Ito", "S_Kin", "S_Kuro", "S_Nuno", "S_Odoshi", "S_Tsuka"], "pose": {}, "height": 2.004, "center": [-0.0, 0.067, 0.945], "renders": ["C:\\Users\\totti\\インフィニティブレード\\Blender\\Renders\\samurai_0.png", "C:\\Users\\totti\\インフィニティブレード\\Blender\\Renders\\samurai_
