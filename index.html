@@ -20,6 +20,9 @@ h1{font-weight:900;font-size:30px;letter-spacing:.06em;text-align:center;color:#
 .equip b{color:#ffd58a}
 .tabs{display:flex;gap:6px;margin-bottom:14px}
 .tabs button{flex:1;padding:11px 0;font:700 15px 'M PLUS 1p';color:#c9b597;background:#24190f;border:1px solid #47331f;border-radius:10px;cursor:pointer}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;align-items:start}.grid2>.card{margin:0}.grid2 .btn{white-space:normal}.grid2 .item{gap:10px}.grid2 .item .ico{width:56px;height:56px}.grid2 .item .ico img{width:50px;height:50px}.grid2 .card{padding:12px}.grid2 h3{font-size:15px}.grid2 .tag{white-space:nowrap}.grid2 .tag.perk{white-space:normal;display:inline-block;margin-top:3px}
+.inv2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.inv2 .card.prow{margin:0;border-top:1px solid #4a3522;padding:10px;gap:8px}.inv2 .prow .ico{width:44px;height:44px}.inv2 .prow .ico img{width:40px;height:40px}.inv2 .pst{display:block;margin:2px 0 0}.inv2 .tag{white-space:nowrap;display:inline-block}.inv2 .tag.perk{white-space:normal;margin-top:3px}.inv2 .row,.grid2 .row{flex-wrap:wrap}.inv2 .card.prow,.grid2>.card{min-width:0;overflow-wrap:anywhere}
+@media(max-width:480px){.grid2 .item,.inv2 .prow{flex-direction:column;gap:6px}.grid2 .item .ico,.inv2 .prow .ico{width:44px;height:44px}.grid2 .item .ico img,.inv2 .prow .ico img{width:40px;height:40px}.grid2 .card,.inv2 .card.prow{padding:10px}}
 .subtabs{display:flex;gap:6px;margin:0 0 10px}.subtabs button{flex:1;padding:8px 0;font:700 14px 'M PLUS 1p';color:#c9b597;background:#1c140d;border:1px solid #47331f;border-radius:20px;cursor:pointer}
 .subtabs button.on{background:#5a3a18;color:#fff0d0;border-color:#c98a3a}.hint{font-size:12px;color:#a89478;text-align:center;margin:6px 0 14px}
 .tabs button.on{background:linear-gradient(#b9772a,#8a4f15);color:#fff6e0;border-color:#e0a050}
@@ -27,6 +30,10 @@ h1{font-weight:900;font-size:30px;letter-spacing:.06em;text-align:center;color:#
 .card h3{font-size:18px;font-weight:900;color:#ffe2ad;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .card p{font-size:13px;color:#bba78a;margin:6px 0}
 .card.rare{border-color:#9a6ad0;box-shadow:0 0 14px rgba(160,100,255,.18) inset}
+/* 装備中：緑に光る太枠＋上のふちに「✔ 装備中」のリボン */
+.card.equipped{position:relative;border:2px solid #6fd36a;background:linear-gradient(rgba(80,190,70,.16),rgba(80,190,70,.05)),linear-gradient(#2b1f15,#211710);box-shadow:0 0 0 1px rgba(111,211,106,.25),0 0 16px rgba(111,211,106,.35);margin-top:10px}
+.card.equipped::before{content:'✔ 装備中';position:absolute;top:-10px;right:10px;z-index:2;background:linear-gradient(#7fe07a,#3fa33a);color:#0d2a0b;font-size:11px;font-weight:900;padding:2px 9px;border-radius:999px;box-shadow:0 2px 6px rgba(0,0,0,.5);letter-spacing:.05em}
+.grid2>.card.equipped,.inv2>.card.equipped{margin:0}.grid2,.inv2{padding-top:10px}
 .item{display:flex;gap:14px;align-items:flex-start}
 .item .ico{width:84px;height:84px;flex:none;border-radius:12px;background:radial-gradient(circle at 50% 40%,#3d2c1e,#160f09);border:1px solid #4a3522;display:flex;align-items:center;justify-content:center}
 .item .ico img{width:76px;height:76px}
@@ -101,7 +108,7 @@ h1{font-weight:900;font-size:30px;letter-spacing:.06em;text-align:center;color:#
     <button data-tab="hunt" class="on">ダンジョン</button>
     <button data-tab="forge">工房</button>
     <button data-tab="gacha">ガチャ</button>
-    <button data-tab="mats">素材</button>
+    <button data-tab="inv">持ち物</button>
     <button data-tab="how">遊び方</button>
   </div>
   <div id="panel"></div>
@@ -365,7 +372,7 @@ const WEAPONS=[
   {id:'f5',name:'魂喰らいの鎌',atk:33,build:'dodge',...WP('d3',['shade','soul']),shape:'dark',blade:'#70e0d0',glow:'#a0fff0',perk:{dodgePts:20,dodge:0.65}},
   {id:'r3',name:'王笏剣ルクスフェル',atk:38,build:'crit',...WP('d3',['soul']),shape:'royal',blade:'#fff6dc',glow:'#ffe070',perk:{crit:0.2,critDmg:0.5,parryPts:0.85},rareCost:{scepter:1,soulstone:2,voidcrystal:1}},
   // ボスの特殊武器：ガチャ限定（工房では作れない。手に入れたら強化はできる）
-  {id:'gw_golm',name:'岩王剣ゴルムガルド',atk:20,build:'special',gacha:'golm',...WP('d1',[]),cost:{},shape:'great',blade:'#cbb48e',glow:'#ffb040',perk:{dmgCut:0.25}},
+  {id:'gw_golm',name:'岩王剣ゴルムガルド',atk:20,build:'special',gacha:'golm',...WP('d1',[]),cost:{},shape:'great',blade:'#cbb48e',glow:'#ffb040',perk:{dmgCut:0.5}},
   {id:'gw_lumina',name:'妖蛾刀ルミナ',atk:24,build:'special',gacha:'lumina',...WP('f1',[]),cost:{},shape:'katana',blade:'#e2ccff',glow:'#b0ff40',perk:{gPoison:1}},
   {id:'gw_volga',name:'雷竜槍ヴォルガノン',atk:29,build:'special',gacha:'volga',...WP('d2',[]),cost:{},shape:'vajra',blade:'#fff27a',glow:'#7ad0ff',perk:{gBolt:1}},
   {id:'gw_glacier',name:'氷霊剣グラシエル',atk:32,build:'special',gacha:'glacier',...WP('g1',[]),cost:{},shape:'amber',blade:'#dff6ff',glow:'#9fe8ff',perk:{gFreeze:1}},
@@ -399,7 +406,8 @@ const ARMOR_SETS=[
 const MULPERK=['parry','part','dodge','parryPts','atk'];   // 掛け算で効く効果（それ以外は足し算）
 function mergePerk(a,b){const o={...(a||{})};for(const[k,v]of Object.entries(b||{}))o[k]=k in o?(MULPERK.includes(k)?o[k]*v:o[k]+v):v;return o}
 const ARMORS=[];
-for(const st of ARMOR_SETS){let dl=st.def,hl=st.hp;
+const ARMOR_DEF_MUL=1.05;   // 防具の防御力（一式）に一律でかける倍率（v16で5%上げた）
+for(const st of ARMOR_SETS){st.def=Math.round(st.def*ARMOR_DEF_MUL);let dl=st.def,hl=st.hp;
   const ps=SLOTS.map((sl,i)=>{const d=sl.k==='body'?0:Math.floor(st.def*sl.r),h=sl.k==='body'?0:Math.floor(st.hp*sl.r);dl-=d;hl-=h;
     const cost=recipe(st.d,st.mats,ARMOR_SET_CLEARS,sl.r);
     const isPerk=st.perkSlot===sl.k;Object.assign(cost,isPerk?st.perkCost:(st.rare||{}));
@@ -451,7 +459,7 @@ function perkText(pk){if(!pk)return '';const o=[],pc=v=>Math.round(v*100);
     else if(k==='dmgCut')o.push(`被ダメージ ${Math.round(v*100)}%カット`);
     else if(k==='gPoison')o.push(`攻撃時 1/${Math.round(1/G_POISON_CH)}で敵を毒に（最大HPの${Math.round(G_POISON_PCT*100)}%×${G_POISON_TICKS}回）`);
     else if(k==='gBolt')o.push(`攻撃時 1/${Math.round(1/G_BOLT_CH)}で落雷（最大HPの${Math.round(G_BOLT_PCT*100)}%）`);
-    else if(k==='gFreeze')o.push(`この武器で崩すと敵が凍り、崩し時間 +${G_FREEZE_SEC}秒`);
+    else if(k==='gFreeze')o.push(`崩すと敵が凍り崩し時間 +${G_FREEZE_SEC}秒／攻撃時 1/${Math.round(1/G_FREEZE_CH)}で氷撃（最大HPの${Math.round(G_FREEZE_PCT*100)}%）`);
     else if(k==='gBeam')o.push(`攻撃時 1/${Math.round(1/G_BEAM_CH)}で闇の光線（最大HPの${Math.round(G_BEAM_PCT*100)}%）`)}
   return o.join('／')}
 const buildTag=b=>b?`<span class="tag build b-${b}">${BUILD_NAME[b]}</span>`:'';
@@ -459,7 +467,8 @@ const buildTag=b=>b?`<span class="tag build b-${b}">${BUILD_NAME[b]}</span>`:'';
 const parryGain=heavy=>Math.round(PT*(heavy?2:1)*perk('parryPts'));
 const dodgeGain=()=>Math.round(perk('dodgePts'));
 const critRate=()=>BASE_CRIT+perk('crit'), critMul=()=>CRIT_MUL+perk('critDmg');
-function upgCost(it,lv){const c={};for(const[k,q]of Object.entries(it.upg))c[k]=q*(it.halfUpg?Math.ceil((lv+1)/2):(lv+1));return c}
+const UPG_COST_MUL=2;   // 強化に使う素材の数の倍率（v16で2倍にした）
+function upgCost(it,lv){const c={};for(const[k,q]of Object.entries(it.upg))c[k]=q*(it.halfUpg?Math.ceil((lv+1)/2):(lv+1))*UPG_COST_MUL;return c}
 const has=c=>Object.entries(c).every(([k,q])=>(S.mats[k]||0)>=q);
 function pay(c){for(const[k,q]of Object.entries(c))S.mats[k]-=q}
 function addMat(k,q){S.mats[k]=(S.mats[k]||0)+q}
@@ -782,6 +791,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b||
 // ===================== 拠点UI =====================
 const $=s=>document.querySelector(s);
 let tab='hunt';
+let invTab='w';   // 持ち物の小タブ：w=武器 / a=防具 / m=素材
 function toast(t){const el=$('#toast');el.textContent=t;el.style.opacity=1;clearTimeout(toast.h);toast.h=setTimeout(()=>el.style.opacity=0,1600)}
 const chip=(k,txt,cls='')=>`<span class="chip ${cls} ${MATS[k].rare?'r'+MATS[k].rare:''}"><img src="${ICON[k]}">${txt}</span>`;
 function costChips(c){const e=Object.entries(c);if(!e.length)return '<span class="chip" style="padding:3px 8px">素材不要</span>';
@@ -806,19 +816,19 @@ function renderHub(){
         <p style="font-size:12px;color:#a89478">部位破壊を多くするほど素材は増える。</p>`}
       h+=`<div class="row" style="justify-content:flex-end">${lock?'':`<button class="btn sub2" data-act="detail" data-id="${D.id}">${open?'詳細を閉じる':'詳細を表示'}</button>`}<button class="btn" data-act="hunt" data-i="${i}" ${lock?'disabled':''}>潜入する</button></div></div>`});
   }else if(tab==='forge'){
-    const sec=(title,list,kind)=>{h+=`<div class="sect">${title}</div>`;
+    const sec=(title,list,kind)=>{h+=`<div class="sect">${title}</div><div class="grid2">`;
       list.forEach(it=>{const own=kind==='w'?S.weapons:S.armors;const lv=own[it.id];const owned=lv!==undefined;
         const eq=(kind==='w'?S.eqW:S.eqA)===it.id;const rare=Object.keys(it.cost).some(k=>MATS[k].rare);
         const st=kind==='w'?`攻撃 ${wStat(it,lv||0)}`:(()=>{const s=aStat(it,lv||0);return `防御 ${s.def} / 体力 +${s.hp}`})();
-        h+=`<div class="card ${rare?'rare':''}"><div class="item"><div class="ico"><img src="${kind==='w'?weaponIcon(it):armorIcon(it)}"></div><div class="body">
-        <h3>${it.name}${owned?' +'+lv:''} ${eq?'<span class="tag ok">装備中</span>':''}${!owned?'<span class="tag">未作成</span>':''}${it.gacha?'<span class="tag gacha">ガチャ限定</span>':''}</h3>
+        h+=`<div class="card ${rare?'rare':''} ${eq?'equipped':''}"><div class="item"><div class="ico"><img src="${kind==='w'?weaponIcon(it):armorIcon(it)}"></div><div class="body">
+        <h3>${it.name}${owned?' +'+lv:''} ${!owned?'<span class="tag">未作成</span>':''}${it.gacha?'<span class="tag gacha">ガチャ限定</span>':''}</h3>
         <p>${buildTag(it.build)} ${st} ${it.perk?`<span class="tag perk">✦ ${perkText(it.perk)}</span>`:''}</p>`;
         if(!owned){h+=`<div class="row">${costChips(it.cost)}</div><div class="row"><button class="btn" data-act="craft" data-k="${kind}" data-id="${it.id}" ${has(it.cost)?'':'disabled'}>作成する</button></div>`}
         else{const c=upgCost(it,lv);
           h+=`<div class="row">${lv<MAXLV?costChips(c):'<span class="chip" style="padding:3px 8px">強化MAX</span>'}</div><div class="row">
           ${eq?'':`<button class="btn sub2" data-act="equip" data-k="${kind}" data-id="${it.id}">装備する</button>`}
           ${lv<MAXLV?`<button class="btn" data-act="upg" data-k="${kind}" data-id="${it.id}" ${has(c)?'':'disabled'}>強化 +${lv}→+${lv+1}（${kind==='w'?'攻撃 '+wStat(it,lv+1):'防御 '+aStat(it,lv+1).def}）</button>`:''}</div>`}
-        h+='</div></div></div>'})};
+        h+='</div></div></div>'});h+='</div>'};
     h+=`<div class="buildbox"><b>いまのビルド</b>　攻撃 ${atkStat()}　／　パリィ1回で体勢 +${parryGain(false)}pt（強撃 +${parryGain(true)}）　／　回避で体勢 ${dodgeGain()>0?'+'+dodgeGain()+'pt':'なし'}<br>
       会心率 ${Math.round(critRate()*100)}%（×${critMul().toFixed(1)}）　／　パリィ受付 ×${perk('parry').toFixed(2)}　／　回避受付 ×${perk('dodge').toFixed(2)}${perk('heal')?`　／　パリィでHP+${+perk('heal').toFixed(1)}`:''}</div>`;
     h+=`<div class="subtabs"><button class="${forgeTab==='w'?'on':''}" data-act="ftab" data-v="w">武器</button><button class="${forgeTab==='a'?'on':''}" data-act="ftab" data-v="a">防具</button></div>`;
@@ -831,13 +841,14 @@ function renderHub(){
     h+=`<div class="sect">— 防具（頭・胴・手・足） —</div><p style="font-size:12px;color:#a89478;margin:-4px 0 10px">シリーズの部位を全部そろえると合計：防御／体力。強化は1段ごとに 防御+1・体力+1。素材の目安：防具一式＝そのダンジョン約${ARMOR_SET_CLEARS}回踏破分</p>`;
     sets.forEach(st=>{const ps=ARMORS.filter(p=>p.set===st);const rare=!!st.rare||Object.keys(st.perkCost||{}).length>0;
       h+=`<div class="card ${rare?'rare':''}"><h3>${st.title}シリーズ <span style="font-size:12px;color:#bba78a;font-weight:700">一式 防御${st.def} / 体力+${st.hp}</span> ${buildTag(st.build)}${st.setPerk?` <span class="tag perk">✦ 一式：${perkText(st.setPerk)}</span>`:''}${st.perk?` <span class="tag perk">✦ ${SLOTS.find(x=>x.k===st.perkSlot).n}：${perkText(st.perk)}</span>`:''}</h3>`;
+      h+='<div class="inv2" style="margin-top:8px">';
       ps.forEach(it=>{const lv=S.armors[it.id],owned=lv!==undefined,eq=S.eq[it.slot]===it.id,sn=SLOTS.find(x=>x.k===it.slot).n,stt=aStat(it,lv||0);
-        h+=`<div class="prow"><div class="ico"><img src="${armorIcon(it)}"></div><div class="body">
-          <div class="pn"><span class="tag">${sn}</span> <b>${it.name}${owned?' +'+lv:''}</b> ${eq?'<span class="tag ok">装備中</span>':''} <span class="pst">防御 ${stt.def} / 体力 +${stt.hp}</span>${it.perk?` <span class="tag perk" style="opacity:.85">✦ ${perkText(it.perk)}</span>`:''}</div>`;
+        h+=`<div class="card prow ${eq?'equipped':''}"><div class="ico"><img src="${armorIcon(it)}"></div><div class="body">
+          <div class="pn"><span class="tag">${sn}</span> <b>${it.name}${owned?' +'+lv:''}</b>  <span class="pst">防御 ${stt.def} / 体力 +${stt.hp}</span>${it.perk?` <span class="tag perk" style="opacity:.85">✦ ${perkText(it.perk)}</span>`:''}</div>`;
         if(!owned)h+=`<div class="row">${costChips(it.cost)}<button class="btn mini" data-act="craft" data-k="a" data-id="${it.id}" ${has(it.cost)?'':'disabled'}>作成</button></div>`;
         else{const c=upgCost(it,lv);h+=`<div class="row">${eq?'':`<button class="btn sub2 mini" data-act="equip" data-k="a" data-id="${it.id}">装備</button>`}${lv<MAXLV?costChips(c)+`<button class="btn mini" data-act="upg" data-k="a" data-id="${it.id}" ${has(c)?'':'disabled'}>強化 +${lv+1}</button>`:'<span class="chip" style="padding:3px 8px">強化MAX</span>'}</div>`}
         h+='</div></div>'});
-      h+='</div>'});
+      h+='</div></div>'});
     if(sets.length<ARMOR_SETS.length)h+=`<p class="hint">ほかにも防具がある。素材を1つでも手に入れると表示される。</p>`;
     }
   }else if(tab==='gacha'){
@@ -853,10 +864,30 @@ function renderHub(){
           <span class="chip"><img src="${weaponIcon(w)}">ボス武器：${w.name}${S.weapons[w.id]!==undefined?'（所持）':''}</span></div>
         <p class="grate">${w.name}：${perkText(w.perk)}（攻撃 ${w.atk}）</p>
         <div class="row" style="justify-content:flex-end"><button class="btn" data-act="gacha" data-b="${b.id}" ${n>0?'':'disabled'}>ガチャを回す（証1つ）</button></div></div>`}
-  }else if(tab==='mats'){
+  }else if(tab==='inv'){
+    // 持ち物：武器・防具はここから装備できる（作成と強化は工房）
+    h+=`<div class="subtabs">${[['w','武器'],['a','防具'],['m','素材']].map(([k,n])=>`<button class="${invTab===k?'on':''}" data-act="itab" data-v="${k}">${n}</button>`).join('')}</div>`;
+    if(invTab==='w'){
+      h+=`<div class="buildbox"><b>いまのビルド</b>　攻撃 ${atkStat()}　／　パリィ1回で体勢 +${parryGain(false)}pt　／　回避で体勢 ${dodgeGain()>0?'+'+dodgeGain()+'pt':'なし'}　／　会心率 ${Math.round(critRate()*100)}%</div>`;
+      for(const w of [...WEAPONS].sort((a,b)=>(b.id===S.eqW)-(a.id===S.eqW))){const lv=S.weapons[w.id];if(lv===undefined)continue;const eq=S.eqW===w.id;
+        h+=`<div class="card ${eq?'equipped':''}"><div class="item"><div class="ico"><img src="${weaponIcon(w)}"></div><div class="body">
+          <h3>${w.name} +${lv} </h3>
+          <p>${buildTag(w.build)} 攻撃 ${wStat(w,lv)} ${w.perk?`<span class="tag perk">✦ ${perkText(w.perk)}</span>`:''}</p>
+          ${eq?'':`<div class="row"><button class="btn sub2" data-act="equip" data-k="w" data-id="${w.id}">装備する</button></div>`}</div></div></div>`}
+    }else if(invTab==='a'){
+      const as=armStat();h+=`<div class="buildbox"><b>いまの防具</b>　防御 ${as.def}　／　体力 +${as.hp}</div>`;
+      for(const sl of SLOTS){h+=`<div class="sect">— ${sl.n} —</div><div class="inv2">`;
+        const list=ARMORS.filter(p=>p.slot===sl.k&&S.armors[p.id]!==undefined).sort((a,b)=>(S.eq[sl.k]===b.id)-(S.eq[sl.k]===a.id));
+        for(const it of list){const lv=S.armors[it.id],eq=S.eq[sl.k]===it.id,st=aStat(it,lv);
+          h+=`<div class="card prow ${eq?'equipped':''}"><div class="ico"><img src="${armorIcon(it)}"></div><div class="body">
+            <div class="pn"><b>${it.name} +${lv}</b>  ${buildTag(it.set.build)} <span class="pst">防御 ${st.def} / 体力 +${st.hp}</span>${it.perk?` <span class="tag perk" style="opacity:.85">✦ ${perkText(it.perk)}</span>`:''}</div>
+            ${eq?'':`<div class="row"><button class="btn sub2 mini" data-act="equip" data-k="a" data-id="${it.id}">装備</button></div>`}</div></div>`}
+        h+='</div>'}
+    }else{
     const e=Object.entries(S.mats).filter(([k,q])=>q>0).sort((a,b)=>(MATS[a[0]].rare||0)-(MATS[b[0]].rare||0));
     h+=e.length?`<div class="mats">${e.map(([k,q])=>`<div class="mat ${MATS[k].rare?'r'+MATS[k].rare:''}"><img src="${ICON[k]}"><div>${MATS[k].n}${MATS[k].rare?`<div style="font-size:10px;color:#e0c0ff">${RARE_NAME[MATS[k].rare]}</div>`:''}</div><b>×${q}</b></div>`).join('')}</div>`:'<div class="card"><p>まだ素材がありません。狩りに出て部位破壊・討伐で集めよう！</p></div>';
     h+=`<div class="row" style="margin-top:24px"><button class="btn sub2" data-act="reset">データをリセット</button></div>`;
+    }
   }else{
     h+=`<div class="card how"><h3>遊び方</h3><ul>
     <li>矢印は出ない。<b>敵のモーション</b>（振りかぶった手足・光る部位）から攻撃が来る方向を読み、<b>その方向へはじき返す</b>ようにスワイプでパリィ！（上からの攻撃→上へ、右下からの攻撃→右下へ。8方向）</li>
@@ -889,6 +920,7 @@ $('#panel').addEventListener('click',e=>{const b=e.target.closest('button');if(!
   if(act==='hunt')startDungeon(+b.dataset.i);
   else if(act==='bossrush'){const i=+b.dataset.i;sfx('start');const D=DUNGEONS[i],pmax=100+armStat().hp;RUN={i,D,floor:D.floors.length-1,loot:{},php:pmax,pmax,test:true};startFloor()}
   else if(act==='gacha'){rollGacha(b.dataset.b)}
+  else if(act==='itab'){invTab=b.dataset.v;renderHub()}
   else if(act==='ftab'){forgeTab=b.dataset.v;renderHub()}
   else if(act==='detail'){OPEN_DETAIL[b.dataset.id]=!OPEN_DETAIL[b.dataset.id];sfx('click');renderHub()}
   else if(act==='craft'){const it=(b.dataset.k==='w'?W_:A_)(b.dataset.id);if(!has(it.cost))return;pay(it.cost);sfx('craft');(b.dataset.k==='w'?S.weapons:S.armors)[it.id]=0;
@@ -1091,24 +1123,31 @@ function strike(p,f,x,y,ang){
   if(perk('gPoison')&&Math.random()<G_POISON_CH){B.epoison.push({ticks:G_POISON_TICKS,next:1});sfx('poison');float('毒にした！',B.tf.x,B.tf.y-B.tf.u*0.6,'#b0ff40',24,1)}
   if(perk('gBolt')&&Math.random()<G_BOLT_CH)specialHit(G_BOLT_PCT,'bolt');
   if(perk('gBeam')&&Math.random()<G_BEAM_CH)specialHit(G_BEAM_PCT,'beam');
+  if(perk('gFreeze')&&Math.random()<G_FREEZE_CH)specialHit(G_FREEZE_PCT,'ice');
 }
 // ===== ボス武器の追加効果（数値） =====
 const G_POISON_CH=0.1,G_POISON_PCT=0.02,G_POISON_TICKS=5;   // 毒：1/10で、最大HPの2%を1秒ごとに5回
 const G_BOLT_CH=1/15,G_BOLT_PCT=0.07;                      // 落雷：1/15で最大HPの7%
 const G_BEAM_CH=0.1,G_BEAM_PCT=0.10;                       // 闇の光線：1/10で最大HPの10%
-const G_FREEZE_SEC=2;                                      // 凍結：崩し時間+2秒
-const cutMul=()=>1-Math.min(0.8,perk('dmgCut'));          // 被ダメージの倍率（岩王剣で0.75）
+const G_FREEZE_SEC=1;                                      // 凍結：この武器で崩すと崩し時間+1秒
+const G_FREEZE_CH=1/12,G_FREEZE_PCT=0.08;                  // 氷撃：1/12で最大HPの8%
+const cutMul=()=>1-Math.min(0.8,perk('dmgCut'));          // 被ダメージの倍率（岩王剣で0.5）
 function specialHit(frac,type){if(!B||B.over)return;const t=B.tf;
   const dmg=Math.max(1,Math.round(B.maxHp*frac*(B.g.armor>0?0.2:1)));B.hp-=dmg;guardPhase();
   fx.special.push({type,x:t.x,y:t.y,life:type==='bolt'?0.4:0.6,max:type==='bolt'?0.4:0.6});
   if(type==='bolt'){sfx('thunder');fx.flash={c:'#fff8c0',life:0.25,max:0.25};burst(t.x,t.y,'#fff27a',40,600,true)}
+  else if(type==='ice'){sfx('iceCrash');fx.flash={c:'#bff4ff',life:0.3,max:0.3};burst(t.x,t.y,'#dff8ff',44,600,true)}
   else{sfx('darkBeam');fx.flash={c:'#a040ff',life:0.3,max:0.3};burst(t.x,t.y,'#d070ff',40,600,true)}
-  B.shake=Math.max(B.shake,12);float(`${type==='bolt'?'落雷':'闇の光線'}！ ${dmg}`,t.x,t.y-t.u*0.7,type==='bolt'?'#fff27a':'#e0a0ff',30,1.1);
+  const NM={bolt:['落雷','#fff27a'],beam:['闇の光線','#e0a0ff'],ice:['氷撃','#bff4ff']}[type];
+  B.shake=Math.max(B.shake,12);float(`${NM[0]}！ ${dmg}`,t.x,t.y-t.u*0.7,NM[1],30,1.1);
   if(B.hp<=0&&!B.over)victory()}
 function drawSpecialFX(dt){if(!fx.special||!fx.special.length)return;
   for(const e of fx.special){e.life-=dt;const al=Math.max(0,e.life/e.max);ctx.save();ctx.globalAlpha=al;ctx.globalCompositeOperation='lighter';
     if(e.type==='bolt'){ctx.strokeStyle='#fffbe0';ctx.shadowColor='#fff27a';ctx.shadowBlur=36;ctx.lineWidth=7;ctx.beginPath();let x=e.x,y=0;ctx.moveTo(x,y);
       let r=11;const rnd=()=>((r=(r*9301+49297)%233280)/233280);while(y<e.y){y+=30;x=e.x+(rnd()-0.5)*60;ctx.lineTo(x,y)}ctx.stroke();ctx.lineWidth=2;ctx.strokeStyle='#ffffff';ctx.stroke()}
+    else if(e.type==='ice'){const r=40+120*(1-al);ctx.strokeStyle='#e8fbff';ctx.shadowColor='#9fe8ff';ctx.shadowBlur=24;ctx.lineWidth=4;
+      for(let i=0;i<10;i++){const a=i*Math.PI/5+0.3,r1=r*(i%2?0.6:1);ctx.beginPath();ctx.moveTo(e.x+Math.cos(a)*r*0.2,e.y+Math.sin(a)*r*0.2);ctx.lineTo(e.x+Math.cos(a)*r1,e.y+Math.sin(a)*r1);ctx.stroke()}
+      ctx.fillStyle='rgba(190,240,255,0.35)';ctx.beginPath();ctx.arc(e.x,e.y,r*0.5,0,Math.PI*2);ctx.fill()}
     else{const w=90*(0.6+0.4*al),g=ctx.createLinearGradient(e.x-w,0,e.x+w,0);g.addColorStop(0,'rgba(90,0,160,0)');g.addColorStop(0.5,'rgba(235,170,255,0.95)');g.addColorStop(1,'rgba(90,0,160,0)');
       ctx.fillStyle=g;ctx.fillRect(e.x-w,0,w*2,e.y+80);ctx.fillStyle='rgba(255,255,255,0.8)';ctx.fillRect(e.x-6*al,0,12*al,e.y+80)}
     ctx.restore()}
