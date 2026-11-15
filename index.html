@@ -654,7 +654,7 @@ function renderHub(){
   document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab));
   let h='';
   if(tab==='hunt'){
-    h+=`<div class="card" style="border-color:#7a2a20"><p style="color:#ffb0a0;margin:0">⚠ ダンジョンで手に入れた素材は<b>帰還するまで未確定</b>。倒れると<b>その探索の戦利品と、装備中の武器・防具をすべて失う</b>（初期装備は強化が+0に戻る）。階の合間に「帰還」か戦闘中の「脱出」なら装備は守れる。</p></div>`;
+    h+=`<div class="card" style="border-color:#7a2a20"><p style="color:#ffb0a0;margin:0">⚠ ダンジョンで手に入れた素材は<b>帰還するまで未確定</b>。倒れると<b>その探索の戦利品と、装備中の武器・防具（5つ）のうちランダムに1〜3つを失う</b>（初期装備は強化が+0に戻る）。階の合間に「帰還」か戦闘中の「脱出」なら装備は守れる。</p></div>`;
     DUNGEONS.forEach((D,i)=>{const lock=!unlocked(i),open=OPEN_DETAIL[D.id]&&!lock;
       h+=`<div class="card ${lock?'locked':''}"><h3>${'★'.repeat(D.stars)} ${D.name}（全${D.floors.length}階） ${S.cleared[D.id]?'<span class="tag ok">踏破済</span>':''}</h3>
       <p>${lock?'🔒 前のダンジョンを踏破すると解放':D.desc}</p>`;
@@ -711,7 +711,7 @@ function renderHub(){
     <li>部位の耐久をゼロにすると<b>部位破壊</b>！その部位の素材が手に入る。</li>
     <li>防具は<b>頭・胴・手・足</b>の4部位。シリーズごとに作って組み合わせられる（レアシリーズは特定の部位に特殊効果）。</li>
     <li>倒すと討伐素材と、確率で<b>レア素材</b>がドロップ。レア素材で特殊効果つきの装備が作れる。</li>
-    <li><b>ダンジョン</b>は階層制。HPは階をまたいで持ち越し（次の階へ進むとき最大HPの5%だけ回復）。各階の後に<b>帰還</b>すれば戦利品を持ち帰れるが、<b>倒れると全ロスト</b>。最奥のボスを倒すと踏破＆全部持ち帰り。<b>倒れると装備中の武器・防具も失う</b>（工房で作り直せる）。</li>
+    <li><b>ダンジョン</b>は階層制。HPは階をまたいで持ち越し（次の階へ進むとき最大HPの5%だけ回復）。各階の後に<b>帰還</b>すれば戦利品を持ち帰れるが、<b>倒れると全ロスト</b>。最奥のボスを倒すと踏破＆全部持ち帰り。<b>倒れると装備中の武器・防具5つのうちランダムに1〜3つも失う</b>（1つ33%・2つ33%・3つ34%。工房で作り直せる）。</li>
     <li>PCキー：パリィは矢印キー／WASD、斜めは Q・E・Z・C。回避は Shift。</li></ul></div>`;
   }
   $('#panel').innerHTML=h;
@@ -936,20 +936,28 @@ function floorCleared(rares){
   $('#goNext').onclick=()=>{RUN.php=Math.min(RUN.pmax,RUN.php+heal);RUN.floor++;startFloor()};
 }
 const isLast2=()=>RUN.floor+1===RUN.D.floors.length-1;
+// 倒れたとき：装備中の5つ（武器＋防具4部位）からランダムに1〜3つを失う（1つ33%／2つ33%／3つ34%）
+const LOSE_ODDS=[[1,0.33],[2,0.33],[3,0.34]];
+function loseCount(){let r=Math.random();for(const[n,p]of LOSE_ODDS){if((r-=p)<0)return n}return 3}
+function loseOne(key){
+  if(key==='w'){const w=W_(S.eqW);
+    if(S.eqW==='w0'){const lv=S.weapons.w0||0;S.weapons.w0=0;return {t:lv>0?`${w.name}+${lv} → +0`:`${w.name}（初期装備なので無事）`,i:weaponIcon(w)}}
+    const o={t:`${w.name}+${S.weapons[S.eqW]}`,i:weaponIcon(w)};delete S.weapons[S.eqW];S.eqW='w0';if(S.weapons.w0===undefined)S.weapons.w0=0;return o}
+  const p=A_(S.eq[key]),lv=S.armors[p.id]||0;
+  if(p.set.id==='a0'){S.armors[p.id]=0;return {t:lv>0?`${p.name}+${lv} → +0`:`${p.name}（初期装備なので無事）`,i:armorIcon(p)}}
+  const o={t:`${p.name}+${lv}`,i:armorIcon(p)};delete S.armors[p.id];S.eq[key]='a0_'+key;if(S.armors['a0_'+key]===undefined)S.armors['a0_'+key]=0;return o}
 function loseEquipment(){
-  const out=[];const w=W_(S.eqW);
-  if(S.eqW==='w0'){if(S.weapons.w0>0)out.push({t:`${w.name}+${S.weapons.w0} → +0`,i:weaponIcon(w)});S.weapons.w0=0}
-  else{out.push({t:`${w.name}+${S.weapons[S.eqW]}`,i:weaponIcon(w)});delete S.weapons[S.eqW];S.eqW='w0';if(S.weapons.w0===undefined)S.weapons.w0=0}
-  for(const sl of SLOTS){const p=A_(S.eq[sl.k]),lv=S.armors[p.id]||0;
-    if(p.set.id==='a0'){if(lv>0)out.push({t:`${p.name}+${lv} → +0`,i:armorIcon(p)});S.armors[p.id]=0}
-    else{out.push({t:`${p.name}+${lv}`,i:armorIcon(p)});delete S.armors[p.id];S.eq[sl.k]='a0_'+sl.k;if(S.armors['a0_'+sl.k]===undefined)S.armors['a0_'+sl.k]=0}}
-  save();return out;
+  const keys=['w',...SLOTS.map(sl=>sl.k)];
+  for(let i=keys.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[keys[i],keys[j]]=[keys[j],keys[i]]}
+  const n=loseCount(),out=[];
+  for(const k of keys.slice(0,n)){const o=loseOne(k);if(o)out.push(o)}
+  save();return {n,out};
 }
 function died(){
   sfx('death');
-  const lost={};addLoot(lost,RUN.loot);addLoot(lost,B.loot);const eq=loseEquipment();
-  showBox(`<h2 style="color:#ff8f7a">力尽きた…</h2><p style="color:#ffb0a0;font-weight:700">${RUN.D.name} ${RUN.floor+1}F で倒れ、装備と戦利品をすべて失った</p>
-    <div style="font-size:13px;color:#bba78a">失った装備</div><div class="row" style="opacity:.6;filter:grayscale(.6)">${eq.length?eq.map(o=>`<span class="chip"><img src="${o.i}">${o.t}</span>`).join(''):'<span class="chip" style="padding:3px 8px">なし</span>'}</div>
+  const lost={};addLoot(lost,RUN.loot);addLoot(lost,B.loot);const {n,out:eq}=loseEquipment();
+  showBox(`<h2 style="color:#ff8f7a">力尽きた…</h2><p style="color:#ffb0a0;font-weight:700">${RUN.D.name} ${RUN.floor+1}F で倒れ、戦利品と装備${n}つを失った</p>
+    <div style="font-size:13px;color:#bba78a">失った装備（装備中の5つからランダムに${n}つ）</div><div class="row" style="opacity:.6;filter:grayscale(.6)">${eq.length?eq.map(o=>`<span class="chip"><img src="${o.i}">${o.t}</span>`).join(''):'<span class="chip" style="padding:3px 8px">なし</span>'}</div>
     <div style="font-size:13px;color:#bba78a">失った戦利品</div><div class="row" style="opacity:.6;filter:grayscale(.6)">${lootChips(lost)}</div>
     <div class="row"><button class="btn" id="home">拠点へ戻る</button></div>`);
   $('#home').onclick=endToHub;
