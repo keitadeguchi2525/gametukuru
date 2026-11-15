@@ -844,6 +844,22 @@ function drawBG(){
   drawBGAnim(theme);
   const v=ctx.createRadialGradient(W/2,H*0.45,Math.min(W,H)*0.2,W/2,H*0.5,Math.max(W,H)*0.75);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.6)');ctx.fillStyle=v;ctx.fillRect(0,0,W,H);
 }
+// 体力が減るほど、画面の周りから赤いトンネルが迫る（HUDの文字は上に描くので読める）
+const LOWHP_START=0.85;   // 体力がこの割合を切ると出はじめる
+function drawLowHP(){
+  if(!B)return;
+  const r=Math.max(0,B.php/B.pmax);if(r>=LOWHP_START)return;
+  let k=(LOWHP_START-r)/LOWHP_START;           // 0（出はじめ）→ 1（瀕死）
+  if(r<0.35)k*=1+0.18*Math.max(0,Math.sin(B.t*(5+6*(0.35-r))));  // 瀕死に近いほど速い鼓動
+  const big=Math.hypot(W,H)/2,inner=big*(0.9-0.5*Math.min(1,k)),outer=big*1.02;
+  const g=ctx.createRadialGradient(W/2,H*0.5,inner,W/2,H*0.5,outer);
+  g.addColorStop(0,'rgba(160,0,0,0)');g.addColorStop(0.45,`rgba(160,0,0,${0.3*k})`);g.addColorStop(1,`rgba(90,0,0,${Math.min(0.95,0.95*k)})`);
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  // 血管のような筋
+  if(k>0.35){ctx.save();ctx.strokeStyle=`rgba(120,0,0,${(k-0.35)*0.8})`;ctx.lineWidth=2;let s=7;const rnd=()=>((s=(s*9301+49297)%233280)/233280);
+    for(let i=0;i<14;i++){const an=i/14*Math.PI*2+rnd()*0.3;let x=W/2+Math.cos(an)*big,y=H/2+Math.sin(an)*big;ctx.beginPath();ctx.moveTo(x,y);
+      const len=big*(0.15+0.3*(k-0.35));for(let j=0;j<5;j++){x-=Math.cos(an)*len/5+(rnd()-0.5)*14;y-=Math.sin(an)*len/5+(rnd()-0.5)*14;ctx.lineTo(x,y)}ctx.stroke()}ctx.restore()}
+}
 function drawBGAnim(theme){
   const t=B.t;ctx.save();
   if(theme==='d1'){ // たいまつの炎と、舞う火の粉
@@ -1186,7 +1202,7 @@ function loop(now){
   const dt=Math.min(0.05,(now-last)/1000);last=now;
   if(B){update(dt);
     ctx.save();if(B.shake>0)ctx.translate((Math.random()-0.5)*B.shake,(Math.random()-0.5)*B.shake);
-    drawBG();drawEnemy();drawBreath();drawTelegraph();drawPlayer();drawFX(dt);ctx.restore();drawHUD();drawGimmickHUD();
+    drawBG();drawEnemy();drawBreath();drawTelegraph();drawPlayer();drawFX(dt);ctx.restore();drawLowHP();drawHUD();drawGimmickHUD();
     if(B.g.curse>0){const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.3,W/2,H/2,Math.max(W,H)*0.7);g.addColorStop(0,'rgba(120,0,200,0)');g.addColorStop(1,'rgba(120,0,200,0.35)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
     if(fx.flash){ctx.fillStyle=rgba(fx.flash.c,0.45*fx.flash.life/fx.flash.max);ctx.fillRect(0,0,W,H)}
     if(B.hurt>0){const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.3,W/2,H/2,Math.max(W,H)*0.7);g.addColorStop(0,'rgba(255,0,0,0)');g.addColorStop(1,`rgba(220,20,10,${B.hurt})`);ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
