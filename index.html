@@ -121,7 +121,15 @@ h1{font-weight:900;font-size:30px;letter-spacing:.06em;text-align:center;color:#
 <script>
 // バージョン表記（画面左下）。仕様メモ（docs/仕様メモ.md）の見出しの番号と合わせて上げる
 const VERSION='v16';
-document.getElementById('ver').textContent=`パリィ・ハンター ${VERSION}`;
+// 更新番号は自動：GitHub の main に入った更新（コミット）の数を聞いて「v16.123」のように出す。最後の更新日も出す
+//   つながらないとき（オフラインなど）は前回わかった番号、それもなければ「v16」だけ
+const REPO='keitadeguchi2525/gametukuru',VERKEY='parryHunter_ver';
+function showVer(v){document.getElementById('ver').textContent=`パリィ・ハンター ${VERSION}${v&&v.n?'.'+v.n:''}${v&&v.d?`（${v.d} 更新）`:''}`}
+try{showVer(JSON.parse(localStorage.getItem(VERKEY)))}catch(e){showVer(null)}
+fetch(`https://api.github.com/repos/${REPO}/commits?sha=main&per_page=1`).then(r=>{if(!r.ok)throw 0;
+  const m=/[?&]page=(\d+)>;\s*rel="last"/.exec(r.headers.get('Link')||'');return r.json().then(j=>{
+    const dt=new Date(j[0].commit.committer.date),v={n:m?+m[1]:1,d:`${dt.getFullYear()}/${dt.getMonth()+1}/${dt.getDate()}`};
+    showVer(v);try{localStorage.setItem(VERKEY,JSON.stringify(v))}catch(e){}})}).catch(()=>{});
 // ===================== 素材 =====================
 const MATS={
   bone:{n:'獣骨',c:'#f4ead2',c2:'#a8977a',sh:'bone'},
