@@ -136,7 +136,7 @@ const ENEMIES=[
     {id:'legL',name:'左前脚',x:0.58,y:0.5,rx:0.17,ry:0.28,c:'#5e4f40',hp:140,mat:[['claw',2]],deco:'claws',limb:1},
     {id:'head',name:'岩角',x:0,y:-0.42,rx:0.27,ry:0.22,c:'#8c7b64',hp:170,mat:[['hornG',2]],deco:'horns2',eyes:true},
    ]},
-  {id:'volga',name:'雷竜ヴォルガ',stars:2,gimmick:'storm',gdesc:'【雷鳴乱舞】雷ゲージが満タンになると、5連撃の順番を一瞬だけ見せてから超高速で放つ。全部パリィすると即体勢崩し（+2秒）。雷角を折るとゲージの溜まりが半分に。',desc:'雷をまとう飛竜。ディレイ攻撃と、パリィ不能の雷ブレスを使う。',
+  {id:'volga',name:'雷竜ヴォルガ',stars:2,gimmick:'storm',gdesc:'【雷速モード／雷光転移】雷ゲージが満タンになると12秒間の雷速モード。攻撃が速くなり、振りかぶりの途中で雷光が走ると攻撃の向きが反対側へ入れ替わる。最後まで見てからはじこう。入れ替わった攻撃をパリィすると体勢+1ボーナス。雷角を折るとゲージの溜まりが半分に。',desc:'雷をまとう飛竜。ディレイ攻撃と、パリィ不能の雷ブレスを使う。',
    hp:2600,need:[4,7],needEvery:22,breakTime:3.5,windup:0.85,dmg:28,idle:[0.7,1.3],combo:2,
    moves:[['slash',5],['heavy',2],['delay',2],['breath',2]],breath:{type:'bolt',name:'雷ブレス',c:'#9fe8ff'},
    bg:['#22324e','#0b1120'],eye:'#fff27a',glow:'#7ad0ff',
@@ -494,10 +494,11 @@ let W=0,H=0,DPR=1;
 function resize(){DPR=Math.min(2,window.devicePixelRatio||1);W=innerWidth;H=innerHeight;cv.width=W*DPR;cv.height=H*DPR;cv.style.width=W+'px';cv.style.height=H+'px';ctx.setTransform(DPR,0,0,DPR,0,0)}
 addEventListener('resize',resize);resize();
 
-let B=null,fx={parts:[],floats:[],trails:[],slashes:[],bolts:[],icons:[],flash:null};
+let B=null,fx={parts:[],floats:[],trails:[],slashes:[],bolts:[],zaps:[],icons:[],flash:null};
 const rand=(a,b)=>a+Math.random()*(b-a),ri=(a,b)=>Math.floor(rand(a,b+1));
 const ease=k=>1-Math.pow(1-k,3);
 const BREATH_IN_FLURRY=0.3,BREATH_WINDUP=0.8;
+const STORM_CHARGE=16,STORM_TIME=12,STORM_SPEED=0.85,WARP_CHANCE=0.45;   // ヴォルガ：ゲージが溜まる秒数／雷速モードの長さ／溜めの速さ倍率／向きが入れ替わる確率
 const LATE=0.12,PERFECT=0.085,DODGEWIN=0.3,RUB=42,RUBCD=95;
 const PC=()=>({x:W/2,y:H*0.62});           // パリィ判定の中心
 const PP=()=>({x:W/2,y:H*0.82});           // プレイヤー胸元
@@ -512,10 +513,10 @@ function startFloor(){
   const E=floorEnemy();
   B={E,hp:E.hp,maxHp:E.hp,parts:E.parts.map((p,k)=>({...p,maxHp:p.hp||0,hp:p.hp||0,broken:false,flash:0,seed:k*13+5})),
      posture:0,state:'idle',timer:2.0,atk:null,combo:0,brokenT:0,brokenMax:1,bonus:0,php:RUN.php,pmax:RUN.pmax,loot:{},over:false,
-     shake:0,lunge:0,recoil:0,pAnim:null,dAnim:null,hurt:0,t:0,fade:1,tf:{x:0,y:0,rot:0,sc:1,u:1},bounce:0,dodgeAt:-9,dodgeCD:0,lastNeed:0,deathT:0,queue:[],chain:null,preview:null,flurry:null,roar:0,
-     g:{charge:0,armor:0,armorMax:3,armorDone:false,phase2:false,curse:0,curseCD:5,regenAcc:0}};
+     shake:0,lunge:0,recoil:0,pAnim:null,dAnim:null,hurt:0,t:0,fade:1,tf:{x:0,y:0,rot:0,sc:1,u:1},bounce:0,dodgeAt:-9,dodgeCD:0,lastNeed:0,deathT:0,flurry:null,roar:0,
+     g:{charge:0,storm:0,armor:0,armorMax:3,armorDone:false,phase2:false,curse:0,curseCD:5,regenAcc:0}};
   B.lastNeed=needNow();
-  fx={parts:[],floats:[],trails:[],slashes:[],bolts:[],icons:[],flash:null};
+  fx={parts:[],floats:[],trails:[],slashes:[],bolts:[],zaps:[],icons:[],flash:null};
   $('#hub').classList.add('hidden');$('#battle').classList.remove('hidden');$('#result').classList.add('hidden');
   resize();
   float(`${RUN.D.name}  ${RUN.floor+1}F`,W/2,H*0.46,'#ffd58a',30,1.6);
@@ -535,25 +536,26 @@ const SPD=0.72,IDLE=0.5;   // 攻撃速度・頻度の全体倍率
 const OPP={R:'L',L:'R',U:'D',D:'U',UR:'DL',DL:'UR',UL:'DR',DR:'UL'};
 function nextAttack(){
   const E=B.E;B.state='idle';
-  if(B.queue.length){B.timer=0.12;return}
   if(B.flurry){B.timer=0.06;return}
   if(B.combo>0){B.combo--;B.timer=0.16}else{B.combo=ri(0,E.combo);B.timer=rand(E.idle[0],E.idle[1])*IDLE*(B.g.phase2?0.7:1)}
 }
 function beginAttack(){
-  const E=B.E;let kind,dir,w,chain=false;
-  let fl=false;const ph=B.g.phase2?0.85:1;
-  if(B.queue.length){kind='slash';dir=B.queue.shift();w=0.62;chain=true;B.chain.idx++}
-  else if(B.flurry){const d=B.flurry.dirs[B.flurry.idx++];fl=true;
+  const E=B.E;let kind,dir,w;
+  let fl=false;const ph=(B.g.phase2?0.85:1)*(B.g.storm>0?STORM_SPEED:1);
+  if(B.flurry){const d=B.flurry.dirs[B.flurry.idx++];fl=true;
     if(d==='B'){kind='breath';dir='D';w=Math.max(0.34,E.windup*SPD*0.5)*ph}else{kind='slash';dir=d;w=Math.max(0.36,E.windup*SPD*0.55)*ph}}
   else{kind=pickMove();w=E.windup*SPD*rand(0.92,1.08)*ph;
     if(kind==='combo'){const n=ri(E.flurry[0],E.flurry[1]);B.flurry={dirs:Array.from({length:n},(_,i)=>i>0&&Math.random()<BREATH_IN_FLURRY?'B':DIRKEYS[ri(0,7)]),idx:1,ok:0,total:n};
       dir=B.flurry.dirs[0];kind='slash';fl=true;w*=1.15}
     else dir=DIRKEYS[ri(0,7)]}
-  const a={kind,dir,t:0,w,res:false,fail:false,lunged:false,holdAt:0,holdLeft:0,impactAt:null,chain,fl,cursed:B.g.curse>0&&kind!=='breath'};
+  const a={kind,dir,t:0,w,res:false,fail:false,lunged:false,holdAt:0,holdLeft:0,impactAt:null,fl,cursed:B.g.curse>0&&kind!=='breath'};
   if(kind==='heavy')a.w*=1.4;
   if(kind==='breath'&&!fl)a.w*=BREATH_WINDUP;   // ブレス/投擲は溜めを短く（以前は×1.35）
   if(kind==='delay'){a.holdAt=a.w*rand(0.5,0.68);a.holdLeft=rand(0.3,0.55)}
   B.atk=a;B.state='windup';
+  // ヴォルガ：雷速モード中は、振りかぶりの途中で雷光が走って攻撃の向きが反対側へ入れ替わることがある
+  //   入れ替わりは受付が始まる前に必ず起きる（前の向きのままでは弾けない）。溜めが短すぎる攻撃では起きない
+  if(B.g.storm>0&&kind!=='breath'&&a.w>=0.45&&Math.random()<WARP_CHANCE){a.warpAt=Math.max(0.15,a.w-earlyWin()-rand(0.03,0.1));a.warped=false}
 }
 const earlyWin=()=>Math.min(0.3,B.atk.w*0.45)*perk('parry');
 const needDir=a=>a.cursed?a.dir:OPP[a.dir];   // 攻撃が来た方向へはじき返す（呪い中は逆）
@@ -568,20 +570,14 @@ function enterBroken(extra=0){
 }
 function afterResolve(){ // 1回の攻撃が終わったあとの共通処理
   const a=B.atk;
-  if(a.chain&&!B.queue.length){finishChain();return}
   if(a.fl){if(B.flurry.idx>=B.flurry.total){finishFlurry();return}B.state='recover';B.timer=0.05;return}
-  if(!a.chain&&B.posture>=needNow()){enterBroken();return}
+  if(B.posture>=needNow()){enterBroken();return}
   B.state='recover';B.timer=a.res?0.22:0.3;
 }
 function finishFlurry(){
   const f=B.flurry;B.flurry=null;
   if(f.ok===f.total){B.posture++;float(`${f.total}連撃 見切り！ 体勢+1`,W/2,H*0.26,'#9fe0ff',24,1.3)}
   if(B.posture>=needNow())enterBroken();else{B.state='recover';B.timer=0.3}
-}
-function finishChain(){
-  const c=B.chain;B.chain=null;B.g.charge=0;
-  if(c.ok===c.total){float('雷鳴乱舞を完全に弾いた！',W/2,H*0.26,'#9fe8ff',26,1.6);B.posture=Math.max(B.posture,needNow());enterBroken(2)}
-  else{float(`雷鳴乱舞 ${c.ok}/${c.total} パリィ`,W/2,H*0.26,'#cdb89a',22,1.2);if(B.posture>=needNow())enterBroken();else{B.state='recover';B.timer=0.4}}
 }
 function tryParry(ang){
   const a=B.atk,c=PC();
@@ -599,7 +595,7 @@ function tryParry(ang){
   burst(c.x,c.y,perfect?'#fff27a':'#bfe8ff',perfect?34:20,perfect?440:300,true);
   fx.slashes.push({ang:DIRS[a.dir],life:0.18,max:0.18,c:'#ffffff',parried:true});
   B.recoil=0.3;B.shake=perfect?10:a.kind==='heavy'?9:5;
-  if(a.chain)B.chain.ok++;
+  if(a.warped){B.posture++;float('雷光転移を見切った！ 体勢+1',c.x,c.y+14,'#bff4ff',20,1.1)}
   if(a.fl)B.flurry.ok++;
   afterResolve();
 }
@@ -759,15 +755,136 @@ function hitTest(px,py){
 
 // ===================== 描画 =====================
 function ell(x,y,rx,ry){ctx.beginPath();ctx.ellipse(x,y,Math.max(1,rx),Math.max(1,ry),0,0,Math.PI*2)}
+// ===================== 背景（ダンジョンごと） =====================
+// 動かない部分は一度だけ別キャンバスに描いてキャッシュし、毎フレームは炎・雨・雷・霧などの動く部分だけ描く
+let BGCACHE=null;
+function mulberry(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const bgTheme=()=>RUN?RUN.D.id:'d1';
+const lerp=(a,b,k)=>a+(b-a)*k;
+const TORCHES=()=>[[W*0.055,H*0.40],[W*0.945,H*0.40]];
+const PORTAL=()=>({x:W/2,y:H*0.5*0.62,r:Math.min(W,H)*0.3});
+function bgPoly(g,pts){g.beginPath();pts.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.closePath()}
+function buildBG(theme){
+  const c=document.createElement('canvas');c.width=Math.ceil(W*DPR);c.height=Math.ceil(H*DPR);
+  const g=c.getContext('2d');g.setTransform(DPR,0,0,DPR,0,0);
+  const R=mulberry(theme==='d1'?11:theme==='d2'?22:33),hz=H*0.5;
+  if(theme==='d2')bgCanyon(g,R,hz);else if(theme==='d3')bgUnder(g,R,hz);else bgCave(g,R,hz);
+  return c;
+}
+// --- 岩窟の迷宮：奥へ続く洞窟。手前ほど暗い岩のアーチ、つらら石と石筍、壁のたいまつ
+function bgCave(g,R,hz){
+  let gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#2a1d12');gr.addColorStop(0.5,'#3a2a1a');gr.addColorStop(1,'#1a120b');g.fillStyle=gr;g.fillRect(0,0,W,H);
+  gr=g.createLinearGradient(0,hz,0,H);gr.addColorStop(0,'#3a2b1c');gr.addColorStop(1,'#20170e');g.fillStyle=gr;g.fillRect(0,hz,W,H-hz);
+  const cx=W/2,cy=hz*0.92;
+  let rg=g.createRadialGradient(cx,cy,0,cx,cy,Math.max(W,H)*0.45);rg.addColorStop(0,'rgba(255,180,100,0.35)');rg.addColorStop(0.4,'rgba(200,120,60,0.12)');rg.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=rg;g.fillRect(0,0,W,H);
+  const cols=['#4a3824','#36281a','#251a10','#140d07'];
+  for(let k=0;k<4;k++){const f=k/3,rx=W*(0.16+0.24*f)+30*f,ry=H*(0.18+0.30*f),n=40;
+    const ring=[];for(let i=0;i<n;i++){const an=i/n*Math.PI*2,r=1+(R()-0.5)*0.16;ring.push([cx+Math.cos(an)*rx*r,cy+Math.sin(an)*ry*r])}
+    g.beginPath();g.rect(0,0,W,H);ring.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.closePath();g.fillStyle=cols[k];g.fill('evenodd');
+    g.strokeStyle=`rgba(255,170,90,${0.22*(1-f)+0.05})`;g.lineWidth=3;bgPoly(g,ring);g.stroke();
+    // 岩肌のひび
+    g.strokeStyle='rgba(0,0,0,0.25)';g.lineWidth=1.5;for(let i=0;i<10+k*4;i++){const an=R()*Math.PI*2,r0=1.05+R()*0.25;let x=cx+Math.cos(an)*rx*r0,y=cy+Math.sin(an)*ry*r0;g.beginPath();g.moveTo(x,y);for(let j=0;j<3;j++){x+=(R()-0.5)*30;y+=(R()-0.5)*30;g.lineTo(x,y)}g.stroke()}
+    // つらら石（上）と石筍（下）
+    g.fillStyle=cols[k];
+    for(let i=0;i<6+k*3;i++){const x=cx+(R()-0.5)*rx*1.7,q=Math.max(0,1-((x-cx)/rx)**2);if(q<=0)continue;const y=cy-ry*Math.sqrt(q),len=(10+R()*40)*(0.6+f*1.4),w=4+R()*8*(0.6+f);
+      bgPoly(g,[[x-w,y-6],[x+w,y-6],[x+(R()-0.5)*4,y+len]]);g.fill()}
+    if(k>=1)for(let i=0;i<4+k*2;i++){const x=cx+(R()<0.5?-1:1)*rx*(0.4+R()*0.55),q=Math.max(0,1-((x-cx)/rx)**2);if(q<=0)continue;const y=cy+ry*Math.sqrt(q),len=(8+R()*30)*(0.6+f),w=5+R()*8*(0.6+f);
+      bgPoly(g,[[x-w,y+6],[x+w,y+6],[x+(R()-0.5)*4,y-len]]);g.fill()}
+  }
+  // 足もとの小石
+  for(let i=0;i<40;i++){const x=R()*W,y=lerp(hz*1.15,H,R()),r=2+R()*5*(y/H);g.fillStyle=`rgba(0,0,0,${0.25+R()*0.2})`;g.beginPath();g.ellipse(x,y,r*1.6,r,0,0,Math.PI*2);g.fill()}
+  // たいまつの柄
+  for(const[x,y]of TORCHES()){g.fillStyle='#2a1a0e';g.fillRect(x-3,y,6,34);g.fillStyle='#4a3020';g.fillRect(x-7,y-2,14,8)}
+}
+// --- 雷鳴の峡谷：嵐の空、両側にそびえる断崖（奥ほど青くかすむ）、谷底の道
+function bgCanyon(g,R,hz){
+  let gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#060b18');gr.addColorStop(0.4,'#1c2b4a');gr.addColorStop(0.5,'#34466a');gr.addColorStop(1,'#141b28');g.fillStyle=gr;g.fillRect(0,0,W,H);
+  for(let i=0;i<28;i++){const x=R()*W,y=R()*H*0.3,rx=60+R()*150,ry=16+R()*30;g.fillStyle='rgba(8,13,26,0.55)';g.beginPath();g.ellipse(x,y,rx,ry,0,0,Math.PI*2);g.fill();
+    g.fillStyle='rgba(130,160,210,0.07)';g.beginPath();g.ellipse(x,y+ry*0.5,rx*0.8,ry*0.4,0,0,Math.PI*2);g.fill()}
+  // 遠くの山なみ
+  g.fillStyle='#2b3a58';g.beginPath();g.moveTo(0,hz);for(let x=0;x<=W;x+=W/24)g.lineTo(x,hz-8-R()*H*0.06);g.lineTo(W,hz);g.closePath();g.fill();
+  gr=g.createLinearGradient(0,hz,0,H);gr.addColorStop(0,'#26324a');gr.addColorStop(1,'#0c1018');g.fillStyle=gr;g.fillRect(0,hz,W,H-hz);
+  g.fillStyle='rgba(150,175,215,0.07)';bgPoly(g,[[W/2-6,hz],[W/2+6,hz],[W*0.72,H],[W*0.28,H]]);g.fill();
+  const near='#0b111d',far='#3a4b6c';
+  const mix=(f)=>{const a=parseInt(far.slice(1),16),b=parseInt(near.slice(1),16);const ch=s=>Math.round(lerp((a>>s)&255,(b>>s)&255,f));return `rgb(${ch(16)},${ch(8)},${ch(0)})`};
+  for(let k=0;k<4;k++){const f=k/3,topY=hz-H*(0.22+0.34*f),xb=W*(0.40-0.30*f),xt=W*(0.30-0.27*f);
+    for(const side of[-1,1]){const pts=[],edge=[];const X=x=>side<0?x:W-x;
+      for(let i=0;i<=16;i++){const y=lerp(topY,H,i/16);let xe=y<hz?lerp(xt,xb,(y-topY)/(hz-topY)):xb-(y-hz)*(0.25+0.3*f);xe+=(R()-0.5)*20*(1+f);edge.push([X(xe),y])}
+      pts.push([X(0),topY],...edge,[X(0),H]);g.fillStyle=mix(f);bgPoly(g,pts);g.fill();
+      g.strokeStyle='rgba(255,255,255,0.05)';g.lineWidth=1;for(let s=1;s<6;s++){const e=edge[Math.floor(s*16/6)];g.beginPath();g.moveTo(X(0),e[1]+R()*6);g.lineTo(e[0],e[1]);g.stroke()}
+      g.strokeStyle=`rgba(160,200,255,${0.12*(1-f)+0.04})`;g.lineWidth=2;g.beginPath();edge.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.stroke()}}
+}
+// --- 冥界の塔：紫の闇、背後に開く冥界の門、ゴシックの尖塔、床の魔法陣、垂れ下がる鎖
+function bgUnder(g,R,hz){
+  let gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#06020c');gr.addColorStop(0.45,'#1f0c30');gr.addColorStop(0.5,'#2a1040');gr.addColorStop(1,'#08040e');g.fillStyle=gr;g.fillRect(0,0,W,H);
+  const P=PORTAL();
+  let rg=g.createRadialGradient(P.x,P.y,P.r*0.8,P.x,P.y,P.r*1.5);rg.addColorStop(0,'rgba(200,60,255,0.45)');rg.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=rg;g.fillRect(0,0,W,H);
+  rg=g.createRadialGradient(P.x,P.y,0,P.x,P.y,P.r);rg.addColorStop(0,'#000000');rg.addColorStop(0.8,'#12051e');rg.addColorStop(1,'#3a1060');g.fillStyle=rg;g.beginPath();g.arc(P.x,P.y,P.r,0,Math.PI*2);g.fill();
+  g.strokeStyle='rgba(220,120,255,0.8)';g.lineWidth=3;g.beginPath();g.arc(P.x,P.y,P.r,0,Math.PI*2);g.stroke();
+  g.strokeStyle='rgba(220,120,255,0.3)';g.lineWidth=1.5;g.beginPath();g.arc(P.x,P.y,P.r*0.86,0,Math.PI*2);g.stroke();
+  for(let i=0;i<24;i++){const an=i/24*Math.PI*2;g.beginPath();g.moveTo(P.x+Math.cos(an)*P.r*0.88,P.y+Math.sin(an)*P.r*0.88);g.lineTo(P.x+Math.cos(an)*P.r*0.98,P.y+Math.sin(an)*P.r*0.98);g.stroke()}
+  gr=g.createLinearGradient(0,hz,0,H);gr.addColorStop(0,'#1a0c28');gr.addColorStop(1,'#050208');g.fillStyle=gr;g.fillRect(0,hz,W,H-hz);
+  const cols=['#2a1840','#180c26','#07030c'];
+  for(let k=0;k<3;k++){const f=k/2,base=hz+H*0.18*f,n=4;
+    for(const side of[-1,1])for(let i=0;i<n;i++){let x=W*(0.02+i*0.075)+R()*16+f*W*0.02;if(side>0)x=W-x;
+      const w=18+f*26+R()*10,h=H*(0.22+0.22*f+R()*0.16),y0=base-h;g.fillStyle=cols[k];
+      g.fillRect(x-w/2,y0,w,h);bgPoly(g,[[x-w/2-3,y0],[x+w/2+3,y0],[x,y0-w*1.6-R()*20]]);g.fill();
+      if(k<2){g.fillStyle=`rgba(190,90,255,${0.35+R()*0.3})`;for(let j=0;j<3;j++)if(R()<0.6)g.fillRect(x-2,y0+12+j*h*0.25,4,7)}}}
+  g.strokeStyle='rgba(190,90,255,0.32)';g.lineWidth=2;g.beginPath();g.ellipse(W/2,H*0.66,W*0.36,H*0.06,0,0,Math.PI*2);g.stroke();
+  g.lineWidth=1;g.beginPath();g.ellipse(W/2,H*0.66,W*0.3,H*0.048,0,0,Math.PI*2);g.stroke();
+  for(let i=0;i<16;i++){const an=i/16*Math.PI*2;g.beginPath();g.moveTo(W/2+Math.cos(an)*W*0.3,H*0.66+Math.sin(an)*H*0.048);g.lineTo(W/2+Math.cos(an)*W*0.36,H*0.66+Math.sin(an)*H*0.06);g.stroke()}
+  g.strokeStyle='#2c1f38';g.lineWidth=2;
+  for(const side of[-1,1])for(let i=0;i<3;i++){const x0=W*(0.06+i*0.08+R()*0.03),x=side<0?x0:W-x0,len=H*(0.12+R()*0.2);
+    for(let y=0;y<len;y+=9){g.beginPath();g.ellipse(x,y,(y/9)%2?2.5:4,5,0,0,Math.PI*2);g.stroke()}}
+}
 function drawBG(){
-  const E=B.E,g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,E.bg[1]);g.addColorStop(0.45,E.bg[0]);g.addColorStop(1,E.bg[1]);
+  const theme=bgTheme(),key=`${theme}|${W}x${H}@${DPR}`;
+  if(!BGCACHE||BGCACHE.key!==key)BGCACHE={key,c:buildBG(theme)};
+  ctx.drawImage(BGCACHE.c,0,0,W,H);
+  drawBGAnim(theme);
+  const v=ctx.createRadialGradient(W/2,H*0.45,Math.min(W,H)*0.2,W/2,H*0.5,Math.max(W,H)*0.75);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.6)');ctx.fillStyle=v;ctx.fillRect(0,0,W,H);
+}
+// 体力が減るほど、画面の周りから赤いトンネルが迫る（HUDの文字は上に描くので読める）
+const LOWHP_START=0.85;   // 体力がこの割合を切ると出はじめる
+function drawLowHP(){
+  if(!B)return;
+  const r=Math.max(0,B.php/B.pmax);if(r>=LOWHP_START)return;
+  let k=(LOWHP_START-r)/LOWHP_START;           // 0（出はじめ）→ 1（瀕死）
+  if(r<0.35)k*=1+0.18*Math.max(0,Math.sin(B.t*(5+6*(0.35-r))));  // 瀕死に近いほど速い鼓動
+  const big=Math.hypot(W,H)/2,inner=big*(0.9-0.5*Math.min(1,k)),outer=big*1.02;
+  const g=ctx.createRadialGradient(W/2,H*0.5,inner,W/2,H*0.5,outer);
+  g.addColorStop(0,'rgba(160,0,0,0)');g.addColorStop(0.45,`rgba(160,0,0,${0.3*k})`);g.addColorStop(1,`rgba(90,0,0,${Math.min(0.95,0.95*k)})`);
   ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
-  const hz=H*0.5;ctx.strokeStyle='rgba(255,255,255,0.05)';ctx.lineWidth=1;
-  for(let i=-10;i<=10;i++){ctx.beginPath();ctx.moveTo(W/2+i*W*0.04,hz);ctx.lineTo(W/2+i*W*0.35,H);ctx.stroke()}
-  for(let i=1;i<9;i++){const y=hz+(H-hz)*Math.pow(i/9,1.8);ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
-  // 漂う粒子
-  ctx.fillStyle=rgba(E.glow,0.25);for(let i=0;i<24;i++){const x=(i*97+B.t*12*(1+i%3))%W,y=H*0.1+((i*53+Math.sin(B.t+i)*20)%(H*0.5));ctx.fillRect(x,y,2,2)}
-  const v=ctx.createRadialGradient(W/2,H*0.45,Math.min(W,H)*0.2,W/2,H*0.5,Math.max(W,H)*0.75);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.65)');ctx.fillStyle=v;ctx.fillRect(0,0,W,H);
+  // 血管のような筋
+  if(k>0.35){ctx.save();ctx.strokeStyle=`rgba(120,0,0,${(k-0.35)*0.8})`;ctx.lineWidth=2;let s=7;const rnd=()=>((s=(s*9301+49297)%233280)/233280);
+    for(let i=0;i<14;i++){const an=i/14*Math.PI*2+rnd()*0.3;let x=W/2+Math.cos(an)*big,y=H/2+Math.sin(an)*big;ctx.beginPath();ctx.moveTo(x,y);
+      const len=big*(0.15+0.3*(k-0.35));for(let j=0;j<5;j++){x-=Math.cos(an)*len/5+(rnd()-0.5)*14;y-=Math.sin(an)*len/5+(rnd()-0.5)*14;ctx.lineTo(x,y)}ctx.stroke()}ctx.restore()}
+}
+function drawBGAnim(theme){
+  const t=B.t;ctx.save();
+  if(theme==='d1'){ // たいまつの炎と、舞う火の粉
+    for(const[x,y]of TORCHES()){const f=0.85+0.1*Math.sin(t*13+x)+0.07*Math.sin(t*23+x*2);
+      const gl=ctx.createRadialGradient(x,y-10,0,x,y-10,110*f);gl.addColorStop(0,'rgba(255,170,80,0.35)');gl.addColorStop(1,'rgba(255,120,40,0)');ctx.fillStyle=gl;ctx.fillRect(x-120,y-130,240,240);
+      ctx.fillStyle='#ff8a2a';ctx.beginPath();ctx.moveTo(x-8*f,y);ctx.quadraticCurveTo(x-10*f,y-16*f,x+Math.sin(t*9)*3,y-30*f);ctx.quadraticCurveTo(x+10*f,y-16*f,x+8*f,y);ctx.closePath();ctx.fill();
+      ctx.fillStyle='#ffe08a';ctx.beginPath();ctx.moveTo(x-4*f,y);ctx.quadraticCurveTo(x-5*f,y-9*f,x+Math.sin(t*9)*2,y-18*f);ctx.quadraticCurveTo(x+5*f,y-9*f,x+4*f,y);ctx.closePath();ctx.fill()}
+    for(let i=0;i<28;i++){const x=(i*137+t*10*(1+i%3))%W,y=H*0.85-((i*71+t*18*(1+i%2))%(H*0.75)),a=0.25+0.25*Math.sin(t*3+i);ctx.fillStyle=`rgba(255,180,90,${a})`;ctx.fillRect(x,y,2,2)}
+  }else if(theme==='d2'){ // 雨と落雷
+    ctx.strokeStyle='rgba(180,205,255,0.2)';ctx.lineWidth=1;ctx.beginPath();
+    for(let i=0;i<80;i++){const x=(i*53.3+t*240*(1+(i%3)*0.2))%(W+120)-60,y=(i*97.7+t*900*(1+(i%4)*0.1))%(H+60)-30;ctx.moveTo(x,y);ctx.lineTo(x-7,y+20)}ctx.stroke();
+    const L=B.bgL||(B.bgL={next:t+rand(1.5,4),life:0,pts:[]});
+    if(t>L.next){const x0=W*(0.2+Math.random()*0.6);L.pts=[[x0,0]];let x=x0,y=0;const yEnd=H*rand(0.22,0.36);while(y<yEnd){y+=rand(14,30);x+=rand(-24,24);L.pts.push([x,y])}L.life=0.35;L.next=t+rand(2.5,6)}
+    if(L.life>0){L.life-=1/60;const al=Math.max(0,L.life/0.35);ctx.fillStyle=`rgba(200,225,255,${0.18*al})`;ctx.fillRect(0,0,W,H);
+      ctx.strokeStyle=`rgba(235,248,255,${al})`;ctx.shadowColor='#9fd8ff';ctx.shadowBlur=20;ctx.lineWidth=3;ctx.beginPath();L.pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.stroke()}
+  }else{ // 冥界：門の脈動、立ちのぼる魂、流れる霧、魔法陣の明滅
+    const P=PORTAL(),pl=0.5+0.5*Math.sin(t*1.6);
+    ctx.strokeStyle=`rgba(230,140,255,${0.25+0.3*pl})`;ctx.lineWidth=4;ctx.shadowColor='#c060ff';ctx.shadowBlur=24;ctx.beginPath();ctx.arc(P.x,P.y,P.r*(1+0.015*pl),0,Math.PI*2);ctx.stroke();ctx.shadowBlur=0;
+    for(let k=0;k<3;k++){const x=((t*14*(k+1)+k*300)%(W*1.6))-W*0.3;ctx.fillStyle='rgba(160,100,210,0.07)';ctx.beginPath();ctx.ellipse(x,H*(0.56+0.07*k),W*0.45,H*0.035,0,0,Math.PI*2);ctx.fill()}
+    ctx.strokeStyle=`rgba(200,110,255,${0.15+0.2*pl})`;ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(W/2,H*0.66,W*0.36,H*0.06,0,0,Math.PI*2);ctx.stroke();
+    for(let i=0;i<18;i++){const x=W*((i*0.137+0.03*Math.sin(t*0.8+i))%1),y=H*0.9-((t*22*(0.5+(i%3)*0.3)+i*67)%(H*0.75)),r=3+(i%3)*1.5,a=0.5*Math.min(1,(H*0.9-y)/60);
+      const gl=ctx.createRadialGradient(x,y,0,x,y,r*3);gl.addColorStop(0,i%2?`rgba(170,240,255,${a})`:`rgba(220,160,255,${a})`);gl.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=gl;ctx.fillRect(x-r*3,y-r*3,r*6,r*6)}
+    if(B.g.phase2){ctx.fillStyle='rgba(255,20,60,0.10)';ctx.fillRect(0,0,W,H)}
+  }
+  ctx.restore();
 }
 function activeLimb(p,a){if(!p.limb||!a||a.kind==='breath')return false;const v=DV[a.dir];return Math.abs(v.x)<0.3||Math.sign(p.x)===-Math.sign(v.x)}
 function partOff(p,u){
@@ -809,7 +926,7 @@ function drawEnemy(){
   ctx.translate(x,y);ctx.rotate(rot);ctx.scale(sc,sc);
   const heavyCol=a&&a.kind==='heavy'?'#ff3a2a':E.glow;
   if(glow>0){ctx.shadowColor=heavyCol;ctx.shadowBlur=40*glow}
-  const aw=B.state==='windup'&&a&&!a.chain;
+  const aw=B.state==='windup'&&a;
   for(const p of B.parts){const o=partOff(p,u);ctx.save();ctx.translate(o.ox,o.oy);
     if(glow>0){const act=aw&&(activeLimb(p,a)||(a.kind==='breath'&&p.id==='head'));ctx.shadowColor=heavyCol;ctx.shadowBlur=act?60*glow:12*glow}
     drawPart(p,u,glow);if(B.g.armor>0)drawArmor(p,u);ctx.restore()}
@@ -879,11 +996,6 @@ function drawTelegraph(){
   const a=B.atk;if(B.state!=='windup'||!a||B.over)return;
   const c=PC(),ty=c.y+10;
   const rMin=20,rMax=78,r=rMin+(rMax-rMin)*Math.max(0,1-a.t/a.w);
-  if(a.chain){ // 雷鳴乱舞：場所も方向も出さない（記憶勝負）
-    const inWin=a.t>=a.w-earlyWin()&&a.t<=a.w+LATE&&!a.fail,col=a.fail?'#888':inWin?'#ffe94a':'#9fe8ff';
-    ctx.save();ctx.lineWidth=5;ctx.strokeStyle=col;ctx.shadowColor=col;ctx.shadowBlur=16;ctx.beginPath();ctx.arc(c.x,c.y,r,0,Math.PI*2);ctx.stroke();
-    ctx.fillStyle=col;ctx.font="900 40px 'M PLUS 1p'";ctx.textAlign='center';ctx.fillText('?',c.x,c.y+14);ctx.restore();
-    label(`雷鳴乱舞 ${B.chain.idx}/${B.chain.total} — 覚えた順にはじけ！`,col,c.y-rMax-20);return}
   const pt=attackPoint(a);
   if(a.kind==='breath'){
     const dw=DODGEWIN*perk('dodge'),inWin=a.t>=a.w-dw&&a.t<=a.w+LATE,col=inWin?'#ff4af0':'#ff3a3a';
@@ -910,15 +1022,6 @@ function drawTelegraph(){
 const GLYPH={R:'→',DR:'↘',D:'↓',DL:'↙',L:'←',UL:'↖',U:'↑',UR:'↗'};
 function arrowIcon(x,y,sz,deg,col){ctx.save();ctx.translate(x,y);ctx.rotate(deg*Math.PI/180);ctx.fillStyle=col;ctx.strokeStyle='#fff';ctx.lineWidth=2;
   ctx.beginPath();ctx.moveTo(-sz*0.45,-sz*0.12);ctx.lineTo(sz*0.05,-sz*0.12);ctx.lineTo(sz*0.05,-sz*0.35);ctx.lineTo(sz*0.5,0);ctx.lineTo(sz*0.05,sz*0.35);ctx.lineTo(sz*0.05,sz*0.12);ctx.lineTo(-sz*0.45,sz*0.12);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore()}
-function drawChainPreview(){
-  if(B.state!=='preview'||!B.preview)return;
-  const c=PC(),n=B.preview.length,sz=Math.min(56,(W-40)/n-8),gap=sz+10,x0=W/2-(n-1)*gap/2;
-  ctx.save();ctx.fillStyle='rgba(5,15,30,0.75)';ctx.strokeStyle='#9fe8ff';ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(x0-sz/2-14,c.y-sz/2-40,(n-1)*gap+sz+28,sz+64,14);ctx.fill();ctx.stroke();
-  ctx.fillStyle='#9fe8ff';ctx.font="900 15px 'M PLUS 1p'";ctx.textAlign='center';ctx.fillText(`雷鳴乱舞：はじく方向の順番 — あと${B.timer.toFixed(1)}秒`,W/2,c.y-sz/2-16);
-  B.preview.forEach((d,i)=>{ctx.fillStyle='rgba(255,255,255,0.08)';ctx.fillRect(x0+i*gap-sz/2,c.y-sz/2+4,sz,sz);
-    arrowIcon(x0+i*gap,c.y+4,sz*0.85,DIRS[OPP[d]],'#ffe94a');ctx.fillStyle='#9fe8ff';ctx.font="700 11px 'M PLUS 1p'";ctx.fillText(i+1,x0+i*gap,c.y+sz/2+18)});
-  ctx.restore();
-}
 function drawArmor(p,u){const k=p.broken?0.85:1,cx=p.x*u,cy=p.y*u,rx=p.rx*u*k*1.08,ry=p.ry*u*k*1.08,g=B.g;
   ctx.save();ctx.shadowBlur=0;ell(cx,cy,rx,ry);ctx.fillStyle='rgba(118,108,96,0.86)';ctx.fill();ctx.strokeStyle='#2e261e';ctx.lineWidth=3;ctx.stroke();ctx.clip();
   ctx.strokeStyle='rgba(40,32,24,0.6)';ctx.lineWidth=2;for(let i=-3;i<=3;i++){ctx.beginPath();ctx.moveTo(cx+i*rx*0.35,cy-ry);ctx.lineTo(cx+i*rx*0.35+rx*0.2,cy+ry);ctx.stroke()}
@@ -928,7 +1031,9 @@ function drawArmor(p,u){const k=p.broken?0.85:1,cx=p.x*u,cy=p.y*u,rx=p.rx*u*k*1.
 function drawGimmickHUD(){
   const E=B.E,g=B.g,y=110;ctx.textAlign='center';ctx.font="700 12px 'M PLUS 1p'";
   if(E.gimmick==='armor'&&g.armor>0){ctx.fillStyle='#e0d0b8';ctx.fillText(`岩鎧 ${'■'.repeat(g.armor)}${'□'.repeat(g.armorMax-g.armor)}　ダメージ1/5・あと${g.armor}回の体勢崩しで砕ける`,W/2,y)}
-  if(E.gimmick==='storm'){const bw=150;ctx.fillStyle='#9fe8ff';ctx.fillText(B.chain||B.state==='preview'?'雷鳴乱舞！':g.charge>=1?'雷ゲージ MAX — 乱舞が来る！':'雷ゲージ',W/2,y-4);bar(W/2-bw/2,y+2,bw,5,B.chain?0:g.charge,'#9fe8ff')}
+  if(E.gimmick==='storm'){const bw=150;
+    if(g.storm>0){ctx.fillStyle='#dff8ff';ctx.fillText(`雷速モード 残り${Math.ceil(g.storm)}秒 — 雷光が走ったら向きが反対に！`,W/2,y-4);bar(W/2-bw/2,y+2,bw,5,g.storm/STORM_TIME,'#dff8ff')}
+    else{ctx.fillStyle='#9fe8ff';ctx.fillText('雷ゲージ',W/2,y-4);bar(W/2-bw/2,y+2,bw,5,g.charge,'#9fe8ff')}}
   if(E.gimmick==='curse'){const core=B.parts.find(p=>p.id==='core');const t=[];if(!core.broken)t.push('冥核が再生中（破壊で停止）');if(g.phase2)t.push('第二形態');if(g.curse>0)t.push(`反転の呪い 残り${Math.ceil(g.curse)}秒`);
     ctx.fillStyle=g.curse>0?'#e090ff':'#ff9ab0';ctx.fillText(t.join('　'),W/2,y)}
 }
@@ -1005,6 +1110,9 @@ function drawFX(dt){
   for(const b of fx.bolts){b.life-=dt;const h=headScreen(),p=PP(),al=b.life/b.max;ctx.save();ctx.globalAlpha=al;ctx.strokeStyle='#e8fbff';ctx.shadowColor='#7ad0ff';ctx.shadowBlur=30;
     for(let j=0;j<3;j++){ctx.lineWidth=j?2:6;ctx.beginPath();ctx.moveTo(h.x,h.y);for(let i=1;i<=8;i++){const t=i/8;ctx.lineTo(h.x+(p.x-h.x)*t+(i<8?rand(-40,40):rand(-60,60)),h.y+(p.y-h.y)*t)}ctx.stroke()}ctx.restore()}
   fx.bolts=fx.bolts.filter(b=>b.life>0);
+  for(const z of fx.zaps){z.life-=dt;const al=Math.max(0,z.life/z.max);ctx.save();ctx.globalAlpha=al;ctx.strokeStyle='#f2fdff';ctx.shadowColor='#8fe0ff';ctx.shadowBlur=24;ctx.lineCap='round';
+    for(let j=0;j<2;j++){ctx.lineWidth=j?2:6;ctx.beginPath();ctx.moveTo(z.a.x,z.a.y);for(let i=1;i<10;i++){const k=i/10;ctx.lineTo(z.a.x+(z.b.x-z.a.x)*k+rand(-26,26),z.a.y+(z.b.y-z.a.y)*k+rand(-26,26))}ctx.lineTo(z.b.x,z.b.y);ctx.stroke()}ctx.restore()}
+  fx.zaps=fx.zaps.filter(z=>z.life>0);
   // パーティクル
   for(const p of fx.parts){p.life-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=p.drag||0.92;p.vy=p.vy*(p.drag||0.92)+(p.grav!=null?p.grav:300)*dt;
     ctx.globalAlpha=Math.max(0,p.life/p.max);if(p.add)ctx.globalCompositeOperation='lighter';ctx.fillStyle=p.c;
@@ -1028,10 +1136,6 @@ function drawFX(dt){
   ctx.globalAlpha=1;fx.floats=fx.floats.filter(f=>f.life>0);
 }
 
-function startPreview(){
-  B.preview=Array.from({length:5},()=>DIRKEYS[ri(0,7)]);B.state='preview';B.timer=2.4;
-  float('雷鳴乱舞！ 順番を覚えろ！',W/2,H*0.24,'#9fe8ff',26,2);fx.flash={c:'#9fe8ff',life:0.3,max:0.3};
-}
 function guardPhase(){ // 形態変化・岩鎧の境目を一撃で飛び越えさせない
   const E=B.E,g=B.g;
   if(E.gimmick==='curse'&&!g.phase2&&B.hp<=B.maxHp*0.5){B.hp=B.maxHp*0.5;g.trig=true}
@@ -1045,9 +1149,13 @@ function gimmicks(dt){
   const E=B.E,g=B.g;
   if(E.gimmick==='armor'&&!g.armorDone&&(B.hp<=B.maxHp*0.6||g.trig)){g.armorDone=true;g.armor=g.armorMax;
     float('岩鎧をまとった！',W/2,H*0.28,'#d8c8b0',30,1.8);float('体勢崩し3回目で砕ける',W/2,H*0.28+30,'#d8c8b0',18,1.8);B.shake=16;burst(B.tf.x,B.tf.y,'#9a8a78',40,500);cancelBreak()}
-  if(E.gimmick==='storm'&&!B.chain&&B.state!=='preview'){const head=B.parts.find(p=>p.id==='head');
-    g.charge=Math.min(1,g.charge+dt/16*(head.broken?0.5:1));
-    if(g.charge>0.6&&Math.random()<g.charge*0.35){const t=B.tf;burst(t.x+rand(-1,1)*t.u*0.6,t.y+rand(-1,1)*t.u*0.5,'#bff0ff',1,150,true)}}
+  if(E.gimmick==='storm'){
+    if(g.storm>0){g.storm-=dt;if(Math.random()<0.6){const t=B.tf;burst(t.x+rand(-1,1)*t.u*0.7,t.y+rand(-1,1)*t.u*0.6,'#dff8ff',1,220,true)}
+      if(g.storm<=0){g.storm=0;float('雷速モードが解けた',W/2,H*0.25,'#cdb89a',20,1)}}
+    else{const head=B.parts.find(p=>p.id==='head');g.charge=Math.min(1,g.charge+dt/STORM_CHARGE*(head.broken?0.5:1));
+      if(g.charge>0.6&&Math.random()<g.charge*0.35){const t=B.tf;burst(t.x+rand(-1,1)*t.u*0.6,t.y+rand(-1,1)*t.u*0.5,'#bff0ff',1,150,true)}
+      if(g.charge>=1&&B.state==='idle'){g.charge=0;g.storm=STORM_TIME;fx.flash={c:'#bff4ff',life:0.35,max:0.35};B.roar=0.8;B.shake=12;
+        float('雷速モード！',W/2,H*0.26,'#bff4ff',32,1.8);float('雷光が走ったら、攻撃の向きが反対になる',W/2,H*0.26+30,'#bff4ff',16,1.8)}}}
   if(E.gimmick==='curse'){
     const core=B.parts.find(p=>p.id==='core');
     if(!core.broken){for(const p of B.parts)if(!p.body&&!p.broken)p.hp=Math.min(p.maxHp,p.hp+p.maxHp*0.004*dt)}
@@ -1074,10 +1182,11 @@ function update(dt){
   if(B.over)return;
   const n=needNow();if(n>B.lastNeed){B.lastNeed=n;float('敵が警戒を強めた！ 必要パリィ +1',W/2,H*0.2,'#ff9a6a',20,1.6)}
   gimmicks(dt);if(B.over)return;
-  if(B.state==='idle'){B.timer-=dt;if(B.timer<=0){if(B.E.gimmick==='storm'&&B.g.charge>=1&&!B.chain&&!B.queue.length&&!B.flurry)startPreview();else beginAttack()}}
-  else if(B.state==='preview'){B.timer-=dt;if(B.timer<=0){B.queue=[...B.preview];B.chain={seq:B.preview,idx:0,ok:0,total:B.preview.length};B.preview=null;B.state='idle';B.timer=0.2}}
+  if(B.state==='idle'){B.timer-=dt;if(B.timer<=0)beginAttack()}
   else if(B.state==='windup'){
     if(a.holdLeft>0&&a.t>=a.holdAt)a.holdLeft-=dt;else a.t+=dt;
+    if(a.warpAt&&!a.warped&&a.t>=a.warpAt){const p0=attackPoint(a);a.warped=true;a.dir=OPP[a.dir];const p1=attackPoint(a),t=B.tf; // 雷光転移：向きが反対へ
+      fx.flash={c:'#e8fbff',life:0.12,max:0.12};fx.zaps.push({a:p0,b:p1,life:0.28,max:0.28});burst(p1.x,p1.y,'#e8fbff',22,420,true);B.shake=Math.max(B.shake,6)}
     // 冥炎：着弾前から炎を吐く
     if(a.kind==='breath'&&B.E.breath.type==='fire'&&a.t>a.w-Math.min(0.45,a.w*0.75)&&a.t<a.w+0.1){const h=headScreen(),p=PP();
       for(let i=0;i<3;i++){const ang=Math.atan2(p.y-h.y,p.x-h.x)+rand(-0.25,0.25),sp=rand(700,1000);fx.parts.push({x:h.x,y:h.y,vx:Math.cos(ang)*sp,vy:Math.sin(ang)*sp,life:rand(0.35,0.55),max:0.55,c:Math.random()<0.5?'#d070ff':'#ff70c0',r:rand(8,18),add:true,round:true,drag:0.97,grav:0})}}
@@ -1093,7 +1202,7 @@ function loop(now){
   const dt=Math.min(0.05,(now-last)/1000);last=now;
   if(B){update(dt);
     ctx.save();if(B.shake>0)ctx.translate((Math.random()-0.5)*B.shake,(Math.random()-0.5)*B.shake);
-    drawBG();drawEnemy();drawBreath();drawTelegraph();drawChainPreview();drawPlayer();drawFX(dt);ctx.restore();drawHUD();drawGimmickHUD();
+    drawBG();drawEnemy();drawBreath();drawTelegraph();drawPlayer();drawFX(dt);ctx.restore();drawLowHP();drawHUD();drawGimmickHUD();
     if(B.g.curse>0){const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.3,W/2,H/2,Math.max(W,H)*0.7);g.addColorStop(0,'rgba(120,0,200,0)');g.addColorStop(1,'rgba(120,0,200,0.35)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
     if(fx.flash){ctx.fillStyle=rgba(fx.flash.c,0.45*fx.flash.life/fx.flash.max);ctx.fillRect(0,0,W,H)}
     if(B.hurt>0){const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.3,W/2,H/2,Math.max(W,H)*0.7);g.addColorStop(0,'rgba(255,0,0,0)');g.addColorStop(1,`rgba(220,20,10,${B.hurt})`);ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
