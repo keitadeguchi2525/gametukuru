@@ -1006,6 +1006,11 @@ function gesture(dx,dy){
 }
 const dodgeBtn=$('#dodge');
 dodgeBtn.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();doDodge()});
+// 隠しコマンド（テスト用）：拠点の「遊び方」画面で Q を1.5秒以内に5回 → 全ダンジョン解放＋全素材を100個追加
+let qTimes=[];
+addEventListener('keydown',e=>{if(B||tab!=='how'||e.repeat||e.key.toLowerCase()!=='q')return;
+  const now=performance.now();qTimes=[...qTimes.filter(t=>now-t<1500),now];
+  if(qTimes.length>=5){qTimes=[];for(const D of DUNGEONS)S.cleared[D.id]=true;for(const k in MATS)addMat(k,100);save();sfx('rare');toast('隠しコマンド：全ダンジョン解放＆全素材 +100個！')}});
 const KEYDIR={ArrowLeft:'L',ArrowRight:'R',ArrowUp:'U',ArrowDown:'D',a:'L',d:'R',w:'U',s:'D',q:'UL',e:'UR',z:'DL',c:'DR'};
 addEventListener('keydown',e=>{if(!B||B.over)return;
   if(e.key==='Shift'){e.preventDefault();if(!e.repeat)doDodge();return}
