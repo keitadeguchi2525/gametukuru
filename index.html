@@ -803,7 +803,7 @@ function renderHub(){
   document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab));
   let h='';
   if(tab==='hunt'){
-    h+=`<div class="card" style="border-color:#7a2a20"><p style="color:#ffb0a0;margin:0">⚠ ダンジョンで手に入れた素材は<b>帰還するまで未確定</b>。倒れると<b>その探索の戦利品を失い、装備中の武器・防具（5つ）の強化がすべて+0に戻る</b>（装備そのものはなくならない）。階の合間に「帰還」すれば戦利品も強化も守れる（戦闘中に逃げることはできない）。</p></div>`;
+    h+=`<div class="card" style="border-color:#7a2a20"><p style="color:#ffb0a0;margin:0">⚠ ダンジョンで手に入れた素材は<b>帰還するまで未確定</b>。倒れると<b>その探索の戦利品と、装備中の武器・防具（5つ）のうちランダムに1〜3つを失う</b>（初期装備は強化が+0に戻る）。階の合間に「帰還」すれば戦利品も装備も守れる（戦闘中に逃げることはできない）。</p></div>`;
     DUNGEONS.forEach((D,i)=>{const lock=!unlocked(i),open=OPEN_DETAIL[D.id]&&!lock;
       // 前のダンジョンを踏破していないうちは、星の数だけ見せて名前・説明は「???」
       h+=`<div class="card ${lock?'locked':''}"><h3>${'★'.repeat(D.stars)} ${lock?'???':`${D.name}（全${D.floors.length}階）`} ${S.cleared[D.id]?'<span class="tag ok">踏破済</span>':''}</h3>
@@ -907,7 +907,7 @@ function renderHub(){
     <li>防具は<b>頭・胴・手・足</b>の4部位。シリーズごとに作って組み合わせられる（レアシリーズは特定の部位に特殊効果）。</li>
     <li>ボスを倒すと25%で<b>討伐の証</b>が手に入る。拠点の<b>ガチャ</b>で、そのボスのレア素材か<b>ボス武器</b>（特殊効果つき・ガチャ限定）が当たる。</li>
     <li>倒すと討伐素材と、確率で<b>レア素材</b>がドロップ。レア素材で特殊効果つきの装備が作れる。</li>
-    <li><b>ダンジョン</b>は階層制。HPは階をまたいで持ち越し（次の階へ進むとき最大HPの20%回復）。各階の後に<b>帰還</b>すれば戦利品を持ち帰れるが、<b>倒れると全ロスト</b>。最奥のボスを倒すと踏破＆全部持ち帰り。<b>倒れると装備中の武器・防具5つの強化がすべて+0に戻る</b>（装備はなくならない）。</li>
+    <li><b>ダンジョン</b>は階層制。HPは階をまたいで持ち越し（次の階へ進むとき最大HPの20%回復）。各階の後に<b>帰還</b>すれば戦利品を持ち帰れるが、<b>倒れると全ロスト</b>。最奥のボスを倒すと踏破＆全部持ち帰り。<b>倒れると装備中の武器・防具5つのうちランダムに1〜3つも失う</b>（1つ33%・2つ33%・3つ34%。工房で作り直せる）。</li>
     <li>PC：パリィはマウスでスワイプ（ドラッグ）。回避は <b>A＝左</b>／<b>D＝右</b>。</li></ul></div>`;
     // 隠しコマンドを使ったあとだけ出る：ボスに直接挑む（テスト用）
     if(S.debug)h+=`<div class="card" style="border-color:#7a4a9a"><h3>🔧 ボスに直接挑む（テスト用）</h3><p style="font-size:12px;color:#a89478">ダンジョンの最奥の階から始まる。HPは満タン。</p>
@@ -1203,18 +1203,30 @@ function floorCleared(rares){
 }
 const FLOOR_HEAL=0.2;   // 次の階へ進むときに回復する割合（最大HPの20%）
 const isLast2=()=>RUN.floor+1===RUN.D.floors.length-1;
-// 倒れたとき：装備はなくならない。かわりに装備中の5つ（武器＋防具4部位）の強化がすべて+0に戻る
-function resetUpgrades(){const out=[];
-  const w=W_(S.eqW),wl=S.weapons[S.eqW]||0;if(wl>0){S.weapons[S.eqW]=0;out.push({t:`${w.name}+${wl} → +0`,i:weaponIcon(w)})}
-  for(const sl of SLOTS){const p=A_(S.eq[sl.k]),lv=S.armors[p.id]||0;if(lv>0){S.armors[p.id]=0;out.push({t:`${p.name}+${lv} → +0`,i:armorIcon(p)})}}
-  save();return out}
+// 倒れたとき：装備中の5つ（武器＋防具4部位）からランダムに1〜3つを失う（1つ33%／2つ33%／3つ34%）
+const LOSE_ODDS=[[1,0.33],[2,0.33],[3,0.34]];
+function loseCount(){let r=Math.random();for(const[n,p]of LOSE_ODDS){if((r-=p)<0)return n}return 3}
+function loseOne(key){
+  if(key==='w'){const w=W_(S.eqW);
+    if(S.eqW==='w0'){const lv=S.weapons.w0||0;S.weapons.w0=0;return {t:lv>0?`${w.name}+${lv} → +0`:`${w.name}（初期装備なので無事）`,i:weaponIcon(w)}}
+    const o={t:`${w.name}+${S.weapons[S.eqW]}`,i:weaponIcon(w)};delete S.weapons[S.eqW];S.eqW='w0';if(S.weapons.w0===undefined)S.weapons.w0=0;return o}
+  const p=A_(S.eq[key]),lv=S.armors[p.id]||0;
+  if(p.set.id==='a0'){S.armors[p.id]=0;return {t:lv>0?`${p.name}+${lv} → +0`:`${p.name}（初期装備なので無事）`,i:armorIcon(p)}}
+  const o={t:`${p.name}+${lv}`,i:armorIcon(p)};delete S.armors[p.id];S.eq[key]='a0_'+key;if(S.armors['a0_'+key]===undefined)S.armors['a0_'+key]=0;return o}
+function loseEquipment(){
+  const keys=['w',...SLOTS.map(sl=>sl.k)];
+  for(let i=keys.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[keys[i],keys[j]]=[keys[j],keys[i]]}
+  const n=loseCount(),out=[];
+  for(const k of keys.slice(0,n)){const o=loseOne(k);if(o)out.push(o)}
+  save();return {n,out};
+}
 function died(){
   sfx('death');
   const lost={};addLoot(lost,RUN.loot);addLoot(lost,B.loot);
-  // ボスに直接挑む（テスト用）で負けたときは強化も戻らない
-  const eq=RUN.test?[]:resetUpgrades();
-  showBox(`<h2 style="color:#ff8f7a">力尽きた…</h2><p style="color:#ffb0a0;font-weight:700">${RUN.D.name} ${RUN.floor+1}F で倒れ、${RUN.test?'戦利品を失った':'戦利品を失い、装備の強化が+0に戻った'}</p>
-    ${RUN.test?'<p style="font-size:13px;color:#bdf0a8">🔧 テスト挑戦なので強化は戻らない</p>':''}<div style="font-size:13px;color:#bba78a;${RUN.test?'display:none':''}">強化が+0に戻った装備（装備はなくならない）</div><div class="row" style="opacity:.6;filter:grayscale(.6);${RUN.test?'display:none':''}">${eq.length?eq.map(o=>`<span class="chip"><img src="${o.i}">${o.t}</span>`).join(''):'<span class="chip" style="padding:3px 8px">なし（強化していなかった）</span>'}</div>
+  // ボスに直接挑む（テスト用）で負けたときは装備を失わない
+  const {n,out:eq}=RUN.test?{n:0,out:[]}:loseEquipment();
+  showBox(`<h2 style="color:#ff8f7a">力尽きた…</h2><p style="color:#ffb0a0;font-weight:700">${RUN.D.name} ${RUN.floor+1}F で倒れ、${RUN.test?'戦利品を失った':`戦利品と装備${n}つを失った`}</p>
+    ${RUN.test?'<p style="font-size:13px;color:#bdf0a8">🔧 テスト挑戦なので装備は失わない</p>':''}<div style="font-size:13px;color:#bba78a;${RUN.test?'display:none':''}">失った装備（装備中の5つからランダムに${n}つ）</div><div class="row" style="opacity:.6;filter:grayscale(.6);${RUN.test?'display:none':''}">${eq.length?eq.map(o=>`<span class="chip"><img src="${o.i}">${o.t}</span>`).join(''):'<span class="chip" style="padding:3px 8px">なし</span>'}</div>
     <div style="font-size:13px;color:#bba78a">失った戦利品</div><div class="row" style="opacity:.6;filter:grayscale(.6)">${lootChips(lost)}</div>
     <div class="row"><button class="btn" id="home">拠点へ戻る</button></div>`);
   $('#home').onclick=endToHub;
