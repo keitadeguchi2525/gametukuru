@@ -853,12 +853,16 @@ function renderHub(){
     <li>倒すと討伐素材と、確率で<b>レア素材</b>がドロップ。レア素材で特殊効果つきの装備が作れる。</li>
     <li><b>ダンジョン</b>は階層制。HPは階をまたいで持ち越し（次の階へ進むとき最大HPの5%だけ回復）。各階の後に<b>帰還</b>すれば戦利品を持ち帰れるが、<b>倒れると全ロスト</b>。最奥のボスを倒すと踏破＆全部持ち帰り。<b>倒れると装備中の武器・防具5つのうちランダムに1〜3つも失う</b>（1つ33%・2つ33%・3つ34%。工房で作り直せる）。</li>
     <li>PC：パリィはマウスでスワイプ（ドラッグ）。回避は <b>A＝左</b>／<b>D＝右</b>。</li></ul></div>`;
+    // 隠しコマンドを使ったあとだけ出る：ボスに直接挑む（テスト用）
+    if(S.debug)h+=`<div class="card" style="border-color:#7a4a9a"><h3>🔧 ボスに直接挑む（テスト用）</h3><p style="font-size:12px;color:#a89478">ダンジョンの最奥の階から始まる。HPは満タン。</p>
+      <div class="row">${DUNGEONS.map((D,i)=>{const b=EN(D.floors.slice(-1)[0]);return `<button class="btn mini" data-act="bossrush" data-i="${i}">${'★'.repeat(D.stars)} ${b.name}</button>`}).join('')}</div></div>`;
   }
   $('#panel').innerHTML=h;
 }
 document.querySelector('.tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b){tab=b.dataset.tab;renderHub()}});
 $('#panel').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled)return;const act=b.dataset.act;
   if(act==='hunt')startDungeon(+b.dataset.i);
+  else if(act==='bossrush'){const i=+b.dataset.i;sfx('start');const D=DUNGEONS[i],pmax=100+armStat().hp;RUN={i,D,floor:D.floors.length-1,loot:{},php:pmax,pmax};startFloor()}
   else if(act==='gacha'){rollGacha(b.dataset.b)}
   else if(act==='ftab'){forgeTab=b.dataset.v;renderHub()}
   else if(act==='detail'){OPEN_DETAIL[b.dataset.id]=!OPEN_DETAIL[b.dataset.id];sfx('click');renderHub()}
@@ -1186,7 +1190,7 @@ for(const d of['L','R'])dodgeBtns[d].addEventListener('pointerdown',e=>{e.preven
 let qTimes=[];
 addEventListener('keydown',e=>{if(B||tab!=='how'||e.repeat||e.key.toLowerCase()!=='q')return;
   const now=performance.now();qTimes=[...qTimes.filter(t=>now-t<1500),now];
-  if(qTimes.length>=5){qTimes=[];for(const D of DUNGEONS)S.cleared[D.id]=true;for(const k in MATS)addMat(k,100);save();sfx('rare');toast('隠しコマンド：全ダンジョン解放＆全素材 +100個！')}});
+  if(qTimes.length>=5){qTimes=[];for(const D of DUNGEONS)S.cleared[D.id]=true;for(const k in MATS)addMat(k,100);S.debug=true;save();sfx('rare');toast('隠しコマンド：全ダンジョン解放＆全素材 +100個！');renderHub()}});
 // PCキー：A＝左へ回避、D＝右へ回避（パリィはマウス／タッチのスワイプだけ）
 const DODGEKEY={a:'L',d:'R'};
 addEventListener('keydown',e=>{if(!B||B.over)return;
