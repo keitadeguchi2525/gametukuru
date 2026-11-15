@@ -56,6 +56,10 @@ h1{font-weight:900;font-size:30px;letter-spacing:.06em;text-align:center;color:#
 .btn.mini{padding:5px 12px;font-size:12px;box-shadow:0 2px 0 #8a4f15}.btn.sub2.mini{box-shadow:0 2px 0 #2a1e14}
 #battle{position:fixed;inset:0;touch-action:none}
 #cv{display:block;touch-action:none}
+#mute{position:absolute;left:64px;top:8px;font:700 12px 'M PLUS 1p';padding:5px 10px;border-radius:8px;border:1px solid #6b4a2a;background:rgba(30,20,12,.7);color:#e8d4b4;cursor:pointer}
+.audio{display:flex;gap:8px;justify-content:center;margin:-4px 0 14px}
+.sbtn{font:700 12px 'M PLUS 1p';padding:5px 12px;border-radius:16px;border:1px solid #6b4a2a;background:#2a1e15;color:#ffd58a;cursor:pointer}
+.sbtn.off{color:#8a7a66;border-color:#3d2b1b}
 #retreat{position:absolute;left:8px;top:8px;font:700 12px 'M PLUS 1p';padding:5px 10px;border-radius:8px;border:1px solid #6b4a2a;background:rgba(30,20,12,.7);color:#e8d4b4;cursor:pointer}
 #dodge{position:absolute;right:16px;bottom:22px;width:84px;height:84px;border-radius:50%;border:3px solid #9fd8ff;background:radial-gradient(circle at 40% 35%,rgba(90,150,200,.55),rgba(20,40,70,.75));color:#e8f6ff;font:900 17px 'M PLUS 1p';cursor:pointer;touch-action:none;box-shadow:0 0 14px rgba(120,200,255,.35)}
 #dodge small{display:block;font-size:10px;font-weight:700;opacity:.7}
@@ -75,6 +79,7 @@ h1{font-weight:900;font-size:30px;letter-spacing:.06em;text-align:center;color:#
   <h1>⚔ パリィ・ハンター</h1>
   <div class="sub">弾いて、崩して、斬り刻め。</div>
   <div class="equip" id="equip"></div>
+  <div class="audio"><button id="sndSfx" class="sbtn"></button><button id="sndBgm" class="sbtn"></button></div>
   <div class="tabs">
     <button data-tab="hunt" class="on">ダンジョン</button>
     <button data-tab="forge">工房</button>
@@ -87,6 +92,7 @@ h1{font-weight:900;font-size:30px;letter-spacing:.06em;text-align:center;color:#
 <div id="battle" class="hidden">
   <canvas id="cv"></canvas>
   <button id="retreat">脱出</button>
+  <button id="mute"></button>
   <button id="dodge">回避<small>Shift</small></button>
   <div id="result" class="hidden"><div class="box" id="resultBox"></div></div>
 </div>
@@ -405,6 +411,129 @@ function armorIcon(p){if(EQICON[p.id])return EQICON[p.id];const c=document.creat
   else{drawGauntlet(g,a,44,88,1.9,-0.25);drawGauntlet(g,a,84,88,1.9,0.25)}
   return EQICON[p.id]=c.toDataURL()}
 
+// ===================== サウンド（効果音・BGM） =====================
+// 音声ファイルは使わず、Web Audio API でその場で音を合成する。
+// ブラウザの決まりで、最初のタップ／クリック／キー入力のあとから鳴らせるようになる。
+const SND={ctx:null,master:null,sfxBus:null,bgmBus:null,delay:null,noise:null,want:'hub',song:null,step:0,next:0,opt:{sfx:true,bgm:true}};
+const SFX_VOL=0.7,BGM_VOL=0.22;   // 効果音／BGM の音量（0〜1）
+try{const o=JSON.parse(localStorage.getItem('parryHunter_audio'));if(o)Object.assign(SND.opt,o)}catch(e){}
+function audioInit(){
+  if(SND.ctx){if(SND.ctx.state==='suspended')SND.ctx.resume();return}
+  try{const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;const c=new AC();SND.ctx=c;
+    SND.master=c.createGain();SND.master.gain.value=0.9;SND.master.connect(c.destination);
+    SND.sfxBus=c.createGain();SND.sfxBus.gain.value=SND.opt.sfx?SFX_VOL:0;SND.sfxBus.connect(SND.master);
+    SND.bgmBus=c.createGain();SND.bgmBus.gain.value=SND.opt.bgm?BGM_VOL:0;SND.bgmBus.connect(SND.master);
+    const d=c.createDelay(1);d.delayTime.value=0.32;const fb=c.createGain();fb.gain.value=0.32;const wet=c.createGain();wet.gain.value=0.35;
+    d.connect(fb);fb.connect(d);d.connect(wet);wet.connect(SND.bgmBus);SND.delay=d;
+    const len=c.sampleRate*2,buf=c.createBuffer(1,len,c.sampleRate),ch=buf.getChannelData(0);for(let i=0;i<len;i++)ch[i]=Math.random()*2-1;SND.noise=buf;
+    setInterval(bgmTick,25);bgm(SND.want,true);
+  }catch(e){SND.ctx=null}
+}
+addEventListener('pointerdown',audioInit,true);addEventListener('keydown',audioInit,true);
+function setAudio(kind,on){
+  SND.opt[kind]=on;try{localStorage.setItem('parryHunter_audio',JSON.stringify(SND.opt))}catch(e){}
+  if(SND.ctx){const t=SND.ctx.currentTime,g=(kind==='sfx'?SND.sfxBus:SND.bgmBus).gain;g.cancelScheduledValues(t);g.setValueAtTime(g.value,t);g.setTargetAtTime(on?(kind==='sfx'?SFX_VOL:BGM_VOL):0,t,0.05)}
+  updateAudioButtons();
+}
+function updateAudioButtons(){
+  const a=document.getElementById('sndSfx'),b=document.getElementById('sndBgm'),m=document.getElementById('mute');
+  if(a)a.textContent=`効果音 ${SND.opt.sfx?'ON':'OFF'}`;if(b)b.textContent=`BGM ${SND.opt.bgm?'ON':'OFF'}`;
+  if(a)a.classList.toggle('off',!SND.opt.sfx);if(b)b.classList.toggle('off',!SND.opt.bgm);
+  if(m)m.textContent=SND.opt.sfx||SND.opt.bgm?'♪ 音あり':'♪ 消音';
+}
+const mf=m=>440*Math.pow(2,(m-69)/12);
+// 基本の音：音程つき（tone）とノイズ（noise）
+function tone(f,dur,{type='sine',vol=0.3,to=null,at=0,attack=0.005,det=0}={}){
+  const c=SND.ctx;const t=c.currentTime+at,o=c.createOscillator(),g=c.createGain();o.type=type;o.frequency.setValueAtTime(f,t);o.detune.value=det;
+  if(to)o.frequency.exponentialRampToValueAtTime(Math.max(20,to),t+dur);
+  g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+attack);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(g);g.connect(SND.sfxBus);o.start(t);o.stop(t+dur+0.03);
+}
+function noise(dur,{vol=0.3,f=1000,q=1,ftype='bandpass',to=null,at=0,attack=0.003}={}){
+  const c=SND.ctx;const t=c.currentTime+at,s=c.createBufferSource();s.buffer=SND.noise;
+  const fl=c.createBiquadFilter();fl.type=ftype;fl.frequency.setValueAtTime(f,t);fl.Q.value=q;if(to)fl.frequency.exponentialRampToValueAtTime(Math.max(20,to),t+dur);
+  const g=c.createGain();g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+attack);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  s.connect(fl);fl.connect(g);g.connect(SND.sfxBus);s.start(t,Math.random()*0.4);s.stop(t+dur+0.03);
+}
+const SFX={
+  click:()=>tone(1100,0.05,{type:'triangle',vol:0.12,to:1500}),
+  tab:()=>tone(700,0.06,{type:'triangle',vol:0.1,to:900}),
+  craft:()=>{[72,76,79,84].forEach((m,i)=>tone(mf(m),0.25,{type:'triangle',vol:0.18,at:i*0.07}));noise(0.4,{vol:0.08,f:8000,ftype:'highpass',at:0.25})},
+  upgrade:()=>{tone(220,0.12,{type:'square',vol:0.12,to:180});noise(0.12,{vol:0.25,f:3000,q:4});tone(mf(79),0.3,{type:'triangle',vol:0.15,at:0.12});tone(mf(86),0.35,{type:'triangle',vol:0.12,at:0.2})},
+  equip:()=>{tone(mf(67),0.08,{type:'square',vol:0.08});tone(mf(74),0.12,{type:'square',vol:0.08,at:0.07})},
+  start:()=>{noise(0.8,{vol:0.25,f:300,to:1800,q:0.8});tone(70,0.6,{vol:0.4,to:40})},
+  parry:()=>{tone(1300,0.18,{type:'triangle',vol:0.25,to:1250});tone(1950,0.14,{type:'square',vol:0.06});noise(0.09,{vol:0.3,f:5000,ftype:'highpass'})},
+  perfect:()=>{SFX.parry();tone(mf(88),0.35,{vol:0.18,at:0.03});tone(mf(95),0.4,{vol:0.12,at:0.08})},
+  heavyParry:()=>{tone(150,0.3,{vol:0.4,to:60});noise(0.25,{vol:0.3,f:900})},
+  fail:()=>{tone(220,0.2,{type:'sawtooth',vol:0.12,to:110});noise(0.1,{vol:0.12,f:400})},
+  dodge:()=>noise(0.28,{vol:0.22,f:600,to:2600,q:1.2,attack:0.02}),
+  dodgeOk:()=>{tone(mf(84),0.15,{vol:0.12});tone(mf(91),0.2,{vol:0.1,at:0.06})},
+  swing:()=>noise(0.18,{vol:0.18,f:1500,to:400,q:1.5,attack:0.02}),
+  hurt:h=>{tone(h?90:120,0.35,{vol:0.5,to:40});noise(h?0.35:0.22,{vol:h?0.45:0.35,f:h?600:900,ftype:'lowpass'})},
+  heavyWind:()=>tone(80,0.6,{type:'sawtooth',vol:0.08,to:60,attack:0.2}),
+  charge:d=>noise(Math.max(0.2,d),{vol:0.12,f:300,to:3000,q:2,attack:Math.max(0.1,d*0.8)}),
+  rock:()=>{tone(70,0.4,{vol:0.5,to:35});noise(0.4,{vol:0.35,f:400,ftype:'lowpass'})},
+  thunder:()=>{noise(0.9,{vol:0.45,f:2000,to:200,ftype:'lowpass'});noise(0.12,{vol:0.3,f:6000,ftype:'highpass'})},
+  fire:()=>noise(0.7,{vol:0.35,f:700,to:300,q:0.7,attack:0.05}),
+  zap:()=>{noise(0.15,{vol:0.3,f:4000,q:3});tone(1800,0.12,{type:'square',vol:0.06,to:400})},
+  break:()=>{tone(110,0.5,{vol:0.45,to:50});tone(mf(64),0.3,{type:'triangle',vol:0.12,at:0.05});tone(mf(60),0.4,{type:'triangle',vol:0.12,at:0.15})},
+  hit:()=>{noise(0.07,{vol:0.22,f:2500,q:1.5});tone(240,0.06,{type:'square',vol:0.05,to:120})},
+  crit:()=>{noise(0.1,{vol:0.32,f:4000});tone(900,0.15,{type:'triangle',vol:0.15,to:500})},
+  partBreak:()=>{noise(0.35,{vol:0.4,f:800,ftype:'lowpass'});tone(90,0.3,{vol:0.4,to:45});[76,83,88].forEach((m,i)=>tone(mf(m),0.25,{type:'triangle',vol:0.12,at:0.15+i*0.06}))},
+  kill:()=>{tone(60,1.0,{vol:0.5,to:30});noise(1.0,{vol:0.3,f:500,to:100,ftype:'lowpass'})},
+  rare:()=>[84,88,91,96,100].forEach((m,i)=>tone(mf(m),0.3,{vol:0.14,at:i*0.06})),
+  fanfare:()=>[[67,0],[72,0.12],[76,0.24],[79,0.36],[84,0.55]].forEach(([m,t])=>{tone(mf(m),0.35,{type:'square',vol:0.07,at:t});tone(mf(m-12),0.35,{type:'triangle',vol:0.12,at:t})}),
+  clear:()=>[72,76,79].forEach((m,i)=>tone(mf(m),0.3,{type:'triangle',vol:0.15,at:i*0.1})),
+  death:()=>[64,63,62,57].forEach((m,i)=>tone(mf(m-12),0.5,{type:'sawtooth',vol:0.08,at:i*0.32})),
+  warn:()=>{tone(880,0.08,{type:'square',vol:0.06});tone(880,0.08,{type:'square',vol:0.06,at:0.14})},
+  bonus:()=>[79,84].forEach((m,i)=>tone(mf(m),0.2,{type:'triangle',vol:0.14,at:i*0.08})),
+  armor:()=>{noise(0.8,{vol:0.35,f:250,ftype:'lowpass'});tone(55,0.8,{vol:0.4})},
+  crack:()=>noise(0.25,{vol:0.35,f:1800,q:2}),
+  shatter:()=>{noise(0.6,{vol:0.45,f:1200,to:300});[60,67,72].forEach((m,i)=>tone(mf(m),0.4,{type:'triangle',vol:0.12,at:0.1+i*0.05}))},
+  roar:()=>{tone(70,1.0,{type:'sawtooth',vol:0.15,to:50,attack:0.1});noise(1.0,{vol:0.3,f:300,q:0.8,attack:0.1})},
+  curse:()=>{tone(mf(61),0.9,{vol:0.12,det:-30});tone(mf(67),0.9,{vol:0.1,det:20})},
+  heart:()=>{tone(60,0.12,{vol:0.45,to:40});tone(55,0.14,{vol:0.35,to:38,at:0.16})},
+  escape:()=>noise(0.6,{vol:0.2,f:400,to:2000}),
+};
+function sfx(name,...a){if(!SND.ctx||!SND.opt.sfx||SND.ctx.state!=='running')return;try{SFX[name](...a)}catch(e){}}
+
+// ---- BGM：16ステップの簡単なシーケンサー。コード進行・ベース・アルペジオ・ドラムを場面ごとに切り替える
+const SONGS={
+  hub:{bpm:76,root:57,prog:[[0,3,7],[-4,0,3],[3,7,10],[-2,2,5]],bass:'x.......x.......',arpOn:'x.x.x.x.x.x.x.x.',arpOct:12,arpVol:0.06,pad:1,padCut:700},
+  d1:{bpm:100,root:45,prog:[[0,3,7],[0,3,7],[-4,0,3],[-5,-1,2]],bass:'x..x..x.x..x..x.',bassType:'sawtooth',arpOn:'....x.......x.x.',arpOct:24,kick:'x.......x..x....',snare:'....x.......x...',hat:'..x...x...x...x.',pad:1,padCut:600},
+  d1b:{bpm:120,root:45,prog:[[0,3,7],[0,3,7],[-4,0,3],[-5,-1,2]],bass:'x.x.x.x.x.x.x.x.',bassType:'sawtooth',arpOn:'x.xx..x.x.xx..x.',arpOct:24,kick:'x...x...x...x...',snare:'....x.......x..x',hat:'x.x.x.x.x.x.x.x.',pad:1,padCut:800},
+  d2:{bpm:128,root:50,prog:[[0,3,7],[1,5,8],[0,3,7],[-2,2,5]],bass:'x.xx.x.xx.xx.x.x',bassType:'sawtooth',arpOn:'x..x..x.x..x..x.',arpType:'square',arpVol:0.04,arpOct:24,kick:'x..x..x...x..x..',snare:'....x.......x...',hat:'xxxxxxxxxxxxxxxx',hatVol:0.12,pad:1,padCut:900},
+  d2b:{bpm:142,root:50,prog:[[0,3,7],[1,5,8],[0,3,7],[-2,2,5]],bass:'xxxxxxxxxxxxxxxx',bassType:'sawtooth',bassLen:1.5,arpOn:'x.xxx.xxx.xxx.xx',arpType:'square',arpVol:0.04,arpOct:24,kick:'x.x.x.x.x.x.x.x.',snare:'....x.......x.x.',hat:'xxxxxxxxxxxxxxxx',hatVol:0.12,pad:1,padCut:1200},
+  d3:{bpm:84,root:49,prog:[[0,3,6],[1,4,7],[0,3,7],[-1,2,6]],bass:'x.......x...x...',bassLen:6,arpOn:'x...x...x...x...',arpType:'sine',arpOct:36,arpVol:0.06,kick:'x.......x.......',hat:'....x.......x...',pad:1,padCut:500},
+  d3b:{bpm:100,root:49,prog:[[0,3,6],[1,4,7],[0,3,7],[-1,2,6]],bass:'x..x....x..x..x.',bassType:'sawtooth',arpOn:'x.x.x.x.x.x.x.x.',arpType:'sine',arpOct:36,arpVol:0.06,kick:'x..x....x..x....',snare:'....x.......x...',hat:'x.x.x.x.x.x.x.x.',pad:1,padCut:700},
+};
+function bgm(name,force){
+  SND.want=name;const c=SND.ctx;if(!c)return;if(!force&&SND.song&&SND.song.name===name)return;
+  SND.song=name?{name,...SONGS[name]}:null;SND.step=0;SND.next=c.currentTime+0.15;
+  const g=SND.bgmBus.gain;g.cancelScheduledValues(c.currentTime);g.setValueAtTime(0.0001,c.currentTime);g.linearRampToValueAtTime(SND.opt.bgm?BGM_VOL:0,c.currentTime+1.0);
+}
+function bgmTick(){const c=SND.ctx,s=SND.song;if(!c||!s||c.state!=='running')return;const sd=60/s.bpm/4;
+  if(SND.next<c.currentTime)SND.next=c.currentTime+0.05;
+  while(SND.next<c.currentTime+0.15){playStep(s,SND.step,SND.next,sd);SND.step++;SND.next+=sd}}
+function voice(f,t,dur,type,vol,{cut=2000,attack=0.005,det=0,echo=false}={}){
+  const c=SND.ctx,o=c.createOscillator(),g=c.createGain(),fl=c.createBiquadFilter();o.type=type;o.frequency.value=f;o.detune.value=det;fl.type='lowpass';fl.frequency.value=cut;
+  g.gain.setValueAtTime(0.0001,t);g.gain.linearRampToValueAtTime(vol,t+attack);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(fl);fl.connect(g);g.connect(SND.bgmBus);if(echo)g.connect(SND.delay);o.start(t);o.stop(t+dur+0.05);
+}
+function drum(kind,t,vol=1){const c=SND.ctx;
+  if(kind==='k'){const o=c.createOscillator(),g=c.createGain();o.frequency.setValueAtTime(120,t);o.frequency.exponentialRampToValueAtTime(40,t+0.15);g.gain.setValueAtTime(0.8*vol,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.25);o.connect(g);g.connect(SND.bgmBus);o.start(t);o.stop(t+0.3);return}
+  const s=c.createBufferSource();s.buffer=SND.noise;const f=c.createBiquadFilter(),h=kind==='h';f.type=h?'highpass':'bandpass';f.frequency.value=h?7000:1800;
+  const g=c.createGain(),d=h?0.05:0.18;g.gain.setValueAtTime((h?0.25:0.45)*vol,t);g.gain.exponentialRampToValueAtTime(0.001,t+d);s.connect(f);f.connect(g);g.connect(SND.bgmBus);s.start(t,Math.random());s.stop(t+d+0.02)}
+function playStep(s,i,t,sd){
+  const st=i%16,ch=s.prog[Math.floor(i/16)%s.prog.length];
+  if(st===0&&s.pad)for(const n of ch)voice(mf(s.root+12+n),t,sd*16*1.05,'sawtooth',0.045,{cut:s.padCut||900,attack:sd*4,det:(Math.random()-0.5)*14});
+  if(s.bass&&s.bass[st]==='x')voice(mf(s.root+ch[0]),t,sd*(s.bassLen||3),s.bassType||'triangle',0.3,{cut:600});
+  if(s.arpOn&&s.arpOn[st]==='x')voice(mf(s.root+ch[st%ch.length]+(s.arpOct||24)),t,sd*2.5,s.arpType||'triangle',s.arpVol||0.07,{cut:4000,echo:true});
+  if(s.kick&&s.kick[st]==='x')drum('k',t);if(s.snare&&s.snare[st]==='x')drum('s',t);if(s.hat&&s.hat[st]==='x')drum('h',t,s.hatVol?s.hatVol/0.25:1);
+}
+// ボタンを押したときのクリック音（作成・強化などは専用の音も重ねる）
+document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled||b.id==='dodge')return;sfx(b.closest('.tabs')?'tab':'click')},true);
+
 // ===================== 拠点UI =====================
 const $=s=>document.querySelector(s);
 let tab='hunt';
@@ -481,13 +610,16 @@ function renderHub(){
 document.querySelector('.tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b){tab=b.dataset.tab;renderHub()}});
 $('#panel').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled)return;const act=b.dataset.act;
   if(act==='hunt')startDungeon(+b.dataset.i);
-  else if(act==='craft'){const it=(b.dataset.k==='w'?W_:A_)(b.dataset.id);if(!has(it.cost))return;pay(it.cost);(b.dataset.k==='w'?S.weapons:S.armors)[it.id]=0;
+  else if(act==='craft'){const it=(b.dataset.k==='w'?W_:A_)(b.dataset.id);if(!has(it.cost))return;pay(it.cost);sfx('craft');(b.dataset.k==='w'?S.weapons:S.armors)[it.id]=0;
     if(b.dataset.k==='w')S.eqW=it.id;else S.eq[it.slot]=it.id;save();toast(`${it.name} を作成して装備した！`);renderHub()}
-  else if(act==='upg'){const own=b.dataset.k==='w'?S.weapons:S.armors;const it=(b.dataset.k==='w'?W_:A_)(b.dataset.id);const c=upgCost(it,own[it.id]);if(!has(c))return;pay(c);own[it.id]++;save();toast(`${it.name} を +${own[it.id]} に強化！`);renderHub()}
-  else if(act==='equip'){if(b.dataset.k==='w')S.eqW=b.dataset.id;else{const it=A_(b.dataset.id);S.eq[it.slot]=it.id}save();renderHub()}
+  else if(act==='upg'){const own=b.dataset.k==='w'?S.weapons:S.armors;const it=(b.dataset.k==='w'?W_:A_)(b.dataset.id);const c=upgCost(it,own[it.id]);if(!has(c))return;pay(c);sfx('upgrade');own[it.id]++;save();toast(`${it.name} を +${own[it.id]} に強化！`);renderHub()}
+  else if(act==='equip'){sfx('equip');if(b.dataset.k==='w')S.eqW=b.dataset.id;else{const it=A_(b.dataset.id);S.eq[it.slot]=it.id}save();renderHub()}
   else if(act==='reset'){if(b.dataset.sure){S=newSave();migrate();save();toast('リセットしました');renderHub()}else{b.dataset.sure=1;b.textContent='本当にリセット？（もう一度押す）'}}
 });
 
+$('#mute').onclick=()=>{const on=!(SND.opt.sfx||SND.opt.bgm);setAudio('sfx',on);setAudio('bgm',on)};
+$('#sndSfx').onclick=()=>setAudio('sfx',!SND.opt.sfx);$('#sndBgm').onclick=()=>setAudio('bgm',!SND.opt.bgm);
+updateAudioButtons();
 // ===================== バトル =====================
 const cv=$('#cv'),ctx=cv.getContext('2d');
 let W=0,H=0,DPR=1;
@@ -504,7 +636,7 @@ const PC=()=>({x:W/2,y:H*0.62});           // パリィ判定の中心
 const PP=()=>({x:W/2,y:H*0.82});           // プレイヤー胸元
 
 let RUN=null;
-function startDungeon(i){const D=DUNGEONS[i];const pmax=100+armStat().hp;RUN={i,D,floor:0,loot:{},php:pmax,pmax};startFloor()}
+function startDungeon(i){sfx('start');const D=DUNGEONS[i];const pmax=100+armStat().hp;RUN={i,D,floor:0,loot:{},php:pmax,pmax};startFloor()}
 function floorEnemy(){const id=RUN.D.floors[RUN.floor],E=EN(id);if(!E.minion)return E;
   const m=1+0.12*RUN.floor;
   return {...E,hp:Math.round(E.hp*m),dmg:Math.round(E.dmg*(1+0.06*RUN.floor)),parts:E.parts.map(p=>p.hp?{...p,hp:Math.round(p.hp*m)}:p)}}
@@ -519,10 +651,11 @@ function startFloor(){
   fx={parts:[],floats:[],trails:[],slashes:[],bolts:[],zaps:[],icons:[],flash:null};
   $('#hub').classList.add('hidden');$('#battle').classList.remove('hidden');$('#result').classList.add('hidden');
   resize();
+  bgm(RUN.D.id+(isBossFloor()?'b':''));
   float(`${RUN.D.name}  ${RUN.floor+1}F`,W/2,H*0.46,'#ffd58a',30,1.6);
   float(isBossFloor()?`BOSS ${E.name}`:E.name,W/2,H*0.53,isBossFloor()?'#ff7a5a':'#e8d4b4',isBossFloor()?34:24,1.6);
 }
-function endToHub(){B=null;RUN=null;$('#battle').classList.add('hidden');$('#hub').classList.remove('hidden');renderHub()}
+function endToHub(){bgm('hub');B=null;RUN=null;$('#battle').classList.add('hidden');$('#hub').classList.remove('hidden');renderHub()}
 $('#retreat').onclick=()=>{if(!B)return;if(B.over){if($('#result').classList.contains('hidden'))return;endToHub();return}B.over=true;escapeRun()};
 function needNow(){const E=B.E;return Math.max(1,Math.min(E.need[1],E.need[0]+Math.floor(B.t/E.needEvery))+perk('need'))}
 
@@ -553,6 +686,7 @@ function beginAttack(){
   if(kind==='breath'&&!fl)a.w*=BREATH_WINDUP;   // ブレス/投擲は溜めを短く（以前は×1.35）
   if(kind==='delay'){a.holdAt=a.w*rand(0.5,0.68);a.holdLeft=rand(0.3,0.55)}
   B.atk=a;B.state='windup';
+  if(kind==='heavy')sfx('heavyWind');if(kind==='breath')sfx('charge',a.w);
   // ヴォルガ：雷速モード中は、振りかぶりの途中で雷光が走って攻撃の向きが反対側へ入れ替わることがある
   //   入れ替わりは受付が始まる前に必ず起きる（前の向きのままでは弾けない）。溜めが短すぎる攻撃では起きない
   if(B.g.storm>0&&kind!=='breath'&&a.w>=0.45&&Math.random()<WARP_CHANCE){a.warpAt=Math.max(0.15,a.w-earlyWin()-rand(0.03,0.1));a.warped=false}
@@ -561,12 +695,12 @@ const earlyWin=()=>Math.min(0.3,B.atk.w*0.45)*perk('parry');
 const needDir=a=>a.cursed?a.dir:OPP[a.dir];   // 攻撃が来た方向へはじき返す（呪い中は逆）
 function enterBroken(extra=0){
   B.state='broken';B.brokenMax=B.E.breakTime+B.bonus+extra;B.brokenT=B.brokenMax;B.bonus=0;B.combo=0;
-  float('体勢崩し！',W/2,H*0.32,'#ffd04a',46,1.4);B.shake=14;
+  float('体勢崩し！',W/2,H*0.32,'#ffd04a',46,1.4);B.shake=14;sfx('break');
   // ゴルム：岩鎧は形態変化後3回目の体勢崩しで砕ける
   const g=B.g;if(g.armor>0){g.armor--;const t=B.tf;
-    if(g.armor<=0){float('岩鎧が砕けた！',W/2,H*0.24,'#ffd04a',38,1.6);burst(t.x,t.y,'#d8c8b0',70,650);B.shake=22;
+    if(g.armor<=0){sfx('shatter');float('岩鎧が砕けた！',W/2,H*0.24,'#ffd04a',38,1.6);burst(t.x,t.y,'#d8c8b0',70,650);B.shake=22;
       const bonus=atkStat()*3;B.hp-=bonus;float('-'+bonus,t.x,t.y,'#fff',30,1);if(B.hp<=0&&!B.over)victory()}
-    else{float(`岩鎧にヒビ！ あと${g.armor}回の崩しで砕ける`,W/2,H*0.24,'#d8c8b0',22,1.4);burst(t.x,t.y,'#b0a090',30,420)}}
+    else{sfx('crack');float(`岩鎧にヒビ！ あと${g.armor}回の崩しで砕ける`,W/2,H*0.24,'#d8c8b0',22,1.4);burst(t.x,t.y,'#b0a090',30,420)}}
 }
 function afterResolve(){ // 1回の攻撃が終わったあとの共通処理
   const a=B.atk;
@@ -576,20 +710,21 @@ function afterResolve(){ // 1回の攻撃が終わったあとの共通処理
 }
 function finishFlurry(){
   const f=B.flurry;B.flurry=null;
-  if(f.ok===f.total){B.posture++;float(`${f.total}連撃 見切り！ 体勢+1`,W/2,H*0.26,'#9fe0ff',24,1.3)}
+  if(f.ok===f.total&&!f.dodged){B.posture++;sfx('bonus');float(`${f.total}連撃 見切り！ 体勢+1`,W/2,H*0.26,'#9fe0ff',24,1.3)}
   if(B.posture>=needNow())enterBroken();else{B.state='recover';B.timer=0.3}
 }
 function tryParry(ang){
   const a=B.atk,c=PC();
   if(a.res||a.fail)return;
   B.pAnim={ang,t:0,dur:0.16};
-  if(a.kind==='breath'){a.fail=true;float('パリィ不可！ 回避せよ',c.x,c.y-60,'#ff6a6a',24);return}
-  if(a.t<a.w-earlyWin()){a.fail=true;float(a.holdLeft>0||a.kind==='delay'?'ディレイに釣られた！':'早すぎ！',c.x,c.y-60,'#ff8f7a',26);return}
+  if(a.kind==='breath'){a.fail=true;sfx('fail');float('パリィ不可！ 回避せよ',c.x,c.y-60,'#ff6a6a',24);return}
+  if(a.t<a.w-earlyWin()){a.fail=true;sfx('fail');float(a.holdLeft>0||a.kind==='delay'?'ディレイに釣られた！':'早すぎ！',c.x,c.y-60,'#ff8f7a',26);return}
   const nd=needDir(a);
-  if(angDiff(ang,DIRS[nd])>30){a.fail=true;float(a.cursed?`呪い！ 逆の${DNAME[nd]}だった`:`向きが違う！（${DNAME[nd]}）`,c.x,c.y-60,'#ff8f7a',24);return}
+  if(angDiff(ang,DIRS[nd])>30){a.fail=true;sfx('fail');float(a.cursed?`呪い！ 逆の${DNAME[nd]}だった`:`向きが違う！（${DNAME[nd]}）`,c.x,c.y-60,'#ff8f7a',24);return}
   a.res=true;const perfect=Math.abs(a.t-a.w)<=PERFECT*perk('parry');
   const gain=a.kind==='heavy'?2:1;B.posture+=gain;if(perfect)B.bonus+=0.6;
   const heal=perk('heal');if(heal){B.php=Math.min(B.pmax,B.php+heal)}
+  sfx(perfect?'perfect':'parry');if(a.kind==='heavy')sfx('heavyParry');
   float((a.kind==='heavy'?'強撃':'')+(perfect?'PERFECT!':'パリィ！'),c.x,c.y-60,perfect?'#fff27a':'#9fe0ff',perfect?40:32,0.9);
   if(gain>1)float('体勢 +2',c.x,c.y-20,'#9fe0ff',20,0.9);
   burst(c.x,c.y,perfect?'#fff27a':'#bfe8ff',perfect?34:20,perfect?440:300,true);
@@ -601,31 +736,35 @@ function tryParry(ang){
 }
 function doDodge(){
   if(!B||B.over||B.dodgeCD>0)return;
-  B.dodgeCD=0.45;B.dodgeAt=B.t;B.dAnim={t:0,dur:0.38,side:Math.random()<0.5?-1:1};
+  B.dodgeCD=0.45;B.dodgeAt=B.t;sfx('dodge');B.dAnim={t:0,dur:0.38,side:Math.random()<0.5?-1:1};
 }
 function impact(){
   const a=B.atk,E=B.E;a.impactAt=B.t;
   if(a.kind==='breath'){const p=PP();
+    sfx({rock:'rock',bolt:'thunder',fire:'fire'}[E.breath.type]);
     if(E.breath.type==='bolt')fx.bolts.push({life:0.32,max:0.32});
     if(E.breath.type==='rock')burst(p.x,p.y-40,'#a88058',26,380);
     fx.flash={c:E.breath.c,life:0.25,max:0.25};
-  }else{fx.slashes.push({ang:DIRS[a.dir],life:0.24,max:0.24,c:E.glow,heavy:a.kind==='heavy'});B.lunge=0.25}
+  }else{sfx('swing');fx.slashes.push({ang:DIRS[a.dir],life:0.24,max:0.24,c:E.glow,heavy:a.kind==='heavy'});B.lunge=0.25}
 }
 function resolveHit(){
   const a=B.atk;const win=DODGEWIN*perk('dodge');
-  if(B.dodgeAt>=a.impactAt-win&&B.dodgeAt<=a.impactAt+LATE){float('回避成功！',W/2,H*0.7,'#9fffc0',30,0.9);if(a.fl&&a.kind==='breath'&&B.flurry)B.flurry.ok++;return}
+  if(B.dodgeAt>=a.impactAt-win&&B.dodgeAt<=a.impactAt+LATE){
+    // 回避は体勢ポイントを増やさない。連撃中は「⚠ブレス/投擲を回避」だけがさばいた扱いで、普通の攻撃を回避すると連撃ボーナスはなくなる
+    if(a.fl&&B.flurry){if(a.kind==='breath')B.flurry.ok++;else{B.flurry.dodged=true;float('回避（体勢は増えない）',W/2,H*0.7+34,'#cdb89a',16,0.9)}}
+    sfx('dodgeOk');float('回避成功！',W/2,H*0.7,'#9fffc0',30,0.9);return}
   const mul=(a.kind==='heavy'?1.6:a.kind==='breath'?1.35:1)*(a.fl?0.6:1);
   const raw=B.E.dmg*mul*rand(0.9,1.1);const def=armStat().def;const dmg=Math.round(raw*100/(100+def));
-  B.php-=dmg;B.hurt=0.4;B.shake=a.kind==='heavy'?20:14;B.posture=Math.max(0,B.posture-1);
+  sfx('hurt',a.kind==='heavy');B.php-=dmg;B.hurt=0.4;B.shake=a.kind==='heavy'?20:14;B.posture=Math.max(0,B.posture-1);
   float('-'+dmg,W/2,H*0.76,'#ff5a4a',a.kind==='heavy'?40:32,0.9);
-  if(B.php<=0){B.php=0;B.over=true;setTimeout(died,900)}
+  if(B.php<=0){B.php=0;B.over=true;bgm(null);setTimeout(died,900)}
 }
 
 // --- プレイヤーの攻撃（こすり） ---
 function strike(p,f,x,y,ang){
   let dmg=atkStat()*f*rand(0.9,1.1)*(p.weak&&!p.broken?p.weak:1)*(B.g.armor>0?0.2:1);
   const crit=Math.random()<0.1+perk('crit');if(crit)dmg*=1.8;dmg=Math.max(1,Math.round(dmg));
-  B.hp-=dmg;guardPhase();p.flash=0.12;B.bounce=0.1;
+  sfx(crit?'crit':'hit');B.hp-=dmg;guardPhase();p.flash=0.12;B.bounce=0.1;
   B.pAnim={ang,t:0,dur:0.12};
   float((crit?'会心 ':'')+dmg,x+rand(-14,14),y-10,crit?'#ff6a4a':'#fff',crit?28:20,0.7);
   burst(x,y,crit?'#ff9a6a':'#ffcf8a',crit?14:7,crit?340:220);B.shake=Math.max(B.shake,crit?7:3);
@@ -638,17 +777,17 @@ function breakPart(p){
   const t=B.tf,pt=toScreen(p.x*t.u,p.y*t.u);
   burst(pt.x,pt.y,'#ffe08a',40,520,true);B.shake=16;
   p.mat.forEach(([k,q],i)=>{B.loot[k]=(B.loot[k]||0)+q;for(let j=0;j<Math.min(q,3);j++)dropIcon(k,pt.x,pt.y,i*0.1+j*0.06)});
-  float(`${p.name} 破壊！`,pt.x,pt.y-30,'#ffd04a',34,1.4);
+  sfx('partBreak');float(`${p.name} 破壊！`,pt.x,pt.y-30,'#ffd04a',34,1.4);
   float(p.mat.map(([k,q])=>`${MATS[k].n}×${q}`).join('  ')+' 獲得',pt.x,pt.y+10,'#bdf0a8',20,1.6);
 }
 function victory(){
-  B.over=true;B.hp=0;B.dying=true;const drops={},rares={};
+  B.over=true;B.hp=0;B.dying=true;bgm(null);sfx('kill');const drops={},rares={};
   B.E.drops.forEach(([k,a,b])=>{const n=ri(a,b);if(n>0){drops[k]=n;B.loot[k]=(B.loot[k]||0)+n}});
   B.E.rares.forEach(([k,p])=>{if(Math.random()<p){rares[k]=1;B.loot[k]=(B.loot[k]||0)+1}});
   const t=B.tf;burst(t.x,t.y,B.E.glow,70,650,true);
   let d=0;for(const k in drops){dropIcon(k,t.x,t.y,0.5+d);d+=0.08}
   const rk=Object.keys(rares);
-  rk.forEach((k,i)=>{dropIcon(k,t.x,t.y,0.9+i*0.15);setTimeout(()=>{float(`${RARE_NAME[MATS[k].rare]}ドロップ！ ${MATS[k].n}`,W/2,H*0.45+i*44,'#fff0a0',30,1.6);burst(W/2,H*0.45+i*44,'#ffe070',40,500,true)},900+i*300)});
+  rk.forEach((k,i)=>{dropIcon(k,t.x,t.y,0.9+i*0.15);setTimeout(()=>{sfx('rare');float(`${RARE_NAME[MATS[k].rare]}ドロップ！ ${MATS[k].n}`,W/2,H*0.45+i*44,'#fff0a0',30,1.6);burst(W/2,H*0.45+i*44,'#ffe070',40,500,true)},900+i*300)});
   setTimeout(()=>floorCleared(rares),1700+rk.length*300);
 }
 const lootChips=o=>{const e=Object.entries(o);return e.length?e.sort((a,b)=>(MATS[b[0]].rare||0)-(MATS[a[0]].rare||0)).map(([k,q])=>chip(k,`${MATS[k].n} ×${q}`)).join(''):'<span class="chip" style="padding:3px 8px">なし</span>'};
@@ -660,7 +799,7 @@ function floorCleared(rares){
   const rk=Object.keys(rares);
   const rareHtml=rk.length?`<div class="rarebanner">✦ レアドロップ ✦</div><div class="row">${rk.map(k=>chip(k,`${MATS[k].n}（${RARE_NAME[MATS[k].rare]}）`)).join('')}</div>`:'';
   if(isBossFloor()){
-    bankRun();const D=RUN.D,first=!S.cleared[D.id];S.cleared[D.id]=true;save();
+    sfx('fanfare');bankRun();const D=RUN.D,first=!S.cleared[D.id];S.cleared[D.id]=true;save();
     const next=DUNGEONS[RUN.i+1];
     showBox(`<h2 style="color:#ffd58a">ダンジョン踏破！</h2>${rareHtml}
       <div style="font-size:13px;color:#bba78a">持ち帰った戦利品</div><div class="row">${lootChips(RUN.loot)}</div>
@@ -668,7 +807,7 @@ function floorCleared(rares){
       <div class="row"><button class="btn" id="home">拠点へ戻る</button></div>`);
     $('#home').onclick=endToHub;return;
   }
-  const heal=Math.round(RUN.pmax*0.05);
+  sfx('clear');const heal=Math.round(RUN.pmax*0.05);
   showBox(`<h2 style="color:#ffd58a">${RUN.floor+1}F 突破！</h2>${rareHtml}
     <div style="font-size:13px;color:#bba78a">この階の戦利品</div><div class="row">${lootChips(B.loot)}</div>
     <div style="font-size:13px;color:#ffb0a0">未確定の戦利品（倒れると失う）</div><div class="row">${lootChips(RUN.loot)}</div>
@@ -688,6 +827,7 @@ function loseEquipment(){
   save();return out;
 }
 function died(){
+  sfx('death');
   const lost={};addLoot(lost,RUN.loot);addLoot(lost,B.loot);const eq=loseEquipment();
   showBox(`<h2 style="color:#ff8f7a">力尽きた…</h2><p style="color:#ffb0a0;font-weight:700">${RUN.D.name} ${RUN.floor+1}F で倒れ、装備と戦利品をすべて失った</p>
     <div style="font-size:13px;color:#bba78a">失った装備</div><div class="row" style="opacity:.6;filter:grayscale(.6)">${eq.length?eq.map(o=>`<span class="chip"><img src="${o.i}">${o.t}</span>`).join(''):'<span class="chip" style="padding:3px 8px">なし</span>'}</div>
@@ -696,6 +836,7 @@ function died(){
   $('#home').onclick=endToHub;
 }
 function escapeRun(){
+  sfx('escape');bgm(null);
   bankRun();
   showBox(`<h2 style="color:#e8d4b4">脱出した</h2><p style="font-size:13px;color:#ffb0a0">この階（${RUN.floor+1}F）で得た戦利品は置いてきた</p>
     <div style="font-size:13px;color:#bba78a">持ち帰った戦利品（${RUN.floor}F までの分）</div><div class="row">${lootChips(RUN.loot)}</div>
@@ -1148,23 +1289,23 @@ function cancelBreak(msg){
 function gimmicks(dt){
   const E=B.E,g=B.g;
   if(E.gimmick==='armor'&&!g.armorDone&&(B.hp<=B.maxHp*0.6||g.trig)){g.armorDone=true;g.armor=g.armorMax;
-    float('岩鎧をまとった！',W/2,H*0.28,'#d8c8b0',30,1.8);float('体勢崩し3回目で砕ける',W/2,H*0.28+30,'#d8c8b0',18,1.8);B.shake=16;burst(B.tf.x,B.tf.y,'#9a8a78',40,500);cancelBreak()}
+    sfx('armor');float('岩鎧をまとった！',W/2,H*0.28,'#d8c8b0',30,1.8);float('体勢崩し3回目で砕ける',W/2,H*0.28+30,'#d8c8b0',18,1.8);B.shake=16;burst(B.tf.x,B.tf.y,'#9a8a78',40,500);cancelBreak()}
   if(E.gimmick==='storm'){
     if(g.storm>0){g.storm-=dt;if(Math.random()<0.6){const t=B.tf;burst(t.x+rand(-1,1)*t.u*0.7,t.y+rand(-1,1)*t.u*0.6,'#dff8ff',1,220,true)}
       if(g.storm<=0){g.storm=0;float('雷速モードが解けた',W/2,H*0.25,'#cdb89a',20,1)}}
     else{const head=B.parts.find(p=>p.id==='head');g.charge=Math.min(1,g.charge+dt/STORM_CHARGE*(head.broken?0.5:1));
       if(g.charge>0.6&&Math.random()<g.charge*0.35){const t=B.tf;burst(t.x+rand(-1,1)*t.u*0.6,t.y+rand(-1,1)*t.u*0.5,'#bff0ff',1,150,true)}
       if(g.charge>=1&&B.state==='idle'){g.charge=0;g.storm=STORM_TIME;fx.flash={c:'#bff4ff',life:0.35,max:0.35};B.roar=0.8;B.shake=12;
-        float('雷速モード！',W/2,H*0.26,'#bff4ff',32,1.8);float('雷光が走ったら、攻撃の向きが反対になる',W/2,H*0.26+30,'#bff4ff',16,1.8)}}}
+        sfx('thunder');float('雷速モード！',W/2,H*0.26,'#bff4ff',32,1.8);float('雷光が走ったら、攻撃の向きが反対になる',W/2,H*0.26+30,'#bff4ff',16,1.8)}}}
   if(E.gimmick==='curse'){
     const core=B.parts.find(p=>p.id==='core');
     if(!core.broken){for(const p of B.parts)if(!p.body&&!p.broken)p.hp=Math.min(p.maxHp,p.hp+p.maxHp*0.004*dt)}
     if(!core.broken&&B.hp<B.maxHp){const r=B.maxHp*0.004*dt;B.hp=Math.min(B.maxHp,B.hp+r);g.regenAcc+=r;
       if(g.regenAcc>=40){const t=B.tf,pt=toScreen(core.x*t.u,core.y*t.u);float('+'+Math.round(g.regenAcc)+' 再生',pt.x+40,pt.y,'#7aff9a',16,0.8);g.regenAcc=0}}
     if(!g.phase2&&(B.hp<=B.maxHp*0.5||g.trig)){g.phase2=true;g.trig=false;cancelBreak();B.E={...B.E,glow:'#ff3050',eye:'#ff2030',bg:['#3a1020','#100408']};
-      float('冥王が真の姿を現した！',W/2,H*0.28,'#ff6a8a',30,2);B.shake=22;burst(B.tf.x,B.tf.y,'#ff3050',60,600,true)}
+      sfx('roar');float('冥王が真の姿を現した！',W/2,H*0.28,'#ff6a8a',30,2);B.shake=22;burst(B.tf.x,B.tf.y,'#ff3050',60,600,true)}
     if(g.phase2){if(g.curse>0){g.curse-=dt;if(g.curse<=0)float('呪いが解けた',W/2,H*0.25,'#cdb89a',20,1)}
-      else{g.curseCD-=dt;if(g.curseCD<=0){g.curse=8;g.curseCD=14;float('反転の呪い！ 紫の輪は逆へはじけ！',W/2,H*0.25,'#d070ff',26,1.8);fx.flash={c:'#a040ff',life:0.4,max:0.4}}}}
+      else{g.curseCD-=dt;if(g.curseCD<=0){g.curse=8;g.curseCD=14;sfx('curse');float('反転の呪い！ 紫の輪は逆へはじけ！',W/2,H*0.25,'#d070ff',26,1.8);fx.flash={c:'#a040ff',life:0.4,max:0.4}}}}
   }
 }
 function update(dt){
@@ -1180,13 +1321,15 @@ function update(dt){
   dodgeBtn.classList.toggle('warn',!!(B.state==='windup'&&a&&(a.kind==='breath'||a.fail)&&!B.over));
   dodgeBtn.classList.toggle('cd',B.dodgeCD>0);
   if(B.over)return;
-  const n=needNow();if(n>B.lastNeed){B.lastNeed=n;float('敵が警戒を強めた！ 必要パリィ +1',W/2,H*0.2,'#ff9a6a',20,1.6)}
+  { // 瀕死の鼓動（体力35%未満で、減るほど速く）
+    const r=B.php/B.pmax;if(r<0.35&&r>0){B.hb=(B.hb||0)-dt;if(B.hb<=0){sfx('heart');B.hb=60/(70+(0.35-r)*240)}}}
+  const n=needNow();if(n>B.lastNeed){B.lastNeed=n;sfx('warn');float('敵が警戒を強めた！ 必要パリィ +1',W/2,H*0.2,'#ff9a6a',20,1.6)}
   gimmicks(dt);if(B.over)return;
   if(B.state==='idle'){B.timer-=dt;if(B.timer<=0)beginAttack()}
   else if(B.state==='windup'){
     if(a.holdLeft>0&&a.t>=a.holdAt)a.holdLeft-=dt;else a.t+=dt;
     if(a.warpAt&&!a.warped&&a.t>=a.warpAt){const p0=attackPoint(a);a.warped=true;a.dir=OPP[a.dir];const p1=attackPoint(a),t=B.tf; // 雷光転移：向きが反対へ
-      fx.flash={c:'#e8fbff',life:0.12,max:0.12};fx.zaps.push({a:p0,b:p1,life:0.28,max:0.28});burst(p1.x,p1.y,'#e8fbff',22,420,true);B.shake=Math.max(B.shake,6)}
+      fx.flash={c:'#e8fbff',life:0.12,max:0.12};fx.zaps.push({a:p0,b:p1,life:0.28,max:0.28});sfx('zap');burst(p1.x,p1.y,'#e8fbff',22,420,true);B.shake=Math.max(B.shake,6)}
     // 冥炎：着弾前から炎を吐く
     if(a.kind==='breath'&&B.E.breath.type==='fire'&&a.t>a.w-Math.min(0.45,a.w*0.75)&&a.t<a.w+0.1){const h=headScreen(),p=PP();
       for(let i=0;i<3;i++){const ang=Math.atan2(p.y-h.y,p.x-h.x)+rand(-0.25,0.25),sp=rand(700,1000);fx.parts.push({x:h.x,y:h.y,vx:Math.cos(ang)*sp,vy:Math.sin(ang)*sp,life:rand(0.35,0.55),max:0.55,c:Math.random()<0.5?'#d070ff':'#ff70c0',r:rand(8,18),add:true,round:true,drag:0.97,grav:0})}}

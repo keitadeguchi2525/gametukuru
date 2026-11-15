@@ -19,6 +19,8 @@
 - パリィ判定：`needDir()` が「はじくべき方向」を返す。攻撃が来た方向（`OPP[a.dir]`）へスワイプで成功。呪い中は逆。
 - 戦闘の流れ：`beginAttack()` → `update()` の windup → `tryParry()` / `resolveHit()` → `afterResolve()`。
 - ボスのギミックは `gimmicks()`、`enterBroken()`、`guardPhase()` あたり。
+- 音は `sfx('名前')`（効果音）と `bgm('曲名')`（BGM）。音の中身は `SFX` と `SONGS` にまとまっている。新しい場面を足したら、合う効果音も鳴らす。
+- 背景は `drawBG()`（ダンジョンごとに `bgCave` / `bgCanyon` / `bgUnder`、動く部分は `drawBGAnim()`）。
 
 ## 守ること
 - セーブデータ（localStorage のキー `parryHunter_v1`）の互換性を壊さない。形式を変えるときは `migrate()` に変換処理を足す。
