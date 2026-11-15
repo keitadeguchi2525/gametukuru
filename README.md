@@ -7,6 +7,7 @@
 
 - ブラウザで遊ぶ：https://keitadeguchi2525.github.io/gametukuru/ （GitHub Pages をオンにすると使えます）
 - 手元で遊ぶ：`index.html` をダブルクリックしてブラウザで開くだけ
+- インフィニティブレード風（Unity版）：https://keitadeguchi2525.github.io/gametukuru/infinity-blade/ （Unityの元データは `infinity-blade-unity/`）
 
 ### 操作
 
