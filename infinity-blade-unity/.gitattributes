@@ -1,0 +1,33 @@
+# 改行コードは git に任せる
+* text=auto
+
+# Unity の YAML（シーン・プレハブなど）は改行を変えない
+*.unity      text eol=lf
+*.prefab     text eol=lf
+*.asset      text eol=lf
+*.mat        text eol=lf
+*.anim       text eol=lf
+*.controller text eol=lf
+*.meta       text eol=lf
+
+# スクリプト
+*.cs   text diff=csharp
+*.py   text diff=python
+
+# バイナリ（中身を比べない）
+*.fbx    binary
+*.blend  binary
+*.tif    binary
+*.tiff   binary
+*.png    binary
+*.jpg    binary
+*.psd    binary
+*.exr    binary
+*.wav    binary
+*.mp3    binary
+*.ogg    binary
+*.mp4    binary
+*.dll    binary
+*.ttf    binary
+*.otf    binary
+*.pdf    binary
