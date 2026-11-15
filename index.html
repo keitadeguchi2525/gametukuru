@@ -34,6 +34,7 @@ h1{font-weight:900;font-size:30px;letter-spacing:.06em;text-align:center;color:#
 .tag{font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:#3d2b1b;color:#e9c690}
 .tag.ok{background:#2c4a24;color:#bdf0a8}
 .tag.perk{background:#3a2458;color:#e0c0ff}
+.tag.b-special{background:#5a1a4a;color:#ffc0f0}.tag.gacha{background:#4a1a5a;color:#f0c8ff}
 .tag.build{background:#2a3a2a;color:#d0f0c0}.tag.b-parry{background:#1e3a52;color:#a8e0ff}.tag.b-crit{background:#5a2020;color:#ffb8a0}.tag.b-dodge{background:#1e4a32;color:#a8ffc8}.tag.b-balance{background:#4a3a20;color:#ffe0a0}
 .buildbox{background:#1c140d;border:1px solid #4a3826;border-radius:10px;padding:8px 12px;margin:0 0 12px;font-size:13px;line-height:1.7}.buildbox b{color:#ffe2ad}
 .row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
@@ -73,6 +74,14 @@ h1{font-weight:900;font-size:30px;letter-spacing:.06em;text-align:center;color:#
 .dodgebtn.lock{border-color:#777;background:radial-gradient(circle at 40% 35%,rgba(110,110,110,.7),rgba(30,30,30,.85));color:#aaa;animation:none}
 .dodgebtn.lock::after{content:'✕';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:58px;color:rgba(255,90,90,.75);font-weight:900}
 @keyframes pulse{to{transform:scale(1.1);box-shadow:0 0 28px rgba(255,80,80,.8)}}
+#gacha{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(8,5,3,.8)}
+#gachaBox{background:linear-gradient(#2a1d12,#1a120b);border:2px solid #c98a3a;border-radius:16px;padding:22px 20px;width:min(360px,90vw);text-align:center}
+.capsule{width:110px;height:110px;margin:6px auto 14px;border-radius:50%;position:relative;animation:shake .12s infinite alternate}
+.capsule.open{animation:pop .45s ease-out forwards}
+@keyframes shake{from{transform:rotate(-8deg)}to{transform:rotate(8deg)}}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.35)}100%{transform:scale(1)}}
+.gprize{font-size:20px;font-weight:900;margin:8px 0}.gprize img{width:72px;height:72px;display:block;margin:0 auto 6px}
+.grate{font-size:12px;color:#bba78a;line-height:1.8}
 #result{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(8,5,3,.72)}
 #result .box{background:linear-gradient(#2e2116,#1d140d);border:1px solid #7a5530;border-radius:16px;padding:22px 24px;min-width:280px;max-width:92vw;text-align:center}
 #result h2{font-size:30px;font-weight:900;margin-bottom:10px}
@@ -91,6 +100,7 @@ h1{font-weight:900;font-size:30px;letter-spacing:.06em;text-align:center;color:#
   <div class="tabs">
     <button data-tab="hunt" class="on">ダンジョン</button>
     <button data-tab="forge">工房</button>
+    <button data-tab="gacha">ガチャ</button>
     <button data-tab="mats">素材</button>
     <button data-tab="how">遊び方</button>
   </div>
@@ -104,6 +114,7 @@ h1{font-weight:900;font-size:30px;letter-spacing:.06em;text-align:center;color:#
   <button id="dodgeR" class="dodgebtn">回避 →<small>D</small></button>
   <div id="result" class="hidden"><div class="box" id="resultBox"></div></div>
 </div>
+<div id="gacha" class="hidden"><div class="box" id="gachaBox"></div></div>
 <div id="toast"></div>
 <div id="ver"></div>
 
@@ -154,6 +165,7 @@ const MATS={
   timeice:{n:'時止めの氷',c:'#ffffff',c2:'#3060ff',sh:'crystal',rare:3},
 };
 const RARE_NAME={1:'レア',2:'激レア',3:'超激レア'};
+const PROOF_RATE=0.25;   // ボスを倒したとき「討伐の証」が出る確率
 
 // ===================== 敵 =====================
 const ENEMIES=[
@@ -343,6 +355,12 @@ const WEAPONS=[
   {id:'w4',name:'冥刃ネクロ',atk:35,build:'balance',...WP('d3',['shade','crown','core']),shape:'dark',blade:'#a874e8',glow:'#d080ff'},
   {id:'f5',name:'魂喰らいの鎌',atk:33,build:'dodge',...WP('d3',['shade','soul']),shape:'dark',blade:'#70e0d0',glow:'#a0fff0',perk:{dodgePts:20,dodge:0.65}},
   {id:'r3',name:'王笏剣ルクスフェル',atk:38,build:'crit',...WP('d3',['soul']),shape:'royal',blade:'#fff6dc',glow:'#ffe070',perk:{crit:0.2,critDmg:0.5,parryPts:0.85},rareCost:{scepter:1,soulstone:2,voidcrystal:1}},
+  // ボスの特殊武器：ガチャ限定（工房では作れない。手に入れたら強化はできる）
+  {id:'gw_golm',name:'岩王剣ゴルムガルド',atk:20,build:'special',gacha:'golm',...WP('d1',[]),cost:{},shape:'great',blade:'#cbb48e',glow:'#ffb040',perk:{dmgCut:0.25}},
+  {id:'gw_lumina',name:'妖蛾刀ルミナ',atk:24,build:'special',gacha:'lumina',...WP('f1',[]),cost:{},shape:'katana',blade:'#e2ccff',glow:'#b0ff40',perk:{gPoison:1}},
+  {id:'gw_volga',name:'雷竜槍ヴォルガノン',atk:29,build:'special',gacha:'volga',...WP('d2',[]),cost:{},shape:'vajra',blade:'#fff27a',glow:'#7ad0ff',perk:{gBolt:1}},
+  {id:'gw_glacier',name:'氷霊剣グラシエル',atk:32,build:'special',gacha:'glacier',...WP('g1',[]),cost:{},shape:'amber',blade:'#dff6ff',glow:'#9fe8ff',perk:{gFreeze:1}},
+  {id:'gw_necros',name:'冥王鎌ネクロシス',atk:37,build:'special',gacha:'necros',...WP('d3',[]),cost:{},shape:'dark',blade:'#8a3ab8',glow:'#d070ff',perk:{gBeam:1}},
 ];
 for(const w of WEAPONS)if(w.rareCost)w.cost={...w.cost,...w.rareCost};
 // 防具は「シリーズ」ごとに 頭・胴・手・足 の4部位。シリーズの防御/体力の合計を部位の比率で分ける
@@ -410,14 +428,19 @@ const armStat=()=>{let def=0,hp=0;for(const p of eqPieces()){const st=aStat(p,S.
 //   crit=会心率 critDmg=会心ダメージ heal=パリィで回復 dodgePts=回避で入る体勢ポイント（以上は足し算）
 function perk(k){const mul=MULPERK.includes(k);let v=mul?1:0;
   for(const p of[W_(S.eqW).perk,...eqPieces().map(a=>a.perk)])if(p&&p[k]!=null)v=mul?v*p[k]:v+p[k];return v}
-const BUILD_NAME={balance:'バランス',parry:'パリィ特化',crit:'クリティカル',dodge:'回避'};
+const BUILD_NAME={balance:'バランス',parry:'パリィ特化',crit:'クリティカル',dodge:'回避',special:'ボス武器'};
 function perkText(pk){if(!pk)return '';const o=[],pc=v=>Math.round(v*100);
   for(const[k,v]of Object.entries(pk)){const d=pc(v-1),sg=x=>(x>0?'+':'')+x;
     if(k==='parryPts')o.push(`パリィの体勢pt ${sg(d)}%`);else if(k==='atk')o.push(`攻撃力 ${sg(d)}%`);
     else if(k==='parry')o.push(`パリィ受付 ${sg(d)}%`);else if(k==='part')o.push(`部位ダメージ ${sg(d)}%`);
     else if(k==='dodge')o.push(`回避受付 ${sg(d)}%`);else if(k==='crit')o.push(`会心率 ${sg(pc(v))}%`);
     else if(k==='critDmg')o.push(`会心ダメージ ${sg(pc(v))}%`);else if(k==='heal')o.push(`パリィ成功でHP${+v.toFixed(1)}回復`);
-    else if(k==='dodgePts')o.push(`回避成功で体勢 +${Math.round(v)}pt`)}
+    else if(k==='dodgePts')o.push(`回避成功で体勢 +${Math.round(v)}pt`);
+    else if(k==='dmgCut')o.push(`被ダメージ ${Math.round(v*100)}%カット`);
+    else if(k==='gPoison')o.push(`攻撃時 1/${Math.round(1/G_POISON_CH)}で敵を毒に（最大HPの${G_POISON_PCT*100}%×${G_POISON_TICKS}回）`);
+    else if(k==='gBolt')o.push(`攻撃時 1/${Math.round(1/G_BOLT_CH)}で落雷（最大HPの${G_BOLT_PCT*100}%）`);
+    else if(k==='gFreeze')o.push(`この武器で崩すと敵が凍り、崩し時間 +${G_FREEZE_SEC}秒`);
+    else if(k==='gBeam')o.push(`攻撃時 1/${Math.round(1/G_BEAM_CH)}で闇の光線（最大HPの${G_BEAM_PCT*100}%）`)}
   return o.join('／')}
 const buildTag=b=>b?`<span class="tag build b-${b}">${BUILD_NAME[b]}</span>`:'';
 // いまの装備で「1回の行動で入る体勢ポイント」
@@ -429,7 +452,33 @@ const has=c=>Object.entries(c).every(([k,q])=>(S.mats[k]||0)>=q);
 function pay(c){for(const[k,q]of Object.entries(c))S.mats[k]-=q}
 function addMat(k,q){S.mats[k]=(S.mats[k]||0)+q}
 const OPEN_DETAIL={};   // 拠点の「詳細を表示」を開いているダンジョン
-let forgeTab='w';       // 工房の小タブ：w=武器 / a=防具
+let forgeTab='w';
+// ===== ガチャ =====
+const GACHA_ODDS={r1:0.6,r2:0.2,r3:0.1,w:0.1};   // レア／激レア／超激レア／ボス武器
+const gachaRares=b=>{const o={};for(const[k]of b.rares)o[MATS[k].rare]=k;return o};
+function rollGacha(bid){const b=ENEMIES.find(e=>e.id===bid),pk='proof_'+bid;if(!b||(S.mats[pk]||0)<1)return;
+  S.mats[pk]--;const r=gachaRares(b),w=WEAPONS.find(x=>x.gacha===bid);
+  let x=Math.random(),res;
+  if((x-=GACHA_ODDS.r1)<0)res={k:r[1],tier:1};else if((x-=GACHA_ODDS.r2)<0)res={k:r[2],tier:2};else if((x-=GACHA_ODDS.r3)<0)res={k:r[3],tier:3};else res={w,tier:4};
+  let html='';
+  if(res.w){const lv=S.weapons[w.id];
+    if(lv===undefined){S.weapons[w.id]=0;html=`<div class="gprize" style="color:#ffc0f0"><img src="${weaponIcon(w)}">${w.name}</div><p style="font-size:13px;color:#f0c8ff">${perkText(w.perk)}</p><p style="font-size:12px;color:#bba78a">工房の武器タブで装備できる</p>`}
+    else if(lv<MAXLV){S.weapons[w.id]=lv+1;html=`<div class="gprize" style="color:#ffc0f0"><img src="${weaponIcon(w)}">${w.name}</div><p style="font-size:13px;color:#f0c8ff">もう持っているので強化 +${lv}→+${lv+1}！</p>`}
+    else{addMat(r[3],1);html=`<div class="gprize" style="color:#ffc0f0"><img src="${weaponIcon(w)}">${w.name}</div><p style="font-size:13px;color:#f0c8ff">強化MAXなので、かわりに ${MATS[r[3]].n} ×1</p>`}}
+  else{const q=Math.random()<0.5?1:2;addMat(res.k,q);const cl=['','#bfe0ff','#e6b8ff','#fff3a0'][res.tier];
+    html=`<div class="gprize" style="color:${cl}"><img src="${ICON[res.k]}">${MATS[res.k].n} ×${q}</div><p style="font-size:13px;color:${cl}">${RARE_NAME[res.tier]}</p>`}
+  save();
+  const cap=['','#7ab8ff','#c080ff','#ffd040','#ff70d0'][res.tier],title=['','レア','激レア','超激レア','ボス武器！！'][res.tier];
+  $('#gachaBox').innerHTML=`<h2 style="margin:0 0 4px;color:#ffd58a">${b.name}のガチャ</h2><div class="capsule" style="background:radial-gradient(circle at 35% 30%,#fff,#ccc 30%,#888)"></div><p style="color:#bba78a">……</p>`;
+  $('#gacha').classList.remove('hidden');sfx('charge',0.9);
+  setTimeout(()=>{const left=S.mats[pk]||0;
+    $('#gachaBox').innerHTML=`<h2 style="margin:0 0 4px;color:#ffd58a">${b.name}のガチャ</h2>
+      <div class="capsule open" style="background:radial-gradient(circle at 35% 30%,#fff,${cap} 40%,${shade(cap,-0.5)});box-shadow:0 0 ${res.tier*14}px ${cap}"></div>
+      <div style="font-size:15px;font-weight:900;color:${cap}">${title}</div>${html}
+      <div class="row" style="justify-content:center;margin-top:12px">${left>0?`<button class="btn" id="gAgain">もう1回（残り${left}）</button>`:''}<button class="btn sub2" id="gClose">閉じる</button></div>`;
+    sfx(res.tier>=3?'fanfare':res.tier===2?'rare':'clear');
+    $('#gClose').onclick=()=>{$('#gacha').classList.add('hidden');renderHub()};
+    if(left>0)$('#gAgain').onclick=()=>rollGacha(bid)},900)}       // 工房の小タブ：w=武器 / a=防具
 // 作成に使う素材を1つでも持っているか（持っていない装備は工房に出さない）
 const hasAnyMat=c=>Object.keys(c).length===0||Object.keys(c).some(k=>(S.mats[k]||0)>0);   // 拠点の「詳細を表示」を開いているダンジョン
 const unlocked=i=>i===0||!!S.cleared[DUNGEONS[i].id]||!!S.cleared[DUNGEONS[i-1].id]||!!S.cleared[DUNGEONS[i-1].floors.slice(-1)[0]];
@@ -460,6 +509,7 @@ function matSVG(k){const m=MATS[k],id='g'+k;
     case'crownp':b=`<path d="M8 50 L12 18 L24 34 L32 10 L40 34 L52 18 L56 50 Z" ${F}/><circle cx="32" cy="42" r="5" fill="#c040ff"/>`;break;
     case'orb':b=`<circle cx="32" cy="32" r="28" fill="none" stroke="${m.c}" stroke-width="2" opacity=".5"/><circle cx="32" cy="32" r="21" fill="url(#${id}r)" stroke="${m.c2}" stroke-width="2"/>`;break;
     case'wisp':b=`<path d="M32 60 Q12 50 18 32 Q22 40 28 38 Q20 22 34 4 Q34 22 44 26 Q42 34 46 36 Q54 50 32 60Z" fill="url(#${id}r)" stroke="${m.c2}" stroke-width="2"/>`;break;
+    case'medal':b=`<path d="M20 4 L28 26 L22 28 Z M44 4 L36 26 L42 28 Z" fill="#c03030" stroke="#601010" stroke-width="1.5"/><circle cx="32" cy="38" r="20" fill="url(#${id}r)" stroke="${m.c2}" stroke-width="3"/><circle cx="32" cy="38" r="13" fill="none" stroke="#fff" stroke-width="1.5" opacity=".7"/><path d="M32 29 L35 36 L42 36 L36 40 L38 47 L32 43 L26 47 L28 40 L22 36 L29 36 Z" fill="#fff" opacity=".9"/>`;break;
     case'gem':b=`<polygon points="16,8 48,8 60,24 32,60 4,24" ${F}/><path d="M4 24H60M16 8L24 24L32 60L40 24L48 8M24 24L32 8L40 24" stroke="#fff" stroke-width="1.5" fill="none" opacity=".6"/>`;break;
     case'amber':b=`<path d="M32 4 Q58 18 54 40 Q48 60 30 58 Q8 56 10 34 Q12 12 32 4Z" fill="url(#${id}r)" stroke="${m.c2}" stroke-width="2"/><g stroke="#4a2a08" stroke-width="2" opacity=".75" fill="#4a2a08"><ellipse cx="32" cy="34" rx="3.5" ry="7"/><path d="M29 30l-8-4M29 36l-8 2M35 30l8-4M35 36l8 2"/></g>`;break;
     case'eye':b=`<path d="M4 32 Q32 4 60 32 Q32 60 4 32Z" fill="url(#${id})" stroke="${m.c2}" stroke-width="2"/><circle cx="32" cy="32" r="13" fill="url(#${id}r)"/><ellipse cx="32" cy="32" rx="3" ry="11" fill="#081830"/>`;break;
@@ -467,6 +517,8 @@ function matSVG(k){const m=MATS[k],id='g'+k;
   }
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">${def}${m.rare?`<circle cx="32" cy="32" r="31" fill="url(#${id}g)"/>`:''}${b}</svg>`;
 }
+// 討伐の証（ガチャ1回ぶん）：ボスごとに1種類。素材として持つ
+for(const b of ENEMIES)MATS['proof_'+b.id]={n:`${b.name.replace(/^.*?([ァ-ヶー]+)$/,'$1')}討伐の証`,full:`${b.name}討伐の証`,c:b.glow,c2:shade(b.glow,-0.5).replace(/rgb\((\d+),(\d+),(\d+)\)/,(m,r,g,bb)=>'#'+[r,g,bb].map(v=>(+v).toString(16).padStart(2,'0')).join('')),sh:'medal',proof:b.id};
 const ICON={},IMG={};
 for(const k in MATS){ICON[k]='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(matSVG(k));const im=new Image();im.src=ICON[k];IMG[k]=im}
 
@@ -728,7 +780,7 @@ function renderHub(){
         const eq=(kind==='w'?S.eqW:S.eqA)===it.id;const rare=Object.keys(it.cost).some(k=>MATS[k].rare);
         const st=kind==='w'?`攻撃 ${wStat(it,lv||0)}`:(()=>{const s=aStat(it,lv||0);return `防御 ${s.def} / 体力 +${s.hp}`})();
         h+=`<div class="card ${rare?'rare':''}"><div class="item"><div class="ico"><img src="${kind==='w'?weaponIcon(it):armorIcon(it)}"></div><div class="body">
-        <h3>${it.name}${owned?' +'+lv:''} ${eq?'<span class="tag ok">装備中</span>':''}${!owned?'<span class="tag">未作成</span>':''}</h3>
+        <h3>${it.name}${owned?' +'+lv:''} ${eq?'<span class="tag ok">装備中</span>':''}${!owned?'<span class="tag">未作成</span>':''}${it.gacha?'<span class="tag gacha">ガチャ限定</span>':''}</h3>
         <p>${buildTag(it.build)} ${st} ${it.perk?`<span class="tag perk">✦ ${perkText(it.perk)}</span>`:''}</p>`;
         if(!owned){h+=`<div class="row">${costChips(it.cost)}</div><div class="row"><button class="btn" data-act="craft" data-k="${kind}" data-id="${it.id}" ${has(it.cost)?'':'disabled'}>作成する</button></div>`}
         else{const c=upgCost(it,lv);
@@ -740,9 +792,9 @@ function renderHub(){
       会心率 ${Math.round(critRate()*100)}%（×${critMul().toFixed(1)}）　／　パリィ受付 ×${perk('parry').toFixed(2)}　／　回避受付 ×${perk('dodge').toFixed(2)}${perk('heal')?`　／　パリィでHP+${+perk('heal').toFixed(1)}`:''}</div>`;
     h+=`<div class="subtabs"><button class="${forgeTab==='w'?'on':''}" data-act="ftab" data-v="w">武器</button><button class="${forgeTab==='a'?'on':''}" data-act="ftab" data-v="a">防具</button></div>`;
     if(forgeTab==='w'){
-      const ws=WEAPONS.filter(w=>S.weapons[w.id]!==undefined||hasAnyMat(w.cost));
+      const ws=WEAPONS.filter(w=>S.weapons[w.id]!==undefined||(!w.gacha&&hasAnyMat(w.cost)));
       sec(`— 武器 —（素材の目安：そのダンジョン約${WEAPON_CLEARS}回踏破分）`,ws,'w');
-      if(ws.length<WEAPONS.length)h+=`<p class="hint">ほかにも武器がある。素材を1つでも手に入れると表示される。</p>`;
+      if(ws.length<WEAPONS.length)h+=`<p class="hint">ほかにも武器がある。素材を1つでも手に入れると表示される（ボス武器はガチャ限定）。</p>`;
     }else{
     const sets=ARMOR_SETS.filter(st=>ARMORS.some(p=>p.set===st&&(S.armors[p.id]!==undefined||hasAnyMat(p.cost))));
     h+=`<div class="sect">— 防具（頭・胴・手・足） —</div><p style="font-size:12px;color:#a89478;margin:-4px 0 10px">シリーズの部位を全部そろえると合計：防御／体力。強化は1段ごとに 防御+1・体力+1。素材の目安：防具一式＝そのダンジョン約${ARMOR_SET_CLEARS}回踏破分</p>`;
@@ -757,6 +809,19 @@ function renderHub(){
       h+='</div>'});
     if(sets.length<ARMOR_SETS.length)h+=`<p class="hint">ほかにも防具がある。素材を1つでも手に入れると表示される。</p>`;
     }
+  }else if(tab==='gacha'){
+    h+=`<div class="card"><p style="margin:0">ボスを倒すと <b>${PROOF_RATE*100}%</b> で「討伐の証」が手に入る。証1つでそのボスのガチャを1回まわせる。</p>
+      <p class="grate" style="margin:6px 0 0">排出率：レア ${GACHA_ODDS.r1*100}%（1〜2個）／激レア ${GACHA_ODDS.r2*100}%（1〜2個）／超激レア ${GACHA_ODDS.r3*100}%（1〜2個）／ボス武器 ${GACHA_ODDS.w*100}%</p></div>`;
+    let any=false;
+    for(const b of ENEMIES){const D=DUNGEONS.find(d=>d.floors.slice(-1)[0]===b.id),pk='proof_'+b.id,n=S.mats[pk]||0;
+      if(!(n>0||S.cleared[D.id]))continue;any=true;const w=WEAPONS.find(x=>x.gacha===b.id),r=gachaRares(b);
+      h+=`<div class="card"><h3>${'★'.repeat(D.stars)} ${b.name}のガチャ</h3>
+        <div class="row">${chip(pk,`${MATS[pk].full} ×${n}`)}</div>
+        <div class="rt">当たり</div><div class="row">${[1,2,3].map(q=>r[q]?chip(r[q],`${RARE_NAME[q]}：${MATS[r[q]].n}`):'').join('')}
+          <span class="chip"><img src="${weaponIcon(w)}">ボス武器：${w.name}${S.weapons[w.id]!==undefined?'（所持）':''}</span></div>
+        <p class="grate">${w.name}：${perkText(w.perk)}（攻撃 ${w.atk}）</p>
+        <div class="row" style="justify-content:flex-end"><button class="btn" data-act="gacha" data-b="${b.id}" ${n>0?'':'disabled'}>ガチャを回す（証1つ）</button></div></div>`}
+    if(!any)h+=`<div class="card"><p>まだガチャはない。ダンジョンのボスを倒して「討伐の証」を手に入れよう！</p></div>`;
   }else if(tab==='mats'){
     const e=Object.entries(S.mats).filter(([k,q])=>q>0).sort((a,b)=>(MATS[a[0]].rare||0)-(MATS[b[0]].rare||0));
     h+=e.length?`<div class="mats">${e.map(([k,q])=>`<div class="mat ${MATS[k].rare?'r'+MATS[k].rare:''}"><img src="${ICON[k]}"><div>${MATS[k].n}${MATS[k].rare?`<div style="font-size:10px;color:#e0c0ff">${RARE_NAME[MATS[k].rare]}</div>`:''}</div><b>×${q}</b></div>`).join('')}</div>`:'<div class="card"><p>まだ素材がありません。狩りに出て部位破壊・討伐で集めよう！</p></div>';
@@ -777,6 +842,7 @@ function renderHub(){
     <li>体勢崩し中は、<b>敵の部位を押したまま、こするように動かす</b>と連続攻撃。速くこするほど強い。</li>
     <li>部位の耐久をゼロにすると<b>部位破壊</b>！その部位の素材が手に入る。</li>
     <li>防具は<b>頭・胴・手・足</b>の4部位。シリーズごとに作って組み合わせられる（レアシリーズは特定の部位に特殊効果）。</li>
+    <li>ボスを倒すと25%で<b>討伐の証</b>が手に入る。拠点の<b>ガチャ</b>で、そのボスのレア素材か<b>ボス武器</b>（特殊効果つき・ガチャ限定）が当たる。</li>
     <li>倒すと討伐素材と、確率で<b>レア素材</b>がドロップ。レア素材で特殊効果つきの装備が作れる。</li>
     <li><b>ダンジョン</b>は階層制。HPは階をまたいで持ち越し（次の階へ進むとき最大HPの5%だけ回復）。各階の後に<b>帰還</b>すれば戦利品を持ち帰れるが、<b>倒れると全ロスト</b>。最奥のボスを倒すと踏破＆全部持ち帰り。<b>倒れると装備中の武器・防具5つのうちランダムに1〜3つも失う</b>（1つ33%・2つ33%・3つ34%。工房で作り直せる）。</li>
     <li>PC：パリィはマウスでスワイプ（ドラッグ）。回避は <b>A＝左</b>／<b>D＝右</b>。</li></ul></div>`;
@@ -786,6 +852,7 @@ function renderHub(){
 document.querySelector('.tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b){tab=b.dataset.tab;renderHub()}});
 $('#panel').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled)return;const act=b.dataset.act;
   if(act==='hunt')startDungeon(+b.dataset.i);
+  else if(act==='gacha'){rollGacha(b.dataset.b)}
   else if(act==='ftab'){forgeTab=b.dataset.v;renderHub()}
   else if(act==='detail'){OPEN_DETAIL[b.dataset.id]=!OPEN_DETAIL[b.dataset.id];sfx('click');renderHub()}
   else if(act==='craft'){const it=(b.dataset.k==='w'?W_:A_)(b.dataset.id);if(!has(it.cost))return;pay(it.cost);sfx('craft');(b.dataset.k==='w'?S.weapons:S.armors)[it.id]=0;
@@ -804,7 +871,7 @@ let W=0,H=0,DPR=1;
 function resize(){DPR=Math.min(2,window.devicePixelRatio||1);W=innerWidth;H=innerHeight;cv.width=W*DPR;cv.height=H*DPR;cv.style.width=W+'px';cv.style.height=H+'px';ctx.setTransform(DPR,0,0,DPR,0,0)}
 addEventListener('resize',resize);resize();
 
-let B=null,fx={parts:[],floats:[],trails:[],slashes:[],bolts:[],zaps:[],icons:[],flash:null};
+let B=null,fx={parts:[],floats:[],trails:[],slashes:[],bolts:[],zaps:[],icons:[],special:[],flash:null};
 const rand=(a,b)=>a+Math.random()*(b-a),ri=(a,b)=>Math.floor(rand(a,b+1));
 const ease=k=>1-Math.pow(1-k,3);
 const BREATH_IN_FLURRY=0.3,BREATH_WINDUP=0.8;
@@ -826,9 +893,9 @@ function startFloor(){
      posture:0,state:'idle',timer:2.0,atk:null,combo:0,brokenT:0,brokenMax:1,bonus:0,php:RUN.php,pmax:RUN.pmax,loot:{},over:false,
      shake:0,lunge:0,recoil:0,pAnim:null,dAnim:null,hurt:0,t:0,fade:1,tf:{x:0,y:0,rot:0,sc:1,u:1},bounce:0,dodgeAt:-9,dodgeCD:0,lastNeed:0,deathT:0,flurry:null,roar:0,
      g:{charge:0,storm:0,armor:0,armorMax:3,armorDone:false,phase2:false,curse:0,curseCD:5,regenAcc:0,orbCD:ORB_FIRST,hzCD:0,blizzard:false}};
-  B.orbs=[];B.hz=[];B.poison=[];B.poisonAcc=0;if(hazard())B.g.hzCD=hzEvery()*rand(0.6,0.9);
+  B.orbs=[];B.hz=[];B.poison=[];B.poisonAcc=0;B.epoison=[];B.frozenBreak=false;if(hazard())B.g.hzCD=hzEvery()*rand(0.6,0.9);
   B.lastNeed=needNow();
-  fx={parts:[],floats:[],trails:[],slashes:[],bolts:[],zaps:[],icons:[],flash:null};
+  fx={parts:[],floats:[],trails:[],slashes:[],bolts:[],zaps:[],icons:[],special:[],flash:null};
   $('#hub').classList.add('hidden');$('#battle').classList.remove('hidden');$('#result').classList.add('hidden');
   resize();
   bgm(RUN.D.id+(isBossFloor()?'b':''));
@@ -883,6 +950,7 @@ const COLD_RATE=0.004,COLD_MIN=0.6,BLIZZARD_MUL=0.85;
 function coldMul(){if(!B||B.E.gimmick!=='cold')return 1;return Math.max(COLD_MIN,1-B.t*COLD_RATE)*(B.g.blizzard?BLIZZARD_MUL:1)}
 const needDir=a=>a.cursed?a.dir:OPP[a.dir];   // 攻撃が来た方向へはじき返す（呪い中は逆）
 function enterBroken(extra=0){
+  B.frozenBreak=perk('gFreeze')>0;if(B.frozenBreak){extra+=G_FREEZE_SEC;sfx('iceCrash');float(`凍結！ 崩し時間 +${G_FREEZE_SEC}秒`,W/2,H*0.38,'#bff4ff',24,1.4)}
   B.state='broken';B.brokenMax=B.E.breakTime+B.bonus+extra;B.brokenT=B.brokenMax;B.bonus=0;B.combo=0;
   float('体勢崩し！',W/2,H*0.32,'#ffd04a',46,1.4);B.shake=14;sfx('break');
   // ゴルム：岩鎧は形態変化後3回目の体勢崩しで砕ける
@@ -953,7 +1021,7 @@ function resolveHit(){
     if(dg>0){addPosture(dg,W/2,H*0.7+34,'見切り');burst(W/2,H*0.7,'#9fffc0',16,300,true)}
     return}
   const mul=(a.kind==='heavy'?1.6:a.kind==='breath'?1.35:1)*(a.fl?0.6:1);
-  const raw=B.E.dmg*mul*rand(0.9,1.1);const def=armStat().def;const dmg=Math.round(raw*100/(100+def));
+  const raw=B.E.dmg*mul*rand(0.9,1.1);const def=armStat().def;const dmg=Math.round(raw*100/(100+def)*cutMul());
   sfx('hurt',a.kind==='heavy');B.php-=dmg;B.hurt=0.4;B.shake=a.kind==='heavy'?20:14;B.posture=Math.max(0,B.posture-PT);
   float('-'+dmg,W/2,H*0.76,'#ff5a4a',a.kind==='heavy'?40:32,0.9);
   if(B.php<=0){B.php=0;B.over=true;bgm(null);setTimeout(died,900)}
@@ -969,8 +1037,33 @@ function strike(p,f,x,y,ang){
   burst(x,y,crit?'#ff9a6a':'#ffcf8a',crit?14:7,crit?340:220);B.shake=Math.max(B.shake,crit?7:3);
   fx.slashes.push({ang,life:0.14,max:0.14,c:W_(S.eqW).glow,at:{x,y},small:true});
   if(!p.body&&!p.broken){p.hp-=Math.round(dmg*perk('part'));if(p.hp<=0)breakPart(p)}
-  if(B.hp<=0&&!B.over)victory();
+  if(B.hp<=0&&!B.over){victory();return}
+  // ボス武器の追加効果
+  if(perk('gPoison')&&Math.random()<G_POISON_CH){B.epoison.push({ticks:G_POISON_TICKS,next:1});sfx('poison');float('毒にした！',B.tf.x,B.tf.y-B.tf.u*0.6,'#b0ff40',24,1)}
+  if(perk('gBolt')&&Math.random()<G_BOLT_CH)specialHit(G_BOLT_PCT,'bolt');
+  if(perk('gBeam')&&Math.random()<G_BEAM_CH)specialHit(G_BEAM_PCT,'beam');
 }
+// ===== ボス武器の追加効果（数値） =====
+const G_POISON_CH=0.1,G_POISON_PCT=0.02,G_POISON_TICKS=5;   // 毒：1/10で、最大HPの2%を1秒ごとに5回
+const G_BOLT_CH=1/15,G_BOLT_PCT=0.07;                      // 落雷：1/15で最大HPの7%
+const G_BEAM_CH=0.1,G_BEAM_PCT=0.10;                       // 闇の光線：1/10で最大HPの10%
+const G_FREEZE_SEC=2;                                      // 凍結：崩し時間+2秒
+const cutMul=()=>1-Math.min(0.8,perk('dmgCut'));          // 被ダメージの倍率（岩王剣で0.75）
+function specialHit(frac,type){if(!B||B.over)return;const t=B.tf;
+  const dmg=Math.max(1,Math.round(B.maxHp*frac*(B.g.armor>0?0.2:1)));B.hp-=dmg;guardPhase();
+  fx.special.push({type,x:t.x,y:t.y,life:type==='bolt'?0.4:0.6,max:type==='bolt'?0.4:0.6});
+  if(type==='bolt'){sfx('thunder');fx.flash={c:'#fff8c0',life:0.25,max:0.25};burst(t.x,t.y,'#fff27a',40,600,true)}
+  else{sfx('darkBeam');fx.flash={c:'#a040ff',life:0.3,max:0.3};burst(t.x,t.y,'#d070ff',40,600,true)}
+  B.shake=Math.max(B.shake,12);float(`${type==='bolt'?'落雷':'闇の光線'}！ ${dmg}`,t.x,t.y-t.u*0.7,type==='bolt'?'#fff27a':'#e0a0ff',30,1.1);
+  if(B.hp<=0&&!B.over)victory()}
+function drawSpecialFX(dt){if(!fx.special||!fx.special.length)return;
+  for(const e of fx.special){e.life-=dt;const al=Math.max(0,e.life/e.max);ctx.save();ctx.globalAlpha=al;ctx.globalCompositeOperation='lighter';
+    if(e.type==='bolt'){ctx.strokeStyle='#fffbe0';ctx.shadowColor='#fff27a';ctx.shadowBlur=36;ctx.lineWidth=7;ctx.beginPath();let x=e.x,y=0;ctx.moveTo(x,y);
+      let r=11;const rnd=()=>((r=(r*9301+49297)%233280)/233280);while(y<e.y){y+=30;x=e.x+(rnd()-0.5)*60;ctx.lineTo(x,y)}ctx.stroke();ctx.lineWidth=2;ctx.strokeStyle='#ffffff';ctx.stroke()}
+    else{const w=90*(0.6+0.4*al),g=ctx.createLinearGradient(e.x-w,0,e.x+w,0);g.addColorStop(0,'rgba(90,0,160,0)');g.addColorStop(0.5,'rgba(235,170,255,0.95)');g.addColorStop(1,'rgba(90,0,160,0)');
+      ctx.fillStyle=g;ctx.fillRect(e.x-w,0,w*2,e.y+80);ctx.fillStyle='rgba(255,255,255,0.8)';ctx.fillRect(e.x-6*al,0,12*al,e.y+80)}
+    ctx.restore()}
+  fx.special=fx.special.filter(e=>e.life>0)}
 function breakPart(p){
   p.broken=true;p.hp=0;const bonus=atkStat()*2;B.hp-=bonus;guardPhase();
   const t=B.tf,pt=toScreen(p.x*t.u,p.y*t.u);
@@ -984,6 +1077,10 @@ function victory(){
   B.E.drops.forEach(([k,a,b])=>{const n=ri(a,b);if(n>0){drops[k]=n;B.loot[k]=(B.loot[k]||0)+n}});
   B.E.rares.forEach(([k,p])=>{if(Math.random()<p){rares[k]=1;B.loot[k]=(B.loot[k]||0)+1}});
   const t=B.tf;burst(t.x,t.y,B.E.glow,70,650,true);
+  // ボスは25%で「討伐の証」（ガチャ1回ぶん）
+  B.gotProof=false;const pk='proof_'+B.E.id;
+  if(!B.E.minion&&MATS[pk]&&Math.random()<PROOF_RATE){B.gotProof=true;B.loot[pk]=(B.loot[pk]||0)+1;dropIcon(pk,t.x,t.y,0.7);
+    setTimeout(()=>{sfx('fanfare');float(`${MATS[pk].full}を手に入れた！`,W/2,H*0.38,'#ffd8ff',26,1.8)},700)}
   let d=0;for(const k in drops){dropIcon(k,t.x,t.y,0.5+d);d+=0.08}
   const rk=Object.keys(rares);
   rk.forEach((k,i)=>{dropIcon(k,t.x,t.y,0.9+i*0.15);setTimeout(()=>{sfx('rare');float(`${RARE_NAME[MATS[k].rare]}ドロップ！ ${MATS[k].n}`,W/2,H*0.45+i*44,'#fff0a0',30,1.6);burst(W/2,H*0.45+i*44,'#ffe070',40,500,true)},900+i*300)});
@@ -998,9 +1095,10 @@ function floorCleared(rares){
   const rk=Object.keys(rares);
   const rareHtml=rk.length?`<div class="rarebanner">✦ レアドロップ ✦</div><div class="row">${rk.map(k=>chip(k,`${MATS[k].n}（${RARE_NAME[MATS[k].rare]}）`)).join('')}</div>`:'';
   if(isBossFloor()){
+    const pk='proof_'+B.E.id;const proofHtml=B.gotProof?`<div class="rarebanner" style="color:#ffc8ff">✦ ${MATS[pk].full} ✦</div><p style="font-size:13px;color:#e8c8ff;margin:0 0 8px">拠点の「ガチャ」で1回まわせる！</p>`:'';
     sfx('fanfare');bankRun();const D=RUN.D,first=!S.cleared[D.id];S.cleared[D.id]=true;save();
     const next=DUNGEONS[RUN.i+1];
-    showBox(`<h2 style="color:#ffd58a">ダンジョン踏破！</h2>${rareHtml}
+    showBox(`<h2 style="color:#ffd58a">ダンジョン踏破！</h2>${proofHtml}${rareHtml}
       <div style="font-size:13px;color:#bba78a">持ち帰った戦利品</div><div class="row">${lootChips(RUN.loot)}</div>
       ${first&&next?`<p style="color:#bdf0a8;font-weight:700;margin-bottom:14px">新ダンジョン「${next.name}」が解放された！</p>`:''}
       <div class="row"><button class="btn" id="home">拠点へ戻る</button></div>`);
@@ -1310,10 +1408,18 @@ function drawEnemy(){
   const heavyCol=a&&a.kind==='heavy'?'#ff3a2a':E.glow;
   if(glow>0){ctx.shadowColor=heavyCol;ctx.shadowBlur=40*glow}
   const aw=B.state==='windup'&&a;
+  const psnE=B.epoison&&B.epoison.length>0,frz=B.frozenBreak&&B.state==='broken';
+  ctx.filter=psnE?'sepia(0.55) hue-rotate(45deg) saturate(2.2) brightness(0.95)':frz?'saturate(0.35) hue-rotate(165deg) brightness(1.3)':'none';
   for(const p of B.parts){const o=partOff(p,u);ctx.save();ctx.translate(o.ox,o.oy);
     if(glow>0){const act=aw&&(activeLimb(p,a)||(a.kind==='breath'&&p.id==='head'));ctx.shadowColor=heavyCol;ctx.shadowBlur=act?60*glow:12*glow}
     drawPart(p,u,glow);if(B.g.armor>0)drawArmor(p,u);ctx.restore()}
-  ctx.shadowBlur=0;
+  ctx.filter='none';ctx.shadowBlur=0;
+  if(psnE){ // 毒：緑のもや＋泡
+    const g2=ctx.createRadialGradient(0,0,u*0.2,0,0,u*1.1);g2.addColorStop(0,'rgba(120,230,40,0.28)');g2.addColorStop(1,'rgba(120,230,40,0)');ctx.fillStyle=g2;ell(0,0,u*1.1,u*1.0);ctx.fill();
+    for(let i=0;i<10;i++){const k=(B.t*0.5+i*0.1)%1,bx=Math.sin(i*2.7+B.t)*u*0.6,by=u*0.5-k*u*1.3;ctx.globalAlpha=B.fade*(1-k)*0.8;ctx.strokeStyle='#c8ff60';ctx.lineWidth=2;ell(bx,by,4+i%3*2,4+i%3*2);ctx.stroke()}ctx.globalAlpha=B.fade}
+  if(frz){ // 凍結：氷の膜と氷の結晶
+    ctx.fillStyle='rgba(200,240,255,0.22)';ell(0,u*0.05,u*0.95,u*0.85);ctx.fill();ctx.strokeStyle='rgba(235,250,255,0.8)';ctx.lineWidth=2;ctx.stroke();
+    ctx.fillStyle='rgba(240,252,255,0.9)';for(let i=0;i<8;i++){const an=i/8*Math.PI*2+0.3,X=Math.cos(an)*u*0.85,Y=Math.sin(an)*u*0.75+u*0.05;ctx.beginPath();ctx.moveTo(X,Y);ctx.lineTo(X+Math.cos(an)*u*0.18,Y+Math.sin(an)*u*0.18-6);ctx.lineTo(X+Math.cos(an+0.4)*8,Y+Math.sin(an+0.4)*8);ctx.fill()}}
   if(B.state==='broken'&&!B.over)for(const p of B.parts){if(p.body||p.broken)continue;
     const bw=u*0.32,bx=p.x*u-bw/2,by=p.y*u-p.ry*u-12;
     ctx.fillStyle='rgba(0,0,0,0.6)';ctx.fillRect(bx-1,by-1,bw+2,7);ctx.fillStyle='#ffb84a';ctx.fillRect(bx,by,bw*p.hp/p.maxHp,5)}
@@ -1627,6 +1733,7 @@ function guardPhase(){ // 形態変化・岩鎧の境目を一撃で飛び越え
   if(E.gimmick==='armor'&&!g.armorDone&&B.hp<=B.maxHp*0.6){B.hp=B.maxHp*0.6;g.trig=true}
 }
 function cancelBreak(msg){
+  B.frozenBreak=false;
   if(B.state==='broken')float(msg||'崩しが解除された！',W/2,H*0.34,'#ff9a6a',24,1.6);
   B.posture=0;B.bonus=0;B.flurry=null;B.combo=0;B.state='idle';B.timer=1.4;B.roar=1.2;ptr&&(ptr.acc=0);
 }
@@ -1676,7 +1783,7 @@ function updateHazards(dt){const hz=hazard();
       sfx({rock:'rock',bolt:'thunder',ice:'iceCrash',dark:'darkBeam'}[ic.type]);burst(ic.x,pp.y-30,hz.c,30,480,true);B.shake=Math.max(B.shake,12);
       if(ic.type==='bolt'||ic.type==='dark')fx.flash={c:hz.c,life:0.2,max:0.2};
       if(ok){float(`${hz.name}を回避！`,W/2,H*0.62,'#bff4ff',26,0.9);const dg=dodgeGain();if(dg>0)addPosture(dg,W/2,H*0.62+30,'見切り')}
-      else{const dmg=Math.round(B.E.dmg*HZ_DMG*rand(0.9,1.1)*100/(100+armStat().def));sfx('hurt',true);B.php-=dmg;B.hurt=0.5;B.shake=20;B.posture=Math.max(0,B.posture-PT);
+      else{const dmg=Math.round(B.E.dmg*HZ_DMG*rand(0.9,1.1)*100/(100+armStat().def)*cutMul());sfx('hurt',true);B.php-=dmg;B.hurt=0.5;B.shake=20;B.posture=Math.max(0,B.posture-PT);
         float(`${hz.name}が直撃！ -${dmg}`,W/2,H*0.74,'#ff5a4a',34,1.0);if(B.php<=0){B.php=0;B.over=true;bgm(null);setTimeout(died,900)}}}}
   B.hz=B.hz.filter(ic=>!ic.landed||ic.life<0.4)}
 function drawHazards(){if(!B.hz||!B.hz.length)return;const hz=hazard();if(!hz)return;const pp=PP(),gy=pp.y-20,top=150;
@@ -1770,8 +1877,12 @@ function update(dt){
     const r=B.php/B.pmax;if(r<0.35&&r>0){B.hb=(B.hb||0)-dt;if(B.hb<=0){sfx('heart');B.hb=60/(70+(0.35-r)*240)}}}
   const n=needNow();if(n>B.lastNeed){B.lastNeed=n;sfx('warn');float(`敵が警戒を強めた！ 必要ポイント +${PT}`,W/2,H*0.2,'#ff9a6a',20,1.6)}
   gimmicks(dt);if(B.over)return;
+  if(B.epoison.length){ // ボス武器の毒：敵に1秒ごとダメージ
+    for(const p of B.epoison){p.next-=dt;if(p.next<=0&&p.ticks>0){p.next+=1;p.ticks--;const d=Math.max(1,Math.round(B.maxHp*G_POISON_PCT*(B.g.armor>0?0.2:1)));B.hp-=d;guardPhase();
+      float('毒 '+d,B.tf.x+rand(-40,40),B.tf.y-B.tf.u*0.3,'#b0ff40',20,0.8)}}
+    B.epoison=B.epoison.filter(p=>p.ticks>0);if(B.hp<=0&&!B.over){victory();return}}
   if(B.poison.length){ // 毒の継続ダメージ（防御では減らない）
-    let d=0;for(const p of B.poison){const k=Math.min(dt,p.left);d+=p.dps*k;p.left-=dt}B.poison=B.poison.filter(p=>p.left>0);
+    let d=0;for(const p of B.poison){const k=Math.min(dt,p.left);d+=p.dps*k*cutMul();p.left-=dt}B.poison=B.poison.filter(p=>p.left>0);
     B.php-=d;B.poisonAcc+=d;if(B.poisonAcc>=4){float('-'+Math.round(B.poisonAcc),W/2+rand(-30,30),H*0.78,'#b0ff40',18,0.7);B.poisonAcc=0}
     if(B.php<=0){B.php=0;B.over=true;bgm(null);setTimeout(died,900);return}}
   if(B.state==='idle'){B.timer-=dt;if(B.timer<=0)beginAttack()}
@@ -1786,7 +1897,7 @@ function update(dt){
     if(!a.lunged&&a.t>=a.w){a.lunged=true;if(!a.res)impact()}
     if(!a.res&&a.t>=a.w+LATE){resolveHit();if(!B.over)afterResolve()}}
   else if(B.state==='recover'){B.timer-=dt;if(B.timer<=0)nextAttack()}
-  else if(B.state==='broken'){B.brokenT-=dt;if(B.brokenT<=0){B.posture=0;B.state='idle';B.timer=1.0;B.combo=0;float('体勢を立て直した',W/2,H*0.25,'#cdb89a',20,1)}}
+  else if(B.state==='broken'){B.brokenT-=dt;if(B.brokenT<=0){B.frozenBreak=false;B.posture=0;B.state='idle';B.timer=1.0;B.combo=0;float('体勢を立て直した',W/2,H*0.25,'#cdb89a',20,1)}}
 }
 
 let last=performance.now();
@@ -1794,7 +1905,7 @@ function loop(now){
   const dt=Math.min(0.05,(now-last)/1000);last=now;
   if(B){update(dt);
     ctx.save();if(B.shake>0)ctx.translate((Math.random()-0.5)*B.shake,(Math.random()-0.5)*B.shake);
-    drawBG();drawEnemy();drawBreath();drawTelegraph();drawPlayer();drawHazards();drawFX(dt);ctx.restore();drawOrbs();drawCold();drawLowHP();drawHUD();drawGimmickHUD();
+    drawBG();drawEnemy();drawBreath();drawTelegraph();drawPlayer();drawHazards();drawFX(dt);drawSpecialFX(dt);ctx.restore();drawOrbs();drawCold();drawLowHP();drawHUD();drawGimmickHUD();
     if(B.g.curse>0){const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.3,W/2,H/2,Math.max(W,H)*0.7);g.addColorStop(0,'rgba(120,0,200,0)');g.addColorStop(1,'rgba(120,0,200,0.35)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
     if(fx.flash){ctx.fillStyle=rgba(fx.flash.c,0.45*fx.flash.life/fx.flash.max);ctx.fillRect(0,0,W,H)}
     if(B.hurt>0){const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.3,W/2,H/2,Math.max(W,H)*0.7);g.addColorStop(0,'rgba(255,0,0,0)');g.addColorStop(1,`rgba(220,20,10,${B.hurt})`);ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
