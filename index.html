@@ -458,7 +458,7 @@ function perkText(pk){if(!pk)return '';const o=[],pc=v=>Math.round(v*100);
     else if(k==='dmgCut')o.push(`被ダメージ ${Math.round(v*100)}%カット`);
     else if(k==='gPoison')o.push(`攻撃時 1/${Math.round(1/G_POISON_CH)}で敵を毒に（最大HPの${Math.round(G_POISON_PCT*100)}%×${G_POISON_TICKS}回）`);
     else if(k==='gBolt')o.push(`攻撃時 1/${Math.round(1/G_BOLT_CH)}で落雷（最大HPの${Math.round(G_BOLT_PCT*100)}%）`);
-    else if(k==='gFreeze')o.push(`攻撃時 1/${Math.round(1/G_FREEZE_CH)}で凍結（最大HPの${Math.round(G_FREEZE_PCT*100)}%＋崩し時間 +${G_FREEZE_SEC}秒）`);
+    else if(k==='gFreeze')o.push(`崩すと敵が凍り崩し時間 +${G_FREEZE_SEC}秒／攻撃時 1/${Math.round(1/G_FREEZE_CH)}で氷撃（最大HPの${Math.round(G_FREEZE_PCT*100)}%）`);
     else if(k==='gBeam')o.push(`攻撃時 1/${Math.round(1/G_BEAM_CH)}で闇の光線（最大HPの${Math.round(G_BEAM_PCT*100)}%）`)}
   return o.join('／')}
 const buildTag=b=>b?`<span class="tag build b-${b}">${BUILD_NAME[b]}</span>`:'';
@@ -1016,6 +1016,7 @@ const COLD_RATE=0.004,COLD_MIN=0.6,BLIZZARD_MUL=0.85;
 function coldMul(){if(!B||B.E.gimmick!=='cold')return 1;return Math.max(COLD_MIN,1-B.t*COLD_RATE)*(B.g.blizzard?BLIZZARD_MUL:1)}
 const needDir=a=>a.cursed?a.dir:OPP[a.dir];   // 攻撃が来た方向へはじき返す（呪い中は逆）
 function enterBroken(extra=0){
+  B.frozenBreak=perk('gFreeze')>0;if(B.frozenBreak){extra+=G_FREEZE_SEC;sfx('iceCrash');float(`凍結！ 崩し時間 +${G_FREEZE_SEC}秒`,W/2,H*0.38,'#bff4ff',24,1.4)}
   B.state='broken';B.brokenMax=B.E.breakTime+B.bonus+extra;B.brokenT=B.brokenMax;B.bonus=0;B.combo=0;
   float('体勢崩し！',W/2,H*0.32,'#ffd04a',46,1.4);B.shake=14;sfx('break');
   // ゴルム：岩鎧は形態変化後3回目の体勢崩しで砕ける
@@ -1120,15 +1121,14 @@ function strike(p,f,x,y,ang){
   if(perk('gPoison')&&Math.random()<G_POISON_CH){B.epoison.push({ticks:G_POISON_TICKS,next:1});sfx('poison');float('毒にした！',B.tf.x,B.tf.y-B.tf.u*0.6,'#b0ff40',24,1)}
   if(perk('gBolt')&&Math.random()<G_BOLT_CH)specialHit(G_BOLT_PCT,'bolt');
   if(perk('gBeam')&&Math.random()<G_BEAM_CH)specialHit(G_BEAM_PCT,'beam');
-  if(perk('gFreeze')&&Math.random()<G_FREEZE_CH){specialHit(G_FREEZE_PCT,'ice');
-    // 凍らせて、体勢崩しの残り時間を +1秒（凍った膜と氷の結晶が出る）
-    if(!B.over&&B.state==='broken'){B.brokenT+=G_FREEZE_SEC;B.brokenMax=Math.max(B.brokenMax,B.brokenT);B.frozenBreak=true;float(`体勢崩し +${G_FREEZE_SEC}秒`,W/2,H*0.38,'#bff4ff',24,1.2)}}
+  if(perk('gFreeze')&&Math.random()<G_FREEZE_CH)specialHit(G_FREEZE_PCT,'ice');
 }
 // ===== ボス武器の追加効果（数値） =====
 const G_POISON_CH=0.1,G_POISON_PCT=0.02,G_POISON_TICKS=5;   // 毒：1/10で、最大HPの2%を1秒ごとに5回
 const G_BOLT_CH=1/15,G_BOLT_PCT=0.07;                      // 落雷：1/15で最大HPの7%
 const G_BEAM_CH=0.1,G_BEAM_PCT=0.10;                       // 闇の光線：1/10で最大HPの10%
-const G_FREEZE_CH=1/12,G_FREEZE_PCT=0.08,G_FREEZE_SEC=1;    // 凍結：1/12で最大HPの8%＋崩し時間+1秒
+const G_FREEZE_SEC=1;                                      // 凍結：この武器で崩すと崩し時間+1秒
+const G_FREEZE_CH=1/12,G_FREEZE_PCT=0.08;                  // 氷撃：1/12で最大HPの8%
 const cutMul=()=>1-Math.min(0.8,perk('dmgCut'));          // 被ダメージの倍率（岩王剣で0.75）
 function specialHit(frac,type){if(!B||B.over)return;const t=B.tf;
   const dmg=Math.max(1,Math.round(B.maxHp*frac*(B.g.armor>0?0.2:1)));B.hp-=dmg;guardPhase();
@@ -1136,7 +1136,7 @@ function specialHit(frac,type){if(!B||B.over)return;const t=B.tf;
   if(type==='bolt'){sfx('thunder');fx.flash={c:'#fff8c0',life:0.25,max:0.25};burst(t.x,t.y,'#fff27a',40,600,true)}
   else if(type==='ice'){sfx('iceCrash');fx.flash={c:'#bff4ff',life:0.3,max:0.3};burst(t.x,t.y,'#dff8ff',44,600,true)}
   else{sfx('darkBeam');fx.flash={c:'#a040ff',life:0.3,max:0.3};burst(t.x,t.y,'#d070ff',40,600,true)}
-  const NM={bolt:['落雷','#fff27a'],beam:['闇の光線','#e0a0ff'],ice:['凍結','#bff4ff']}[type];
+  const NM={bolt:['落雷','#fff27a'],beam:['闇の光線','#e0a0ff'],ice:['氷撃','#bff4ff']}[type];
   B.shake=Math.max(B.shake,12);float(`${NM[0]}！ ${dmg}`,t.x,t.y-t.u*0.7,NM[1],30,1.1);
   if(B.hp<=0&&!B.over)victory()}
 function drawSpecialFX(dt){if(!fx.special||!fx.special.length)return;
