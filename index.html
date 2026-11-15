@@ -458,7 +458,7 @@ function perkText(pk){if(!pk)return '';const o=[],pc=v=>Math.round(v*100);
     else if(k==='dmgCut')o.push(`被ダメージ ${Math.round(v*100)}%カット`);
     else if(k==='gPoison')o.push(`攻撃時 1/${Math.round(1/G_POISON_CH)}で敵を毒に（最大HPの${Math.round(G_POISON_PCT*100)}%×${G_POISON_TICKS}回）`);
     else if(k==='gBolt')o.push(`攻撃時 1/${Math.round(1/G_BOLT_CH)}で落雷（最大HPの${Math.round(G_BOLT_PCT*100)}%）`);
-    else if(k==='gFreeze')o.push(`この武器で崩すと敵が凍り、崩し時間 +${G_FREEZE_SEC}秒`);
+    else if(k==='gFreeze')o.push(`攻撃時 1/${Math.round(1/G_FREEZE_CH)}で凍結（最大HPの${Math.round(G_FREEZE_PCT*100)}%＋崩し時間 +${G_FREEZE_SEC}秒）`);
     else if(k==='gBeam')o.push(`攻撃時 1/${Math.round(1/G_BEAM_CH)}で闇の光線（最大HPの${Math.round(G_BEAM_PCT*100)}%）`)}
   return o.join('／')}
 const buildTag=b=>b?`<span class="tag build b-${b}">${BUILD_NAME[b]}</span>`:'';
@@ -1016,7 +1016,6 @@ const COLD_RATE=0.004,COLD_MIN=0.6,BLIZZARD_MUL=0.85;
 function coldMul(){if(!B||B.E.gimmick!=='cold')return 1;return Math.max(COLD_MIN,1-B.t*COLD_RATE)*(B.g.blizzard?BLIZZARD_MUL:1)}
 const needDir=a=>a.cursed?a.dir:OPP[a.dir];   // 攻撃が来た方向へはじき返す（呪い中は逆）
 function enterBroken(extra=0){
-  B.frozenBreak=perk('gFreeze')>0;if(B.frozenBreak){extra+=G_FREEZE_SEC;sfx('iceCrash');float(`凍結！ 崩し時間 +${G_FREEZE_SEC}秒`,W/2,H*0.38,'#bff4ff',24,1.4)}
   B.state='broken';B.brokenMax=B.E.breakTime+B.bonus+extra;B.brokenT=B.brokenMax;B.bonus=0;B.combo=0;
   float('体勢崩し！',W/2,H*0.32,'#ffd04a',46,1.4);B.shake=14;sfx('break');
   // ゴルム：岩鎧は形態変化後3回目の体勢崩しで砕ける
@@ -1121,24 +1120,32 @@ function strike(p,f,x,y,ang){
   if(perk('gPoison')&&Math.random()<G_POISON_CH){B.epoison.push({ticks:G_POISON_TICKS,next:1});sfx('poison');float('毒にした！',B.tf.x,B.tf.y-B.tf.u*0.6,'#b0ff40',24,1)}
   if(perk('gBolt')&&Math.random()<G_BOLT_CH)specialHit(G_BOLT_PCT,'bolt');
   if(perk('gBeam')&&Math.random()<G_BEAM_CH)specialHit(G_BEAM_PCT,'beam');
+  if(perk('gFreeze')&&Math.random()<G_FREEZE_CH){specialHit(G_FREEZE_PCT,'ice');
+    // 凍らせて、体勢崩しの残り時間を +1秒（凍った膜と氷の結晶が出る）
+    if(!B.over&&B.state==='broken'){B.brokenT+=G_FREEZE_SEC;B.brokenMax=Math.max(B.brokenMax,B.brokenT);B.frozenBreak=true;float(`体勢崩し +${G_FREEZE_SEC}秒`,W/2,H*0.38,'#bff4ff',24,1.2)}}
 }
 // ===== ボス武器の追加効果（数値） =====
 const G_POISON_CH=0.1,G_POISON_PCT=0.02,G_POISON_TICKS=5;   // 毒：1/10で、最大HPの2%を1秒ごとに5回
 const G_BOLT_CH=1/15,G_BOLT_PCT=0.07;                      // 落雷：1/15で最大HPの7%
 const G_BEAM_CH=0.1,G_BEAM_PCT=0.10;                       // 闇の光線：1/10で最大HPの10%
-const G_FREEZE_SEC=2;                                      // 凍結：崩し時間+2秒
+const G_FREEZE_CH=1/12,G_FREEZE_PCT=0.08,G_FREEZE_SEC=1;    // 凍結：1/12で最大HPの8%＋崩し時間+1秒
 const cutMul=()=>1-Math.min(0.8,perk('dmgCut'));          // 被ダメージの倍率（岩王剣で0.75）
 function specialHit(frac,type){if(!B||B.over)return;const t=B.tf;
   const dmg=Math.max(1,Math.round(B.maxHp*frac*(B.g.armor>0?0.2:1)));B.hp-=dmg;guardPhase();
   fx.special.push({type,x:t.x,y:t.y,life:type==='bolt'?0.4:0.6,max:type==='bolt'?0.4:0.6});
   if(type==='bolt'){sfx('thunder');fx.flash={c:'#fff8c0',life:0.25,max:0.25};burst(t.x,t.y,'#fff27a',40,600,true)}
+  else if(type==='ice'){sfx('iceCrash');fx.flash={c:'#bff4ff',life:0.3,max:0.3};burst(t.x,t.y,'#dff8ff',44,600,true)}
   else{sfx('darkBeam');fx.flash={c:'#a040ff',life:0.3,max:0.3};burst(t.x,t.y,'#d070ff',40,600,true)}
-  B.shake=Math.max(B.shake,12);float(`${type==='bolt'?'落雷':'闇の光線'}！ ${dmg}`,t.x,t.y-t.u*0.7,type==='bolt'?'#fff27a':'#e0a0ff',30,1.1);
+  const NM={bolt:['落雷','#fff27a'],beam:['闇の光線','#e0a0ff'],ice:['凍結','#bff4ff']}[type];
+  B.shake=Math.max(B.shake,12);float(`${NM[0]}！ ${dmg}`,t.x,t.y-t.u*0.7,NM[1],30,1.1);
   if(B.hp<=0&&!B.over)victory()}
 function drawSpecialFX(dt){if(!fx.special||!fx.special.length)return;
   for(const e of fx.special){e.life-=dt;const al=Math.max(0,e.life/e.max);ctx.save();ctx.globalAlpha=al;ctx.globalCompositeOperation='lighter';
     if(e.type==='bolt'){ctx.strokeStyle='#fffbe0';ctx.shadowColor='#fff27a';ctx.shadowBlur=36;ctx.lineWidth=7;ctx.beginPath();let x=e.x,y=0;ctx.moveTo(x,y);
       let r=11;const rnd=()=>((r=(r*9301+49297)%233280)/233280);while(y<e.y){y+=30;x=e.x+(rnd()-0.5)*60;ctx.lineTo(x,y)}ctx.stroke();ctx.lineWidth=2;ctx.strokeStyle='#ffffff';ctx.stroke()}
+    else if(e.type==='ice'){const r=40+120*(1-al);ctx.strokeStyle='#e8fbff';ctx.shadowColor='#9fe8ff';ctx.shadowBlur=24;ctx.lineWidth=4;
+      for(let i=0;i<10;i++){const a=i*Math.PI/5+0.3,r1=r*(i%2?0.6:1);ctx.beginPath();ctx.moveTo(e.x+Math.cos(a)*r*0.2,e.y+Math.sin(a)*r*0.2);ctx.lineTo(e.x+Math.cos(a)*r1,e.y+Math.sin(a)*r1);ctx.stroke()}
+      ctx.fillStyle='rgba(190,240,255,0.35)';ctx.beginPath();ctx.arc(e.x,e.y,r*0.5,0,Math.PI*2);ctx.fill()}
     else{const w=90*(0.6+0.4*al),g=ctx.createLinearGradient(e.x-w,0,e.x+w,0);g.addColorStop(0,'rgba(90,0,160,0)');g.addColorStop(0.5,'rgba(235,170,255,0.95)');g.addColorStop(1,'rgba(90,0,160,0)');
       ctx.fillStyle=g;ctx.fillRect(e.x-w,0,w*2,e.y+80);ctx.fillStyle='rgba(255,255,255,0.8)';ctx.fillRect(e.x-6*al,0,12*al,e.y+80)}
     ctx.restore()}
