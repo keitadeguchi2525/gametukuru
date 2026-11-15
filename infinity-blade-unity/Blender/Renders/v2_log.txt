@@ -1,0 +1,26 @@
+start
+kept Armature_Mesh Hips
+groups {'Neck_Twist_A': 84, 'Head': 447, 'UpperChest': 282, 'Neck': 12, 'Right_Shoulder': 134, 'Left_Shoulder': 130, 'Chest': 96, 'Spine': 109, 'Right_ThumbProximal': 36, 'Left_ThumbProximal': 36, 'Left_Hand': 304, 'Right_Hand': 306, 'Right_PinkyProximal': 143, 'Right_RingProximal': 151, 'Right_MiddleProximal': 149, 'Right_IndexProximal': 142, 'Right_RingIntermediate': 74, 'Right_MiddleIntermediate': 76, 'Right_IndexIntermediate': 75, 'Right_PinkyIntermediate': 78, 'Left_IndexProximal': 144, 'Left_MiddleProximal': 142, 'Left_RingProximal': 147, 'Left_PinkyProximal': 148, 'Left_PinkyIntermediate': 77, 'Left_RingIntermediate': 79, 'Left_MiddleIntermediate': 76, 'Left_IndexIntermediate': 76, 'Right_LowerArm': 107, 'Left_LowerArm': 104, 'Left_MiddleDistal': 69, 'Left_IndexDistal': 63, 'Left_RingDistal': 66, 'Left_PinkyDistal': 66, 'Right_RingDistal': 66, 'Right_PinkyDistal': 65, 'Right_MiddleDistal': 72, 'Right_IndexDistal': 66, 'Left_ThumbIntermediate': 218, 'Left_ThumbDistal': 67, 'Right_ThumbIntermediate': 214, 'Right_ThumbDistal': 67, 'Right_UpperArm': 355, 'Left_UpperArm': 358, 'Left_UpperLeg': 658, 'Right_UpperLeg': 649, 'Left_Foot': 232, 'Left_Toes': 62, 'Right_Foot': 233, 'Right_Toes': 62, 'Left_LowerLeg': 428, 'Right_LowerLeg': 429}
+landmarks 0.928 1.058 1.462 0.163 1
+torso [(0.131, 0.094, -0.002), (0.123, 0.086, -0.007), (0.131, 0.106, -0.003), (0.146, 0.108, 0.003), (0.154, 0.133, 0.013), (0.149, 0.116, 0.035), (0.076, 0.096, 0.034)] hip (0.17646487802267075, 0.10376907885074615, 0.018915019929409027) headR 0.114
+materials ok
+do
+do done
+kusazuri
+kusazuri done
+arms
+arms done
+legs
+legs done
+kabuto
+kabuto done
+daisho
+daisho done
+pose {'Left_': 46.7, 'Right_': 46.7}
+device OPTIX
+scene ok H 1.899 tris(base) 11792
+render hero
+render front
+render side
+render back
+done

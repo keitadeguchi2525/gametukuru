@@ -1,0 +1,69 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 850a485b43f4f2744923bd1d3cfc51c1, type: 3}
+  m_Name: MT_Kiriage
+  m_EditorClassIdentifier: Assembly-CSharp::IBProtoMove
+  jpName: "\u65AC\u308A\u4E0A\u3052"
+  kind: "\u653B\u6483"
+  input: "\u30C9\u30E9\u30C3\u30B0\u2191"
+  note: "\u65AC\u308A\u4E0A\u3052"
+  duration: 0.58
+  chainFrom: 0.32
+  invulnFrom: -1
+  invulnTo: -1
+  swingDir: U
+  spiritCost: 0
+  spiritGain: 6
+  hits:
+  - t: 0.22
+    mv: 17
+  keys:
+  - t: 0
+    grip: {x: 0.08, y: -0.25, z: 0.35}
+    blade: {x: -0.050198678, y: 0.50198674, z: 0.86341727}
+    yaw: 0
+    lean: 0
+    step: 0
+    rise: 0
+    turn: 0
+  - t: 0.12
+    grip: {x: -0.12, y: -0.42, z: 0.25}
+    blade: {x: -0.30698672, y: -0.7674667, z: 0.56280893}
+    yaw: 15
+    lean: 8
+    step: 0
+    rise: 0
+    turn: 0
+  - t: 0.22
+    grip: {x: 0.05, y: 0, z: 0.55}
+    blade: {x: 0.09950372, y: 0.5970223, z: 0.79602975}
+    yaw: 0
+    lean: 0
+    step: 0.08
+    rise: 0
+    turn: 0
+  - t: 0.32
+    grip: {x: 0.12, y: 0.4, z: 0.3}
+    blade: {x: 0.15409966, y: 0.87323135, z: -0.46229893}
+    yaw: -10
+    lean: -8
+    step: 0
+    rise: 0
+    turn: 0
+  - t: 0.58
+    grip: {x: 0.08, y: -0.25, z: 0.35}
+    blade: {x: -0.050198678, y: 0.50198674, z: 0.86341727}
+    yaw: 0
+    lean: 0
+    step: 0
+    rise: 0
+    turn: 0

@@ -1,0 +1,61 @@
+# ===== Unity が自動で作るもの（消しても開き直せば作り直される） =====
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Mm]emoryCaptures/
+/[Rr]ecordings/
+
+# Visual Scripting のキャッシュ（自動再生成）
+/Assets/Unity.VisualScripting.Generated/VisualScripting.Flow/UnitOptions.db
+/Assets/Unity.VisualScripting.Generated/VisualScripting.Flow/UnitOptions.db.meta
+
+# ===== Visual Studio / Rider（Unity が作り直す） =====
+.vs/
+.vscode/
+.idea/
+*.csproj
+*.sln
+*.suo
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+*.pidb.meta
+*.pdb.meta
+*.mdb.meta
+
+# ===== ビルド・クラッシュ時の残りかす =====
+sysinfo.txt
+crashlytics-build.properties
+*.apk
+*.aab
+*.unitypackage
+*.app
+/[Aa]ssets/[Ss]treamingAssets/aa.meta
+/[Aa]ssets/[Ss]treamingAssets/aa/*
+
+# ===== Blender の自動バックアップ =====
+*.blend1
+*.blend2
+
+# ===== 録画・確認用の一時ファイル =====
+/Captures/
+/ClaudeBridge/
+
+# ===== 個人の設定（他の人と共有しない） =====
+.mcp.json
+.claude/settings.local.json
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+desktop.ini

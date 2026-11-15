@@ -1,0 +1,77 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 850a485b43f4f2744923bd1d3cfc51c1, type: 3}
+  m_Name: MT_Daikaiten
+  m_EditorClassIdentifier: Assembly-CSharp::IBProtoMove
+  jpName: "\u6C17\u5203\u5927\u56DE\u8EE2\u65AC\u308A"
+  kind: "\u653B\u6483"
+  input: "\u53F3\u30AF\u30EA\u30C3\u30AF\uFF08\u2162\u306E\u5F8C\uFF0F\u898B\u5207\u308A\u6210\u529F\u306E\u5F8C\uFF09"
+  note: "\u6C17\u5203\u5927\u56DE\u8EE2\u65AC\u308A\u3002\u5F53\u305F\u308B\u3068\u7DF4\u6C17\u306E\u8272\u304C1\u6BB5\u4E0A\u304C\u308B"
+  duration: 1.15
+  chainFrom: 0.85
+  invulnFrom: -1
+  invulnTo: -1
+  swingDir: R
+  spiritCost: 25
+  spiritGain: 0
+  hits:
+  - t: 0.42
+    mv: 35
+  keys:
+  - t: 0
+    grip: {x: 0.08, y: -0.25, z: 0.35}
+    blade: {x: -0.050198678, y: 0.50198674, z: 0.86341727}
+    yaw: 0
+    lean: 0
+    step: 0
+    rise: 0
+    turn: 0
+  - t: 0.28
+    grip: {x: -0.3, y: 0.05, z: 0.25}
+    blade: {x: -0.94881475, y: 0.09987524, z: -0.29962572}
+    yaw: -40
+    lean: 0
+    step: 0
+    rise: 0
+    turn: -40
+  - t: 0.42
+    grip: {x: 0, y: 0.05, z: 0.6}
+    blade: {x: 0.19971062, y: 0.049927656, z: 0.9785821}
+    yaw: 0
+    lean: 6
+    step: 0.1
+    rise: 0
+    turn: 0
+  - t: 0.6
+    grip: {x: 0.35, y: 0, z: 0.35}
+    blade: {x: 0.91381156, y: 0, z: 0.40613848}
+    yaw: 20
+    lean: 6
+    step: 0.1
+    rise: 0
+    turn: 180
+  - t: 0.8
+    grip: {x: 0.3, y: -0.15, z: 0.35}
+    blade: {x: 0.8619342, y: -0.30421206, z: 0.40561607}
+    yaw: 20
+    lean: 8
+    step: 0.1
+    rise: 0
+    turn: 340
+  - t: 1.15
+    grip: {x: 0.08, y: -0.25, z: 0.35}
+    blade: {x: -0.050198678, y: 0.50198674, z: 0.86341727}
+    yaw: 0
+    lean: 0
+    step: 0
+    rise: 0
+    turn: 360
