@@ -633,8 +633,22 @@ function armorIcon(p){if(EQICON[p.id])return EQICON[p.id];const c=document.creat
 const SND={ctx:null,master:null,sfxBus:null,bgmBus:null,delay:null,noise:null,want:'hub',song:null,step:0,next:0,opt:{sfx:true,bgm:true}};
 const SFX_VOL=0.7,BGM_VOL=0.22;   // 効果音／BGM の音量（0〜1）
 try{const o=JSON.parse(localStorage.getItem('parryHunter_audio'));if(o)Object.assign(SND.opt,o)}catch(e){}
+// --- スマホ（とくに iPhone）で音を出すための工夫 ---
+//  1) 最初のタッチで AudioContext を作る／再開する（pointerdown だけでなく touchend・click でも）
+//  2) 無音を一瞬鳴らして「音を出してよい」状態にする
+//  3) iPhone の消音スイッチがONでも鳴るよう、音声の種類を「再生用」にする（audioSession＋無音のaudio要素）
+//  4) アプリを切り替えて戻ってきたら再開する
+let silentEl=null;
+function silentWavURL(){const sr=8000,n=sr/2,b=new ArrayBuffer(44+n*2),v=new DataView(b),w=(o,t)=>{for(let i=0;i<t.length;i++)v.setUint8(o+i,t.charCodeAt(i))};
+  w(0,'RIFF');v.setUint32(4,36+n*2,true);w(8,'WAVE');w(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);
+  v.setUint32(24,sr,true);v.setUint32(28,sr*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,'data');v.setUint32(40,n*2,true);
+  return URL.createObjectURL(new Blob([b],{type:'audio/wav'}))}
+function mobileUnlock(){const c=SND.ctx;
+  try{if(navigator.audioSession)navigator.audioSession.type='playback'}catch(e){}
+  try{if(!silentEl){silentEl=new Audio(silentWavURL());silentEl.loop=true;silentEl.setAttribute('playsinline','')}if(silentEl.paused)silentEl.play().catch(()=>{})}catch(e){}
+  try{if(c){const src=c.createBufferSource();src.buffer=c.createBuffer(1,1,22050);src.connect(c.destination);src.start(0)}}catch(e){}}
 function audioInit(){
-  if(SND.ctx){if(SND.ctx.state==='suspended')SND.ctx.resume();return}
+  if(SND.ctx){if(SND.ctx.state!=='running')SND.ctx.resume().catch(()=>{});mobileUnlock();return}
   try{const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;const c=new AC();SND.ctx=c;
     SND.master=c.createGain();SND.master.gain.value=0.9;SND.master.connect(c.destination);
     SND.sfxBus=c.createGain();SND.sfxBus.gain.value=SND.opt.sfx?SFX_VOL:0;SND.sfxBus.connect(SND.master);
@@ -643,9 +657,11 @@ function audioInit(){
     d.connect(fb);fb.connect(d);d.connect(wet);wet.connect(SND.bgmBus);SND.delay=d;
     const len=c.sampleRate*2,buf=c.createBuffer(1,len,c.sampleRate),ch=buf.getChannelData(0);for(let i=0;i<len;i++)ch[i]=Math.random()*2-1;SND.noise=buf;
     setInterval(bgmTick,25);bgm(SND.want,true);
+    if(c.state!=='running')c.resume().catch(()=>{});mobileUnlock();
   }catch(e){SND.ctx=null}
 }
-addEventListener('pointerdown',audioInit,true);addEventListener('keydown',audioInit,true);
+for(const ev of['pointerdown','touchstart','touchend','click','keydown'])addEventListener(ev,audioInit,true);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&SND.ctx&&SND.ctx.state!=='running')SND.ctx.resume().catch(()=>{})});
 function setAudio(kind,on){
   SND.opt[kind]=on;try{localStorage.setItem('parryHunter_audio',JSON.stringify(SND.opt))}catch(e){}
   if(SND.ctx){const t=SND.ctx.currentTime,g=(kind==='sfx'?SND.sfxBus:SND.bgmBus).gain;g.cancelScheduledValues(t);g.setValueAtTime(g.value,t);g.setTargetAtTime(on?(kind==='sfx'?SFX_VOL:BGM_VOL):0,t,0.05)}
