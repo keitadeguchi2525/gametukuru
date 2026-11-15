@@ -870,7 +870,7 @@ function renderHub(){
 document.querySelector('.tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b){tab=b.dataset.tab;renderHub()}});
 $('#panel').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled)return;const act=b.dataset.act;
   if(act==='hunt')startDungeon(+b.dataset.i);
-  else if(act==='bossrush'){const i=+b.dataset.i;sfx('start');const D=DUNGEONS[i],pmax=100+armStat().hp;RUN={i,D,floor:D.floors.length-1,loot:{},php:pmax,pmax};startFloor()}
+  else if(act==='bossrush'){const i=+b.dataset.i;sfx('start');const D=DUNGEONS[i],pmax=100+armStat().hp;RUN={i,D,floor:D.floors.length-1,loot:{},php:pmax,pmax,test:true};startFloor()}
   else if(act==='gacha'){rollGacha(b.dataset.b)}
   else if(act==='ftab'){forgeTab=b.dataset.v;renderHub()}
   else if(act==='detail'){OPEN_DETAIL[b.dataset.id]=!OPEN_DETAIL[b.dataset.id];sfx('click');renderHub()}
@@ -1153,9 +1153,11 @@ function loseEquipment(){
 }
 function died(){
   sfx('death');
-  const lost={};addLoot(lost,RUN.loot);addLoot(lost,B.loot);const {n,out:eq}=loseEquipment();
-  showBox(`<h2 style="color:#ff8f7a">力尽きた…</h2><p style="color:#ffb0a0;font-weight:700">${RUN.D.name} ${RUN.floor+1}F で倒れ、戦利品と装備${n}つを失った</p>
-    <div style="font-size:13px;color:#bba78a">失った装備（装備中の5つからランダムに${n}つ）</div><div class="row" style="opacity:.6;filter:grayscale(.6)">${eq.length?eq.map(o=>`<span class="chip"><img src="${o.i}">${o.t}</span>`).join(''):'<span class="chip" style="padding:3px 8px">なし</span>'}</div>
+  const lost={};addLoot(lost,RUN.loot);addLoot(lost,B.loot);
+  // ボスに直接挑む（テスト用）で負けたときは装備を失わない
+  const {n,out:eq}=RUN.test?{n:0,out:[]}:loseEquipment();
+  showBox(`<h2 style="color:#ff8f7a">力尽きた…</h2><p style="color:#ffb0a0;font-weight:700">${RUN.D.name} ${RUN.floor+1}F で倒れ、${RUN.test?'戦利品を失った':`戦利品と装備${n}つを失った`}</p>
+    ${RUN.test?'<p style="font-size:13px;color:#bdf0a8">🔧 テスト挑戦なので装備は失わない</p>':''}<div style="font-size:13px;color:#bba78a;${RUN.test?'display:none':''}">失った装備（装備中の5つからランダムに${n}つ）</div><div class="row" style="opacity:.6;filter:grayscale(.6);${RUN.test?'display:none':''}">${eq.length?eq.map(o=>`<span class="chip"><img src="${o.i}">${o.t}</span>`).join(''):'<span class="chip" style="padding:3px 8px">なし</span>'}</div>
     <div style="font-size:13px;color:#bba78a">失った戦利品</div><div class="row" style="opacity:.6;filter:grayscale(.6)">${lootChips(lost)}</div>
     <div class="row"><button class="btn" id="home">拠点へ戻る</button></div>`);
   $('#home').onclick=endToHub;
