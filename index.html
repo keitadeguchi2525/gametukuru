@@ -848,7 +848,7 @@ function renderHub(){
     <li>輪がピッタリ重なる瞬間なら <b>PERFECT</b>。体勢崩しの時間が延びる。</li>
     <li><b>強撃</b>（赤く光る大振り）はパリィで体勢ポイント2倍。被弾すると痛い。</li>
     <li><b>ディレイ攻撃</b>は途中で溜めが止まる。焦って早くスワイプすると<b>釣られて、その攻撃は回避もできなくなる</b>！</li>
-    <li>回避に成功すると<b>0.6秒間は無敵</b>（体が水色に光る）。敵の攻撃と落下物が続けて来ても、まとめてよけられる。</li>
+    <li>回避に成功すると<b>0.6秒間は無敵</b>（体が水色に光る）。ただし効くのは<b>落下物がからむとき</b>だけ。敵の攻撃と落下物が続けて来ても、まとめてよけられる（攻撃が続けて来るときは1つずつよける）。</li>
     <li>パリィに失敗すると<b>0.5秒間は回避できない</b>（回避ボタンに✕が出る）。ただし<b>連撃の途中</b>の失敗なら、すぐ回避できる。</li>
     <li>ダンジョンによっては、敵の攻撃とは別に<b>頭上から何かが降ってくる</b>（落石・落雷など）。パリィはできないので、落ちる瞬間に回避（左右どちらでもOK）！</li>
     <li><b>連撃</b>は2〜5発の連続攻撃。上に並ぶ矢印の順に素早く弾こう。<b>⚠マークはブレス／投擲</b>なので回避。全部さばくと体勢+25ボーナス。</li>
@@ -1011,11 +1011,17 @@ function tryParry(ang){
   if(a.fl)B.flurry.ok++;
   afterResolve();
 }
-// 回避に成功すると INVINCIBLE 秒のあいだ無敵（ブレス・投擲・落下物・斬撃が重なっても、続けて来たものは当たらない）
-//   空振りの回避では無敵にならない（早押しで何でもよけられないように）
+// 回避に成功すると INVINCIBLE 秒のあいだ無敵。ただし効くのは「落下物がからむとき」だけ
+//   ・攻撃をよけた直後の落下物 → 当たらない
+//   ・落下物をよけた直後の攻撃／落下物 → 当たらない
+//   ・攻撃をよけた直後の攻撃（連撃の次・投擲など）→ 無敵は効かない（1つずつよける）
+//   空振りの回避では無敵にならない
 const INVINCIBLE=0.6;
-function grantInv(){B.invUntil=B.t+INVINCIBLE}
-const invuln=()=>!!B&&B.t<(B.invUntil||0);
+function grantInv(src){B.invUntil=B.t+INVINCIBLE;B.invSrc=src}
+const invOn=()=>!!B&&B.t<(B.invUntil||0);
+const invVsAttack=()=>invOn()&&B.invSrc==='hz';   // 敵の攻撃に対して効くのは、落下物をよけたあとの無敵だけ
+const invVsHazard=()=>invOn();                    // 落下物には、どちらをよけたあとの無敵でも効く
+const invuln=invVsAttack;
 // パリィに失敗すると少しのあいだ回避できない
 function failLock(){if(B.atk&&B.atk.fl)return;B.noDodgeT=PARRY_FAIL_LOCK}   // 連撃中の失敗はすぐ回避できる
 function doDodge(dir='R'){
@@ -1039,7 +1045,7 @@ function resolveHit(){
   const wrongSide=!inv&&inTime&&a.kind==='breath'&&B.dodgeDir!==safeSide(a);   // ブレス／投擲は飛んでくる側の反対へよける
   if(wrongSide)float(`逆によけた！ ${SIDE_NAME[safeSide(a)]}へ回避`,W/2,H*0.66,'#ff8f7a',22,0.9);
   if(inv||(inTime&&!wrongSide)){
-    if(!inv)grantInv();
+    if(!inv)grantInv('atk');
     // 回避で体勢ポイントが入るのは回避ビルドの装備（dodgePts）だけ。
     // 連撃中は「⚠ブレス/投擲を回避」はさばいた扱い。普通の攻撃を回避すると、回避ビルドでなければ連撃ボーナスはなくなる
     const dg=dodgeGain();
@@ -1677,10 +1683,11 @@ function drawPlayer(){
   if(B.dAnim){const k=Math.min(1,B.dAnim.t/B.dAnim.dur);const off=B.dAnim.side*Math.sin(k*Math.PI)*110*s;
     for(let i=1;i<=2;i++){ctx.save();ctx.globalAlpha=0.18*i;drawPlayerAt(x+off*(i/3),gy,s,a,w);ctx.restore()}x+=off}
   if(B.hurt>0)x+=(Math.random()-0.5)*10;
-  if(invuln()){ // 無敵中：体のまわりに水色の光
+  const showInv=invOn()&&(B.invSrc==='hz'||(B.hz&&B.hz.some(i=>!i.landed)));
+  if(showInv){ // 無敵が効く場面だけ：体のまわりに水色の光
     const k=(B.invUntil-B.t)/INVINCIBLE,cy=gy-130*s,g=ctx.createRadialGradient(x,cy,10*s,x,cy,150*s);
     g.addColorStop(0,`rgba(160,255,230,${0.35*k})`);g.addColorStop(1,'rgba(160,255,230,0)');ctx.fillStyle=g;ctx.fillRect(x-160*s,cy-170*s,320*s,340*s)}
-  ctx.save();if(invuln())ctx.globalAlpha=0.55+0.35*Math.sin(B.t*40);
+  ctx.save();if(showInv)ctx.globalAlpha=0.55+0.35*Math.sin(B.t*40);
   drawPlayerAt(x,gy+(B.hurt>0?B.hurt*20:0),s,a,w);ctx.restore();
 }
 function drawPlayerAt(x,gy,s,a,w){
@@ -1813,7 +1820,7 @@ function spawnHazard(delay=0){const hz=hazard();const x=W/2+rand(-0.18,0.18)*Mat
 function updateHazards(dt){const hz=hazard();
   for(const ic of B.hz){if(ic.landed){ic.life+=dt;continue}ic.t+=dt;
     if(ic.t>=0&&!ic.warned){ic.warned=true;sfx({rock:'rumble',bolt:'zap',ice:'creak',dark:'curse'}[ic.type])}
-    if(ic.t>=ic.w+LATE){ic.landed=true;const win=dodgeWin(),inv=invuln(),ok=inv||(B.dodgeAt>=B.t-LATE-win&&B.dodgeAt<=B.t);const pp=PP();if(ok&&!inv)grantInv();
+    if(ic.t>=ic.w+LATE){ic.landed=true;const win=dodgeWin(),inv=invVsHazard(),ok=inv||(B.dodgeAt>=B.t-LATE-win&&B.dodgeAt<=B.t);const pp=PP();if(ok&&!inv)grantInv('hz');
       sfx({rock:'rock',bolt:'thunder',ice:'iceCrash',dark:'darkBeam'}[ic.type]);burst(ic.x,pp.y-30,hz.c,30,480,true);B.shake=Math.max(B.shake,12);
       if(ic.type==='bolt'||ic.type==='dark')fx.flash={c:hz.c,life:0.2,max:0.2};
       if(ok){float(`${hz.name}を回避！`,W/2,H*0.62,'#bff4ff',26,0.9);const dg=dodgeGain();if(dg>0)addPosture(dg,W/2,H*0.62+30,'見切り')}
