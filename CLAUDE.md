@@ -20,7 +20,7 @@
 - パリィ判定：`needDir()` が「はじくべき方向」を返す。攻撃が来た方向（`OPP[a.dir]`）へスワイプで成功。呪い中は逆。
 - 戦闘の流れ：`beginAttack()` → `update()` の windup → `tryParry()` / `resolveHit()` → `afterResolve()`。
 - ガチャ：`rollGacha()`、排出率は `GACHA_ODDS`、討伐の証の出る確率は `PROOF_RATE`（証は `MATS` の `proof_ボスid`）。ボス武器は `WEAPONS` の `gacha:` つき、追加効果は `G_POISON_*` / `G_BOLT_*` / `G_BEAM_*` / `G_FREEZE_SEC` / `cutMul()` と `specialHit()`。
-- ボスのギミックは `gimmicks()`、`enterBroken()`、`guardPhase()` あたり。鱗粉の玉は `spawnOrbs()`/`updateOrbs()`、落氷は `spawnIcicle()`/`updateIcicles()`。
+- ボスのギミックは `gimmicks()`、`enterBroken()`、`guardPhase()` あたり。鱗粉の玉は `spawnOrbs()`/`updateOrbs()`（毒は `POISON_*`）、ダンジョンごとの落下物は `HAZARDS` と `spawnHazard()`/`updateHazards()`、★4の寒さは `coldMul()`。回避は左右（`doDodge('L'|'R')`、ブレスは `safeSide()` の側へ）。
 - 音は `sfx('名前')`（効果音）と `bgm('曲名')`（BGM）。音の中身は `SFX` と `SONGS` にまとまっている。新しい場面を足したら、合う効果音も鳴らす。
 - 背景は `drawBG()`（ダンジョンごとに `bgCave` / `bgForest` / `bgCanyon` / `bgIce` / `bgUnder`、動く部分は `drawBGAnim()`）。
 
