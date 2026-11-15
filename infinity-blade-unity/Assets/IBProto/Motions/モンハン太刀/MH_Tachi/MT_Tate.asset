@@ -1,0 +1,69 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 850a485b43f4f2744923bd1d3cfc51c1, type: 3}
+  m_Name: MT_Tate
+  m_EditorClassIdentifier: Assembly-CSharp::IBProtoMove
+  jpName: "\u7E26\u65AC\u308A"
+  kind: "\u653B\u6483"
+  input: "\u30C9\u30E9\u30C3\u30B0\u2193"
+  note: "\u8E0F\u307F\u8FBC\u307F\u65AC\u308A\u30FB\u7E26\u65AC\u308A"
+  duration: 0.62
+  chainFrom: 0.36
+  invulnFrom: -1
+  invulnTo: -1
+  swingDir: D
+  spiritCost: 0
+  spiritGain: 6
+  hits:
+  - t: 0.27
+    mv: 19
+  keys:
+  - t: 0
+    grip: {x: 0.08, y: -0.25, z: 0.35}
+    blade: {x: -0.050198678, y: 0.50198674, z: 0.86341727}
+    yaw: 0
+    lean: 0
+    step: 0
+    rise: 0
+    turn: 0
+  - t: 0.16
+    grip: {x: 0.05, y: 0.42, z: 0.05}
+    blade: {x: 0, y: 0.34893736, z: -0.93714607}
+    yaw: -5
+    lean: -8
+    step: 0
+    rise: 0
+    turn: 0
+  - t: 0.27
+    grip: {x: 0.02, y: 0.05, z: 0.55}
+    blade: {x: 0, y: 0.09950372, z: 0.99503714}
+    yaw: 0
+    lean: 10
+    step: 0.12
+    rise: 0
+    turn: 0
+  - t: 0.34
+    grip: {x: 0, y: -0.35, z: 0.42}
+    blade: {x: 0, y: -0.7507135, z: 0.6606279}
+    yaw: 0
+    lean: 14
+    step: 0.15
+    rise: 0
+    turn: 0
+  - t: 0.62
+    grip: {x: 0.08, y: -0.25, z: 0.35}
+    blade: {x: -0.050198678, y: 0.50198674, z: 0.86341727}
+    yaw: 0
+    lean: 0
+    step: 0
+    rise: 0
+    turn: 0

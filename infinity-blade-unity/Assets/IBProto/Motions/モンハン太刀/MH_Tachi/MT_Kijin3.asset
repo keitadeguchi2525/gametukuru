@@ -1,0 +1,113 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 850a485b43f4f2744923bd1d3cfc51c1, type: 3}
+  m_Name: MT_Kijin3
+  m_EditorClassIdentifier: Assembly-CSharp::IBProtoMove
+  jpName: "\u6C17\u5203\u65AC\u308A\u2162"
+  kind: "\u653B\u6483"
+  input: "\u53F3\u30AF\u30EA\u30C3\u30AF\uFF08\u2161\u306E\u5F8C\uFF09"
+  note: "\u6C17\u5203\u65AC\u308A\u2162\uFF083\u56DE\u65AC\u308B\u3002\u6700\u5F8C\u304C\u91CD\u3044\uFF09"
+  duration: 0.85
+  chainFrom: 0.62
+  invulnFrom: -1
+  invulnTo: -1
+  swingDir: D
+  spiritCost: 20
+  spiritGain: 0
+  hits:
+  - t: 0.14
+    mv: 11
+  - t: 0.32
+    mv: 13
+  - t: 0.55
+    mv: 30
+  keys:
+  - t: 0
+    grip: {x: 0.08, y: -0.25, z: 0.35}
+    blade: {x: -0.050198678, y: 0.50198674, z: 0.86341727}
+    yaw: 0
+    lean: 0
+    step: 0
+    rise: 0
+    turn: 0
+  - t: 0.07
+    grip: {x: 0.3, y: 0.3, z: 0.15}
+    blade: {x: 0.45047325, y: 0.45047325, z: -0.77080977}
+    yaw: 25
+    lean: 0
+    step: 0
+    rise: 0
+    turn: 0
+  - t: 0.14
+    grip: {x: 0, y: 0, z: 0.55}
+    blade: {x: -0.45121995, y: 0, z: 0.8924128}
+    yaw: 0
+    lean: 6
+    step: 0.1
+    rise: 0
+    turn: 0
+  - t: 0.22
+    grip: {x: -0.3, y: -0.2, z: 0.35}
+    blade: {x: -0.8641586, y: -0.35582998, z: 0.35582998}
+    yaw: -30
+    lean: 8
+    step: 0.1
+    rise: 0
+    turn: 0
+  - t: 0.32
+    grip: {x: 0.05, y: 0, z: 0.55}
+    blade: {x: 0.5001, y: 0.10002001, z: 0.8601721}
+    yaw: 10
+    lean: 6
+    step: 0.12
+    rise: 0
+    turn: 0
+  - t: 0.4
+    grip: {x: 0.35, y: 0.05, z: 0.3}
+    blade: {x: 0.9370426, y: 0.15617378, z: 0.31234756}
+    yaw: 35
+    lean: 4
+    step: 0.12
+    rise: 0
+    turn: 0
+  - t: 0.48
+    grip: {x: 0.05, y: 0.45, z: 0.1}
+    blade: {x: 0, y: 0.40613848, z: -0.91381156}
+    yaw: 0
+    lean: -10
+    step: 0.1
+    rise: 0
+    turn: 0
+  - t: 0.55
+    grip: {x: 0, y: 0, z: 0.6}
+    blade: {x: 0, y: 0.04993762, z: 0.99875236}
+    yaw: 0
+    lean: 12
+    step: 0.2
+    rise: 0
+    turn: 0
+  - t: 0.63
+    grip: {x: 0, y: -0.4, z: 0.4}
+    blade: {x: 0, y: -0.8, z: 0.6}
+    yaw: 0
+    lean: 16
+    step: 0.2
+    rise: 0
+    turn: 0
+  - t: 0.85
+    grip: {x: 0.08, y: -0.25, z: 0.35}
+    blade: {x: -0.050198678, y: 0.50198674, z: 0.86341727}
+    yaw: 0
+    lean: 0
+    step: 0
+    rise: 0
+    turn: 0
