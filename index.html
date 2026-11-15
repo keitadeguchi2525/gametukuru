@@ -372,7 +372,7 @@ const WEAPONS=[
   {id:'f5',name:'魂喰らいの鎌',atk:33,build:'dodge',...WP('d3',['shade','soul']),shape:'dark',blade:'#70e0d0',glow:'#a0fff0',perk:{dodgePts:20,dodge:0.65}},
   {id:'r3',name:'王笏剣ルクスフェル',atk:38,build:'crit',...WP('d3',['soul']),shape:'royal',blade:'#fff6dc',glow:'#ffe070',perk:{crit:0.2,critDmg:0.5,parryPts:0.85},rareCost:{scepter:1,soulstone:2,voidcrystal:1}},
   // ボスの特殊武器：ガチャ限定（工房では作れない。手に入れたら強化はできる）
-  {id:'gw_golm',name:'岩王剣ゴルムガルド',atk:20,build:'special',gacha:'golm',...WP('d1',[]),cost:{},shape:'great',blade:'#cbb48e',glow:'#ffb040',perk:{dmgCut:0.25}},
+  {id:'gw_golm',name:'岩王剣ゴルムガルド',atk:20,build:'special',gacha:'golm',...WP('d1',[]),cost:{},shape:'great',blade:'#cbb48e',glow:'#ffb040',perk:{dmgCut:0.5}},
   {id:'gw_lumina',name:'妖蛾刀ルミナ',atk:24,build:'special',gacha:'lumina',...WP('f1',[]),cost:{},shape:'katana',blade:'#e2ccff',glow:'#b0ff40',perk:{gPoison:1}},
   {id:'gw_volga',name:'雷竜槍ヴォルガノン',atk:29,build:'special',gacha:'volga',...WP('d2',[]),cost:{},shape:'vajra',blade:'#fff27a',glow:'#7ad0ff',perk:{gBolt:1}},
   {id:'gw_glacier',name:'氷霊剣グラシエル',atk:32,build:'special',gacha:'glacier',...WP('g1',[]),cost:{},shape:'amber',blade:'#dff6ff',glow:'#9fe8ff',perk:{gFreeze:1}},
@@ -1129,7 +1129,7 @@ const G_BOLT_CH=1/15,G_BOLT_PCT=0.07;                      // 落雷：1/15で�
 const G_BEAM_CH=0.1,G_BEAM_PCT=0.10;                       // 闇の光線：1/10で最大HPの10%
 const G_FREEZE_SEC=1;                                      // 凍結：この武器で崩すと崩し時間+1秒
 const G_FREEZE_CH=1/12,G_FREEZE_PCT=0.08;                  // 氷撃：1/12で最大HPの8%
-const cutMul=()=>1-Math.min(0.8,perk('dmgCut'));          // 被ダメージの倍率（岩王剣で0.75）
+const cutMul=()=>1-Math.min(0.8,perk('dmgCut'));          // 被ダメージの倍率（岩王剣で0.5）
 function specialHit(frac,type){if(!B||B.over)return;const t=B.tf;
   const dmg=Math.max(1,Math.round(B.maxHp*frac*(B.g.armor>0?0.2:1)));B.hp-=dmg;guardPhase();
   fx.special.push({type,x:t.x,y:t.y,life:type==='bolt'?0.4:0.6,max:type==='bolt'?0.4:0.6});
