@@ -647,16 +647,18 @@ try{const o=JSON.parse(localStorage.getItem('parryHunter_audio'));if(o)Object.as
 //  2) 無音を一瞬鳴らして「音を出してよい」状態にする
 //  3) iPhone の消音スイッチがONでも鳴るよう、音声の種類を「再生用」にする（audioSession＋無音のaudio要素）
 //  4) アプリを切り替えて戻ってきたら再開する
+//  5) ブラウザを裏に回したとき（画面が隠れたとき）は音を全部止める（無音のaudioも止めて、裏で鳴り続けないようにする）
 let silentEl=null;
 function silentWavURL(){const sr=8000,n=sr/2,b=new ArrayBuffer(44+n*2),v=new DataView(b),w=(o,t)=>{for(let i=0;i<t.length;i++)v.setUint8(o+i,t.charCodeAt(i))};
   w(0,'RIFF');v.setUint32(4,36+n*2,true);w(8,'WAVE');w(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);
   v.setUint32(24,sr,true);v.setUint32(28,sr*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,'data');v.setUint32(40,n*2,true);
   return URL.createObjectURL(new Blob([b],{type:'audio/wav'}))}
-function mobileUnlock(){const c=SND.ctx;
+function mobileUnlock(){const c=SND.ctx;if(document.hidden)return;
   try{if(navigator.audioSession)navigator.audioSession.type='playback'}catch(e){}
   try{if(!silentEl){silentEl=new Audio(silentWavURL());silentEl.loop=true;silentEl.setAttribute('playsinline','')}if(silentEl.paused)silentEl.play().catch(()=>{})}catch(e){}
   try{if(c){const src=c.createBufferSource();src.buffer=c.createBuffer(1,1,22050);src.connect(c.destination);src.start(0)}}catch(e){}}
 function audioInit(){
+  if(document.hidden)return;
   if(SND.ctx){if(SND.ctx.state!=='running')SND.ctx.resume().catch(()=>{});mobileUnlock();return}
   try{const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;const c=new AC();SND.ctx=c;
     SND.master=c.createGain();SND.master.gain.value=0.9;SND.master.connect(c.destination);
@@ -670,7 +672,16 @@ function audioInit(){
   }catch(e){SND.ctx=null}
 }
 for(const ev of['pointerdown','touchstart','touchend','click','keydown'])addEventListener(ev,audioInit,true);
-document.addEventListener('visibilitychange',()=>{if(!document.hidden&&SND.ctx&&SND.ctx.state!=='running')SND.ctx.resume().catch(()=>{})});
+// 画面が隠れたら止める／見えたら再開する
+function audioSleep(){
+  try{if(SND.ctx&&SND.ctx.state==='running')SND.ctx.suspend().catch(()=>{})}catch(e){}
+  try{if(silentEl&&!silentEl.paused)silentEl.pause()}catch(e){}
+  try{if(navigator.audioSession)navigator.audioSession.type='auto'}catch(e){}}
+function audioWake(){if(document.hidden||!SND.ctx)return;
+  if(SND.ctx.state!=='running')SND.ctx.resume().catch(()=>{});mobileUnlock()}
+document.addEventListener('visibilitychange',()=>{document.hidden?audioSleep():audioWake()});
+addEventListener('pagehide',audioSleep);
+addEventListener('pageshow',audioWake);
 function setAudio(kind,on){
   SND.opt[kind]=on;try{localStorage.setItem('parryHunter_audio',JSON.stringify(SND.opt))}catch(e){}
   if(SND.ctx){const t=SND.ctx.currentTime,g=(kind==='sfx'?SND.sfxBus:SND.bgmBus).gain;g.cancelScheduledValues(t);g.setValueAtTime(g.value,t);g.setTargetAtTime(on?(kind==='sfx'?SFX_VOL:BGM_VOL):0,t,0.05)}
