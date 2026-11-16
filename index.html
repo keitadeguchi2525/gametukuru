@@ -48,7 +48,7 @@ h1{font-weight:900;font-size:30px;letter-spacing:.06em;text-align:center;color:#
 .tag.ok{background:#2c4a24;color:#bdf0a8}
 .tag.perk{background:#3a2458;color:#e0c0ff}
 .tag.b-special{background:#5a1a4a;color:#ffc0f0}.tag.gacha{background:#4a1a5a;color:#f0c8ff}
-.tag.build{background:#2a3a2a;color:#d0f0c0}.tag.b-parry{background:#1e3a52;color:#a8e0ff}.tag.b-crit{background:#5a2020;color:#ffb8a0}.tag.b-dodge{background:#1e4a32;color:#a8ffc8}.tag.b-balance{background:#4a3a20;color:#ffe0a0}
+.tag.build{background:#2a3a2a;color:#d0f0c0}.tag.b-parry{background:#1e3a52;color:#a8e0ff}.tag.b-crit{background:#6b3410;color:#ffc27a}.tag.b-dodge{background:#1e4a32;color:#a8ffc8}.tag.b-balance{background:#4a3a20;color:#ffe0a0}
 .buildbox{background:#1c140d;border:1px solid #4a3826;border-radius:10px;padding:8px 12px;margin:0 0 12px;font-size:14px;line-height:1.7}.buildbox b{color:#ffe2ad}
 .row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 .chip{display:inline-flex;align-items:center;gap:4px;font-size:13px;background:#1a120c;border:1px solid #3c2b1c;border-radius:8px;padding:2px 8px 2px 3px}
@@ -899,7 +899,8 @@ function renderHub(){
     const pct=v=>Math.round(v*100)+'%',x2=v=>'×'+v.toFixed(2),sec2=v=>v.toFixed(2)+'秒';
     const taken=100/(100+as.def)*cutMul();
     h+=`<div class="card"><h3>装備</h3><div class="eqline"><span><img src="${weaponIcon(w)}">${w.name} +${wl}</span>${eqPieces().map(p=>`<span><img src="${armorIcon(p)}">${p.name} +${S.armors[p.id]||0}</span>`).join('')}</div>
-      <p style="margin-top:8px">ビルド：${[...new Set([w.build,...eqPieces().map(p=>p.set.build)].filter(Boolean))].map(buildTag).join(' ')||'なし'}　<span style="font-size:12px">緑＝基本より良い／赤＝基本より悪い</span></p></div>`;
+      <p style="margin-top:8px">ビルド：${[...new Set([w.build,...eqPieces().map(p=>p.set.build)].filter(Boolean))].map(buildTag).join(' ')||'なし'}</p></div>
+    <p class="hint" style="margin:-4px 0 10px">右の数値の色：<span style="color:#8fe08a;font-weight:700">緑</span>＝基本より良い／<span style="color:#ff9a7a;font-weight:700">赤</span>＝基本より悪い（ビルドの短所など）</p>`;
     h+=`<div class="card"><h3>⚔ 攻撃</h3><table class="stt">
       ${row('攻撃力（武器ダメージ）',cmp(atk,atk/perk('atk'),v=>Math.round(v)),`${w.name}+${wl} の攻撃 ${wStat(w,wl)}${perk('atk')!==1?`　×防具の攻撃力 ${x2(perk('atk'))}`:''}`)}
       ${row('会心率',cmp(cr,BASE_CRIT,pct),'基本 10%（最大 100%）')}
