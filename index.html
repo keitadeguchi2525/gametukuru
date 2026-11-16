@@ -70,13 +70,13 @@ h1{font-weight:900;font-size:30px;letter-spacing:.06em;text-align:center;color:#
 .btn.mini{padding:7px 14px;font-size:13px;box-shadow:0 2px 0 #8a4f15}.btn.sub2.mini{box-shadow:0 2px 0 #2a1e14}
 #battle{position:fixed;inset:0;touch-action:none}
 #cv{display:block;touch-action:none}
-#mute{position:absolute;left:8px;top:8px;height:34px;font:700 13px 'M PLUS 1p';padding:0 12px;border-radius:10px;border:1px solid #6b4a2a;background:rgba(30,20,12,.78);color:#e8d4b4;cursor:pointer}
-#pause{position:absolute;right:8px;top:8px;width:44px;height:34px;font:900 14px 'M PLUS 1p';letter-spacing:-2px;border-radius:10px;border:1px solid #c98a3a;background:rgba(30,20,12,.82);color:#ffd58a;cursor:pointer;z-index:3}
+#pause{position:absolute;left:8px;top:8px;width:44px;height:34px;font:900 14px 'M PLUS 1p';letter-spacing:-2px;border-radius:10px;border:1px solid #c98a3a;background:rgba(30,20,12,.82);color:#ffd58a;cursor:pointer;z-index:3}
 #pause:active{transform:translateY(1px)}
 #pauseOv{position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:rgba(8,5,3,.78)}
 #pauseOv .box{background:linear-gradient(#2e2116,#1d140d);border:2px solid #c98a3a;border-radius:16px;padding:22px 22px 18px;width:min(340px,90vw);text-align:center}
 #pauseOv h2{font-size:26px;font-weight:900;color:#ffe2ad;margin-bottom:6px}#pauseOv p{font-size:14px;color:#d8c6aa;line-height:1.6;margin:6px 0}
 #pauseOv .pbtns{display:flex;flex-direction:column;gap:10px;margin-top:14px}#pauseOv .btn{font-size:16px;padding:12px}
+#pauseOv .audio{margin:12px 0 0}#pauseOv .sbtn{font-size:14px;padding:8px 16px}
 #pauseOv .btn.danger{background:linear-gradient(#e0644a,#a8321e);color:#fff3ea;box-shadow:0 3px 0 #5a1a0e}
 .audio{display:flex;gap:8px;justify-content:center;margin:-4px 0 14px}
 .sbtn{font:700 12px 'M PLUS 1p';padding:5px 12px;border-radius:16px;border:1px solid #6b4a2a;background:#2a1e15;color:#ffd58a;cursor:pointer}
@@ -125,7 +125,6 @@ h1{font-weight:900;font-size:30px;letter-spacing:.06em;text-align:center;color:#
 
 <div id="battle" class="hidden">
   <canvas id="cv"></canvas>
-  <button id="mute"></button>
   <button id="pause" title="ポーズ（Esc / P）">❚❚</button>
   <button id="dodgeL" class="dodgebtn">← 回避<small>A</small></button>
   <button id="dodgeR" class="dodgebtn">回避 →<small>D</small></button>
@@ -699,10 +698,9 @@ function setAudio(kind,on){
   updateAudioButtons();
 }
 function updateAudioButtons(){
-  const a=document.getElementById('sndSfx'),b=document.getElementById('sndBgm'),m=document.getElementById('mute');
-  if(a)a.textContent=`効果音 ${SND.opt.sfx?'ON':'OFF'}`;if(b)b.textContent=`BGM ${SND.opt.bgm?'ON':'OFF'}`;
-  if(a)a.classList.toggle('off',!SND.opt.sfx);if(b)b.classList.toggle('off',!SND.opt.bgm);
-  if(m)m.textContent=SND.opt.sfx||SND.opt.bgm?'♪ 音あり':'♪ 消音';
+  // 拠点（sndSfx/sndBgm）とポーズメニュー（pzSfx/pzBgm）の両方の表示をそろえる
+  for(const[x,y]of[['sndSfx','sndBgm'],['pzSfx','pzBgm']]){const a=document.getElementById(x),b=document.getElementById(y);
+    if(a){a.textContent=`効果音 ${SND.opt.sfx?'ON':'OFF'}`;a.classList.toggle('off',!SND.opt.sfx)}if(b){b.textContent=`BGM ${SND.opt.bgm?'ON':'OFF'}`;b.classList.toggle('off',!SND.opt.bgm)}}
 }
 const mf=m=>440*Math.pow(2,(m-69)/12);
 // 基本の音：音程つき（tone）とノイズ（noise）
@@ -957,7 +955,6 @@ $('#panel').addEventListener('click',e=>{const b=e.target.closest('button');if(!
   else if(act==='reset'){if(b.dataset.sure){S=newSave();migrate();save();toast('リセットしました');renderHub()}else{b.dataset.sure=1;b.textContent='本当にリセット？（もう一度押す）'}}
 });
 
-$('#mute').onclick=()=>{const on=!(SND.opt.sfx||SND.opt.bgm);setAudio('sfx',on);setAudio('bgm',on)};
 $('#sndSfx').onclick=()=>setAudio('sfx',!SND.opt.sfx);$('#sndBgm').onclick=()=>setAudio('bgm',!SND.opt.bgm);
 updateAudioButtons();
 // ===================== バトル =====================
@@ -1253,9 +1250,11 @@ const canPause=()=>B&&!B.over&&$('#result').classList.contains('hidden');
 function pauseGame(){if(PAUSED||!canPause())return;PAUSED=true;ptr=null;sfx('click');pauseMenu()}
 function pauseMenu(){
   $('#pauseBox').innerHTML=`<h2>ポーズ中</h2><p>${RUN.D.name}　${RUN.floor+1}F / ${RUN.D.floors.length}F</p>
+    <div class="audio"><button class="sbtn" id="pzSfx"></button><button class="sbtn" id="pzBgm"></button></div>
     <div class="pbtns"><button class="btn" id="pzResume">戦闘に戻る</button><button class="btn sub2" id="pzQuit">あきらめて帰る（敗北扱い）</button></div>`;
   $('#pauseOv').classList.remove('hidden');
-  $('#pzResume').onclick=resumeGame;
+  $('#pzResume').onclick=resumeGame;updateAudioButtons();
+  $('#pzSfx').onclick=()=>{setAudio('sfx',!SND.opt.sfx);sfx('click')};$('#pzBgm').onclick=()=>{setAudio('bgm',!SND.opt.bgm);sfx('click')};
   $('#pzQuit').onclick=()=>{sfx('click');
     $('#pauseBox').innerHTML=`<h2 style="color:#ff9a7a">本当にあきらめる？</h2><p>倒れたときと同じ扱いになります。<br><b style="color:#ffb0a0">${RUN.test?'この探索の戦利品を失います（テスト挑戦なので装備は失わない）':'この探索の戦利品と、装備中の5つのうちランダムに1〜3つを失います'}</b></p>
       <div class="pbtns"><button class="btn danger" id="pzYes">あきらめる</button><button class="btn sub2" id="pzNo">やめる（ポーズに戻る）</button></div>`;
@@ -1826,7 +1825,7 @@ function drawHUD(){
     const fl=`${RUN.floor+1}F / ${RUN.D.floors.length}F${isBossFloor()?' BOSS':''}`,lt=`戦利品 ${n}`;
     let fs=14;const meas=()=>{ctx.font=`700 ${fs}px 'M PLUS 1p'`;const a=ctx.measureText(RUN.D.name+'　').width;ctx.font=`900 ${fs+1}px 'M PLUS 1p'`;const b2=ctx.measureText(fl+'　').width;ctx.font=`700 ${fs}px 'M PLUS 1p'`;return a+b2+ctx.measureText(lt).width};
     // ♪ボタンの右から ❚❚ボタンの左までのあいだに収める
-    const L0=($('#mute').offsetWidth||70)+18,R0=W-($('#pause').offsetWidth||44)-18,room=R0-L0-24;let fs2=fs;fs=14;while(fs>10&&meas()>room)fs--;const tw=meas(),x0=Math.max(L0+12,Math.min(W/2-tw/2,R0-12-tw));
+    const L0=($('#pause').offsetWidth||44)+18,R0=W-L0,room=R0-L0-24;fs=14;while(fs>10&&meas()>room)fs--;const tw=meas(),x0=Math.max(L0+12,Math.min(W/2-tw/2,R0-12-tw));
     ctx.fillStyle='rgba(20,13,8,0.72)';ctx.strokeStyle='rgba(201,138,58,0.55)';ctx.lineWidth=1;ctx.beginPath();ctx.roundRect(x0-12,8,tw+24,34,10);ctx.fill();ctx.stroke();
     ctx.textAlign='left';ctx.font=`700 ${fs}px 'M PLUS 1p'`;ctx.fillStyle='#e8d4b4';ctx.fillText(RUN.D.name+'　',x0,30);let x=x0+ctx.measureText(RUN.D.name+'　').width;
     ctx.font=`900 ${fs+1}px 'M PLUS 1p'`;ctx.fillStyle=isBossFloor()?'#ff9a7a':'#ffd58a';ctx.fillText(fl+'　',x,30);x+=ctx.measureText(fl+'　').width;
