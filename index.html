@@ -1030,10 +1030,11 @@ function startFloor(){
   resize();
   bgm(RUN.D.id+(isBossFloor()?'b':''));
   // ボス階：戦闘の前に WARNING!! の演出（そのあいだボスは攻撃しない）
-  if(isBossFloor()){B.warn=WARN_TIME;B.timer+=WARN_TIME;sfx('warning')}
+  if(isBossFloor()){B.warn=WARN_TIME;sfx('warning')}
   else{float(`${RUN.D.name}  ${RUN.floor+1}F`,W/2,H*0.46,'#ffd58a',30,1.6);float(E.name,W/2,H*0.53,'#e8d4b4',24,1.6)}
 }
 const WARN_TIME=2.6;   // ボス前の WARNING!! 演出の長さ（秒）
+const WARN_AFTER=1.0;  // 演出が終わってからボスが最初に攻撃するまでの秒数
 function drawWarning(){
   const t=WARN_TIME-B.warn,inA=Math.min(1,t/0.25),outA=Math.min(1,B.warn/0.35),a=Math.min(inA,outA),blink=0.55+0.45*Math.abs(Math.sin(t*Math.PI*2.6));
   ctx.save();ctx.globalAlpha=a;
@@ -2085,7 +2086,7 @@ function gimmicks(dt){
 }
 function update(dt){
   if(B.warn>0){B.warn-=dt;B.shake=Math.max(B.shake,B.warn>WARN_TIME-0.3?8:0);for(const k of['shake'])B[k]=Math.max(0,B[k]-dt*20);
-    if(B.warn<=0){B.warn=0;B.roar=1.2;B.shake=18;sfx('roar');float(`BOSS ${B.E.name}`,W/2,H*0.53,'#ff7a5a',34,1.6)}return}
+    if(B.warn<=0){B.warn=0;B.timer=WARN_AFTER;B.roar=1.2;B.shake=18;sfx('roar');float(`BOSS ${B.E.name}`,W/2,H*0.53,'#ff7a5a',34,1.6)}return}
   B.t+=dt;
   for(const k of['lunge','recoil','hurt','bounce','dodgeCD','roar','noDodgeT','lockMsg'])B[k]=Math.max(0,B[k]-dt);
   B.shake=Math.max(0,B.shake-dt*40);
