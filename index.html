@@ -22,9 +22,13 @@ h1{font-weight:900;font-size:30px;letter-spacing:.06em;text-align:center;color:#
 .tabs button{flex:1;min-width:0;padding:11px 0;white-space:nowrap;font:700 15px 'M PLUS 1p';color:#c9b597;background:#24190f;border:1px solid #47331f;border-radius:10px;cursor:pointer}
 .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;align-items:start}.grid2>.card{margin:0}.grid2 .btn{white-space:normal}.grid2 .item{gap:10px}.grid2 .item .ico{width:56px;height:56px}.grid2 .item .ico img{width:50px;height:50px}.grid2 .card{padding:12px}.grid2 h3{font-size:15px}.grid2 .tag{white-space:nowrap}.grid2 .tag.perk{white-space:normal;display:inline-block;margin-top:3px}
 .inv2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.inv2 .card.prow{margin:0;border-top:1px solid #4a3522;padding:10px;gap:8px}.inv2 .prow .ico{width:44px;height:44px}.inv2 .prow .ico img{width:40px;height:40px}.inv2 .pst{display:block;margin:2px 0 0}.inv2 .tag{white-space:nowrap;display:inline-block}.inv2 .tag.perk{white-space:normal;margin-top:3px}.inv2 .row,.grid2 .row{flex-wrap:wrap}.inv2 .card.prow,.grid2>.card{min-width:0;overflow-wrap:anywhere}
+@media(max-width:560px){.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}}
 @media(max-width:440px){.tabs{gap:4px}.tabs button{font-size:13px;letter-spacing:-.04em}.subtabs button{font-size:13px}}
 @media(max-width:480px){.grid2 .item,.inv2 .prow{flex-direction:column;gap:6px}.grid2 .item .ico,.inv2 .prow .ico{width:44px;height:44px}.grid2 .item .ico img,.inv2 .prow .ico img{width:40px;height:40px}.grid2 .card,.inv2 .card.prow{padding:10px}}
 .eqsets{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 6px}.eqsets .btn{display:inline-flex;align-items:center;gap:6px}.eqsets .btn img{width:22px;height:22px}.eqsets .btn.on{background:linear-gradient(#7fe07a,#3fa33a);color:#0d2a0b;box-shadow:0 2px 0 #1f5a1a}
+.stt{width:100%;border-collapse:collapse;font-size:14px}.stt td{padding:7px 4px;border-top:1px solid #3a2a1c;vertical-align:top}.stt tr:first-child td{border-top:none}
+.stt td.k{color:#d8c6aa;overflow-wrap:anywhere}.stt{table-layout:auto}.stt td.v{width:1%}.stt td.v{text-align:right;font-weight:900;color:#ffe2ad;white-space:nowrap;font-size:15px}.stt small{display:block;font-size:12px;font-weight:400;color:#a89478;margin-top:2px}
+.stt .up{color:#8fe08a}.stt .dn{color:#ff9a7a}.eqline{display:flex;flex-wrap:wrap;gap:6px}.eqline span{display:inline-flex;align-items:center;gap:4px;background:#1c140d;border:1px solid #3c2b1c;border-radius:8px;padding:2px 8px 2px 3px;font-size:13px}.eqline img{width:28px;height:28px}
 .subtabs{display:flex;gap:6px;margin:0 0 10px}.subtabs button{flex:1;padding:8px 0;font:700 14px 'M PLUS 1p';color:#c9b597;background:#1c140d;border:1px solid #47331f;border-radius:20px;cursor:pointer}
 .subtabs button.on{background:#5a3a18;color:#fff0d0;border-color:#c98a3a}.hint{font-size:13px;color:#bba78a;text-align:center;margin:6px 0 14px}
 .tabs button.on{background:linear-gradient(#b9772a,#8a4f15);color:#fff6e0;border-color:#e0a050}
@@ -118,6 +122,7 @@ h1{font-weight:900;font-size:30px;letter-spacing:.06em;text-align:center;color:#
     <button data-tab="forge">工房</button>
     <button data-tab="gacha">ガチャ</button>
     <button data-tab="inv">持ち物</button>
+    <button data-tab="stat">ステータス</button>
     <button data-tab="how">遊び方</button>
   </div>
   <div id="panel"></div>
@@ -886,6 +891,36 @@ function renderHub(){
           <span class="chip"><img src="${weaponIcon(w)}">ボス武器：${w.name}${S.weapons[w.id]!==undefined?'（所持）':''}</span></div>
         <p class="grate">${w.name}：${perkText(w.perk)}（攻撃 ${w.atk}）</p>
         <div class="row" style="justify-content:flex-end"><button class="btn" data-act="gacha" data-b="${b.id}" ${n>0?'':'disabled'}>ガチャを回す（証1つ）</button></div></div>`}
+  }else if(tab==='stat'){
+    // ステータス：いまの装備での数値まとめ
+    const w=W_(S.eqW),wl=S.weapons[S.eqW]||0,as=armStat(),atk=atkStat(),cr=critRate(),cm=critMul(),avg=atk*(1+cr*(cm-1));
+    const cmp=(v,base,fmt,good=1)=>{const d=v-base;if(Math.abs(d)<1e-9)return fmt(v);return `<span class="${(d>0)===(good>0)?'up':'dn'}">${fmt(v)}</span>`};
+    const row=(k,v,note='')=>`<tr><td class="k">${k}${note?`<small>${note}</small>`:''}</td><td class="v">${v}</td></tr>`;
+    const pct=v=>Math.round(v*100)+'%',x2=v=>'×'+v.toFixed(2),sec2=v=>v.toFixed(2)+'秒';
+    const taken=100/(100+as.def)*cutMul();
+    h+=`<div class="card"><h3>装備</h3><div class="eqline"><span><img src="${weaponIcon(w)}">${w.name} +${wl}</span>${eqPieces().map(p=>`<span><img src="${armorIcon(p)}">${p.name} +${S.armors[p.id]||0}</span>`).join('')}</div>
+      <p style="margin-top:8px">ビルド：${[...new Set([w.build,...eqPieces().map(p=>p.set.build)].filter(Boolean))].map(buildTag).join(' ')||'なし'}　<span style="font-size:12px">緑＝基本より良い／赤＝基本より悪い</span></p></div>`;
+    h+=`<div class="card"><h3>⚔ 攻撃</h3><table class="stt">
+      ${row('攻撃力（武器ダメージ）',cmp(atk,atk/perk('atk'),v=>Math.round(v)),`${w.name}+${wl} の攻撃 ${wStat(w,wl)}${perk('atk')!==1?`　×防具の攻撃力 ${x2(perk('atk'))}`:''}`)}
+      ${row('会心率',cmp(cr,BASE_CRIT,pct),'基本 10%（最大 100%）')}
+      ${row('会心ダメージ',cmp(cm,CRIT_MUL,v=>'×'+v.toFixed(2)),'会心が出たときのダメージ倍率（基本 ×1.8）')}
+      ${row('1ヒットの平均ダメージ',Math.round(avg),'会心も込みの目安（こすりの速さで増える）')}
+      ${row('部位ダメージ',cmp(perk('part'),1,x2),'部位を壊すときのダメージ倍率')}
+      ${w.gacha?row('ボス武器の効果','',perkText(w.perk)):''}
+    </table></div>`;
+    h+=`<div class="card"><h3>🛡 パリィ・回避</h3><table class="stt">
+      ${row('パリィの体勢pt',cmp(parryGain(false),PT,v=>'+'+v+'pt'),`強撃をはじくと +${parryGain(true)}pt／PERFECT はさらに +${PERFECT_PT}pt`)}
+      ${row('回避成功の体勢pt',cmp(dodgeGain(),0,v=>v?'+'+v+'pt':'なし'),'回避ビルドの装備でだけ入る')}
+      ${row('パリィ受付',cmp(perk('parry'),1,x2),`着弾の最大 ${sec2(0.3*perk('parry'))} 前から受付／PERFECT は ±${sec2(PERFECT*perk('parry'))}`)}
+      ${row('回避受付',cmp(perk('dodge'),1,x2),`着弾の ${sec2(DODGEWIN*perk('dodge'))} 前から受付`)}
+    </table></div>`;
+    h+=`<div class="card"><h3>❤ 守り</h3><table class="stt">
+      ${row('最大HP',cmp(100+as.hp,100,v=>v),'基本 100＋防具の体力')}
+      ${row('防御',cmp(as.def,0,v=>v),'防具4部位の合計')}
+      ${row('受けるダメージ',cmp(taken,1,pct,-1),`防御${perk('dmgCut')?'と被ダメージカット':''}で減らしたあとの割合`)}
+      ${perk('dmgCut')?row('被ダメージカット',`<span class="up">${pct(Math.min(0.8,perk('dmgCut')))}</span>`,'攻撃・落下物・毒すべて'):''}
+      ${perk('heal')?row('パリィ成功で回復',`<span class="up">HP +${+perk('heal').toFixed(1)}</span>`):''}
+    </table></div>`;
   }else if(tab==='inv'){
     // 持ち物：武器・防具はここから装備できる（作成と強化は工房）
     h+=`<div class="subtabs">${[['w','武器'],['a','防具'],['m','素材']].map(([k,n])=>`<button class="${invTab===k?'on':''}" data-act="itab" data-v="${k}">${n}</button>`).join('')}</div>`;
