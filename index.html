@@ -25,7 +25,8 @@ h1{font-weight:900;font-size:30px;letter-spacing:.06em;text-align:center;color:#
 @media(max-width:560px){.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}}
 @media(max-width:440px){.tabs{gap:4px}.tabs button{font-size:13px;letter-spacing:-.04em}.subtabs button{font-size:13px}}
 @media(max-width:480px){.grid2 .item,.inv2 .prow{flex-direction:column;gap:6px}.grid2 .item .ico,.inv2 .prow .ico{width:44px;height:44px}.grid2 .item .ico img,.inv2 .prow .ico img{width:40px;height:40px}.grid2 .card,.inv2 .card.prow{padding:10px}}
-.eqsets{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 6px}.eqsets .btn{display:inline-flex;align-items:center;gap:6px}.eqsets .btn img{width:22px;height:22px}.eqsets .btn.on{background:linear-gradient(#7fe07a,#3fa33a);color:#0d2a0b;box-shadow:0 2px 0 #1f5a1a}
+.eqsets{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 6px}.eqsets .btn{display:inline-flex;align-items:center;gap:6px}.eqsets .btn img{width:22px;height:22px}.eqsets .btn .tag{margin-left:2px}.eqsets .btn.sub2{border:2px solid transparent}.eqsets .bb-parry.sub2{border-color:#3a7ab0}.eqsets .bb-crit.sub2{border-color:#c07a30}.eqsets .bb-dodge.sub2{border-color:#3aa06a}.eqsets .bb-balance.sub2{border-color:#a08a50}
+.eqsets .btn.on{background:linear-gradient(#7fe07a,#3fa33a);color:#0d2a0b;box-shadow:0 2px 0 #1f5a1a}
 .stt{width:100%;border-collapse:collapse;font-size:14px}.stt td{padding:7px 4px;border-top:1px solid #3a2a1c;vertical-align:top}.stt tr:first-child td{border-top:none}
 .stt td.k{color:#d8c6aa;overflow-wrap:anywhere}.stt{table-layout:auto}.stt td.v{width:1%}.stt td.v{text-align:right;font-weight:900;color:#ffe2ad;white-space:nowrap;font-size:15px}.stt small{display:block;font-size:12px;font-weight:400;color:#a89478;margin-top:2px}
 .stt .up{color:#8fe08a}.stt .dn{color:#ff9a7a}.eqline{display:flex;flex-wrap:wrap;gap:6px}.eqline span{display:inline-flex;align-items:center;gap:4px;background:#1c140d;border:1px solid #3c2b1c;border-radius:8px;padding:2px 8px 2px 3px;font-size:13px}.eqline img{width:28px;height:28px}
@@ -937,7 +938,7 @@ function renderHub(){
       const as=armStat();h+=`<div class="buildbox"><b>いまの防具</b>　防御 ${as.def}　／　体力 +${as.hp}</div>`;
       // シリーズでまとめて装備（持っている部位だけ。持っていない部位はそのまま）
       const sets=ARMOR_SETS.map(st=>{const own=ARMORS.filter(p=>p.set===st&&S.armors[p.id]!==undefined);return {st,own,on:own.length>0&&own.every(p=>S.eq[p.slot]===p.id)}}).filter(o=>o.own.length);
-      h+=`<div class="sect">— シリーズでまとめて装備 —</div><div class="eqsets">${sets.map(o=>`<button class="btn ${o.on?'on':'sub2'} mini" data-act="eqset" data-id="${o.st.id}" ${o.on?'disabled style="opacity:1"':''}><img src="${armorIcon(o.own.find(p=>p.slot==='body')||o.own[0])}">${o.st.title}（${o.own.length}/4）${o.on?' ✔':''}</button>`).join('')}</div>
+      h+=`<div class="sect">— シリーズでまとめて装備 —</div><div class="eqsets">${sets.map(o=>`<button class="btn ${o.on?'on':'sub2'} mini bb-${o.st.build||'none'}" data-act="eqset" data-id="${o.st.id}" ${o.on?'disabled style="opacity:1"':''}><img src="${armorIcon(o.own.find(p=>p.slot==='body')||o.own[0])}">${o.st.title}（${o.own.length}/4）${o.st.build?buildTag(o.st.build):'<span class="tag">なし</span>'}${o.on?' ✔':''}</button>`).join('')}</div>
         <div class="hint" style="text-align:left;margin:0 0 4px">持っている部位をまとめて装備します（持っていない部位はいまのまま）</div>`;
       for(const sl of SLOTS){h+=`<div class="sect">— ${sl.n} —</div><div class="inv2">`;
         const list=ARMORS.filter(p=>p.slot===sl.k&&S.armors[p.id]!==undefined).sort((a,b)=>(S.eq[sl.k]===b.id)-(S.eq[sl.k]===a.id));
