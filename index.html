@@ -402,13 +402,13 @@ const ARMOR_SETS=[
   {id:'r4',title:'心石',build:'balance',names:['心石の額当て','心石の守り','心石の腕輪','心石の具足'],def:14,hp:12,d:'d1',mats:['shell','bone'],rare:{heartstone:1},perkSlot:'body',perk:{heal:2},perkCost:{heartstone:2},style:'plate',color:'#9a5a3a',trim:'#ff9a5a'},
   {id:'r5',title:'黄金角',build:'parry',names:['黄金角の兜','黄金角の胴鎧','黄金角の籠手','黄金角の脚甲'],def:20,hp:18,d:'d1',mats:['shell','hornG'],rare:{heartstone:1},perkSlot:'head',perk:{parryPts:1.2},perkCost:{goldhorn:1},style:'gold',color:'#a88228',trim:'#fff0a0'},
   {id:'fa',title:'鱗粉',build:'dodge',names:['鱗粉の頭巾','鱗粉の衣','鱗粉の手袋','鱗粉の靴'],def:13,hp:10,d:'f1',mats:['dust','silk'],setPerk:{dodgePts:12,dodge:0.8},style:'cloak',color:'#4a5a24',trim:'#d8ff70'},
-  {id:'fb',title:'毒蛾',build:'crit',names:['毒蛾の兜','毒蛾の甲殻','毒蛾の籠手','毒蛾の脚甲'],def:15,hp:11,d:'f1',mats:['mothwing','antenna'],setPerk:{crit:0.18,critDmg:0.2,parryPts:0.9},style:'plate',color:'#5a3a7a',trim:'#e0c0ff'},
+  {id:'fb',title:'毒蛾',build:'crit',names:['毒蛾の兜','毒蛾の甲殻','毒蛾の籠手','毒蛾の脚甲'],def:15,hp:11,d:'f1',mats:['mothwing','antenna'],setPerk:{crit:0.5,critDmg:0.2,parryPts:0.9},style:'plate',color:'#5a3a7a',trim:'#e0c0ff'},
   {id:'r9',title:'月光',build:'dodge',names:['月光の冠','月光の羽衣','月光の手袋','月光の靴'],def:17,hp:13,d:'f1',mats:['silk','dust'],rare:{moonsilk:1},setPerk:{dodgePts:14,dodge:0.85},perkSlot:'head',perk:{crit:0.05},perkCost:{fairyeye:1},style:'cloak',color:'#3a3a6a',trim:'#e8ecff'},
   {id:'a2',title:'雷鱗',build:'balance',names:['雷鱗の兜','雷鱗の鎧','雷鱗の籠手','雷鱗の脚甲'],def:18,hp:15,d:'d2',mats:['scale','wing','tail'],style:'scale',color:'#3e6aa5',trim:'#8cc4ff'},
   {id:'r6',title:'逆鱗',build:'dodge',names:['逆鱗の兜','逆鱗の鎧','逆鱗の籠手','逆鱗の脚甲'],def:24,hp:20,d:'d2',mats:['scale','tail'],rare:{gekirin:1},perkSlot:'legs',perk:{dodgePts:8},perkCost:{gekirin:2},style:'scale',color:'#22448a',trim:'#ffffff'},
   {id:'r7',title:'竜眼',build:'parry',names:['竜眼の兜','竜眼の蒼鎧','竜眼の籠手','竜眼の脚甲'],def:30,hp:26,d:'d2',mats:['scale','crystal'],rare:{gekirin:1},perkSlot:'hands',perk:{parryPts:1.15},perkCost:{dragoneye:1,gekirin:1},style:'gold',color:'#1a5a9a',trim:'#a0f0ff'},
   {id:'ga',title:'霜鎧',build:'parry',names:['霜鎧の兜','霜鎧の胴','霜鎧の籠手','霜鎧の脚甲'],def:28,hp:22,d:'g1',mats:['mstone','icefang'],setPerk:{parryPts:1.3,atk:0.85},style:'plate',color:'#7aa8c8',trim:'#e8f8ff'},
-  {id:'gb',title:'氷晶',build:'crit',names:['氷晶の冠','氷晶の衣','氷晶の手甲','氷晶の靴'],def:24,hp:18,d:'g1',mats:['icecrys','frost'],setPerk:{crit:0.2,critDmg:0.3,parryPts:0.85},style:'scale',color:'#8ac4e4',trim:'#ffffff'},
+  {id:'gb',title:'氷晶',build:'crit',names:['氷晶の冠','氷晶の衣','氷晶の手甲','氷晶の靴'],def:24,hp:18,d:'g1',mats:['icecrys','frost'],setPerk:{crit:0.7,critDmg:0.3,parryPts:0.85},style:'scale',color:'#8ac4e4',trim:'#ffffff'},
   {id:'r10',title:'永久氷',build:'parry',names:['永久氷の兜','永久氷の鎧','永久氷の籠手','永久氷の脚甲'],def:32,hp:26,d:'g1',mats:['mstone','frost'],rare:{permafrost:1},setPerk:{parryPts:1.3,atk:0.9},perkSlot:'body',perk:{heal:3},perkCost:{iceheart:1},style:'gold',color:'#4a7aa8',trim:'#dff6ff'},
   {id:'a3',title:'冥王',build:'balance',names:['冥王の冠帽','冥王の外套','冥王の手甲','冥王の長靴'],def:32,hp:25,d:'d3',mats:['shade','soul','core'],style:'cloak',color:'#5e3a82',trim:'#c060ff'},
   {id:'r8',title:'魂石',build:'balance',names:['魂石の頭巾','魂石の衣','魂石の手甲','魂石の長靴'],def:38,hp:32,d:'d3',mats:['shade','soul'],rare:{soulstone:1},perkSlot:'body',perk:{heal:3},perkCost:{soulstone:2},style:'cloak',color:'#3a1a5a',trim:'#e0a0ff'},
@@ -476,7 +476,8 @@ const buildTag=b=>b?`<span class="tag build b-${b}">${BUILD_NAME[b]}</span>`:'';
 // いまの装備で「1回の行動で入る体勢ポイント」
 const parryGain=heavy=>Math.round(PT*(heavy?2:1)*perk('parryPts'));
 const dodgeGain=()=>Math.round(perk('dodgePts'));
-const critRate=()=>BASE_CRIT+perk('crit'), critMul=()=>CRIT_MUL+perk('critDmg');
+const critRate=()=>Math.min(1,BASE_CRIT+perk('crit')),   // 会心率は最大100%
+      critMul=()=>CRIT_MUL+perk('critDmg');
 const UPG_COST_MUL=2;   // 強化に使う素材の数の倍率（v16で2倍にした）
 function upgCost(it,lv){const c={};for(const[k,q]of Object.entries(it.upg))c[k]=q*(it.halfUpg?Math.ceil((lv+1)/2):(lv+1))*UPG_COST_MUL;return c}
 const has=c=>Object.entries(c).every(([k,q])=>(S.mats[k]||0)>=q);
