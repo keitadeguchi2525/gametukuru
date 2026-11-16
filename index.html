@@ -831,11 +831,11 @@ function renderHub(){
   document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab));
   let h='';
   if(tab==='hunt'){
-    h+=`<div class="card" style="border-color:#7a2a20"><p style="color:#ffb0a0;margin:0">⚠ ダンジョンで手に入れた素材は<b>帰還するまで未確定</b>。倒れると<b>その探索の戦利品と、装備中の武器・防具（5つ）のうちランダムに1〜3つを失う</b>（初期装備は強化が+0に戻る）。階の合間に「帰還」すれば戦利品も装備も守れる（戦闘中に逃げることはできない）。</p></div>`;
+    h+=`<div class="card" style="border-color:#7a2a20"><p style="color:#ffb0a0;margin:0">⚠ ダンジョンで手に入れた素材は<b>帰還するまで未確定</b>。倒れると<b>その探索の戦利品と、装備中の武器・防具（5つ）のうちランダムに1〜3つを失う</b>（初期装備は強化が+0に戻る）。帰還できるのは<b>決まった階をクリアしたときだけ</b>（全5階なら2F・4F、全6階なら3F・5F）。帰還すれば戦利品も装備も守れる（戦闘中に逃げることはできない）。</p></div>`;
     DUNGEONS.forEach((D,i)=>{const lock=!unlocked(i),open=OPEN_DETAIL[D.id]&&!lock;
       // 前のダンジョンを踏破していないうちは、星の数だけ見せて名前・説明は「???」
       h+=`<div class="card ${lock?'locked':''}"><h3>${'★'.repeat(D.stars)} ${lock?'???':`${D.name}（全${D.floors.length}階）`} ${S.cleared[D.id]?'<span class="tag ok">踏破済</span>':''}</h3>
-      <p>${lock?'🔒 ???':D.desc}</p>`;
+      <p>${lock?'🔒 ???':D.desc}</p>${lock?'':`<p style="font-size:12px;color:#bba78a;margin-top:2px">↩ 帰還できる階：${returnFloors(D).map(f=>f+'F').join('・')} のあと</p>`}`;
       if(open){const y=YIELD[D.id];
         // レア素材：1回踏破で1個以上出る確率（全階の討伐ぶんを合算）
         const rp={};for(const id of D.floors)for(const[k,pr]of EN(id).rares)rp[k]=1-(1-(rp[k]||0))*(1-pr);
@@ -969,7 +969,7 @@ function renderHub(){
     <li>装備には<b>パリィ・会心・回避・バランス</b>の得意分野がある。数値は<b>ステータス</b>で見られる。</li>
     <li>ボスを倒すと、たまに<b>討伐の証</b>が出る。<b>ガチャ</b>で特別なボス武器が当たるかも。</li></ul>
     <div class="sect">🗺 ダンジョン</div><ul>
-    <li>階ごとに「<b>帰還</b>」か「<b>次の階へ</b>」を選ぶ。帰れば手に入れた素材は自分のものになる。</li>
+    <li>決まった階をクリアしたときだけ「<b>帰還</b>」できる。帰れば手に入れた素材は自分のものになる。</li>
     <li><b>倒れると</b>その探索の素材をすべて失い、装備もいくつか失う。引き際が大事！</li>
     <li>いちばん奥のボスを倒すと、次のダンジョンへ進める。</li></ul>
     <div class="sect">🎮 操作</div><ul>
@@ -1291,14 +1291,20 @@ function floorCleared(rares){
     $('#home').onclick=endToHub;return;
   }
   sfx('clear');const heal=Math.round(RUN.pmax*FLOOR_HEAL);
+  const canRet=canReturnAt(RUN.D,RUN.floor+1),nextRet=returnFloors(RUN.D).find(f=>f>RUN.floor+1)||RUN.D.floors.length;
   showBox(`<h2 style="color:#ffd58a">${RUN.floor+1}F 突破！</h2>${rareHtml}
     <div style="font-size:13px;color:#bba78a">この階の戦利品</div><div class="row">${lootChips(B.loot)}</div>
     <div style="font-size:13px;color:#ffb0a0">未確定の戦利品（倒れると失う）</div><div class="row">${lootChips(RUN.loot)}</div>
     <p style="font-size:14px;margin-bottom:6px">HP ${Math.ceil(RUN.php)} / ${RUN.pmax}　次は <b>${RUN.floor+2}F ${isLast2()?'BOSS ':''}${EN(RUN.D.floors[RUN.floor+1]).name}</b></p>
-    <div class="row"><button class="btn sub2" id="goHome">帰還する（持ち帰る）</button><button class="btn" id="goNext">次の階へ（HP+${heal}）</button></div>`);
-  $('#goHome').onclick=()=>{bankRun();showBox(`<h2 style="color:#bdf0a8">無事に帰還した</h2><div style="font-size:13px;color:#bba78a">持ち帰った戦利品</div><div class="row">${lootChips(RUN.loot)}</div><div class="row"><button class="btn" id="home">拠点へ戻る</button></div>`);$('#home').onclick=endToHub};
+    ${canRet?'':`<p style="font-size:13px;color:#ffb0a0;margin:4px 0">🚫 この階からは帰還できない（次に帰還できるのは <b>${nextRet}F</b> を突破したあと）</p>`}
+    <div class="row">${canRet?'<button class="btn sub2" id="goHome">帰還する（持ち帰る）</button>':''}<button class="btn" id="goNext">次の階へ（HP+${heal}）</button></div>`);
+  if(canRet)$('#goHome').onclick=()=>{bankRun();showBox(`<h2 style="color:#bdf0a8">無事に帰還した</h2><div style="font-size:13px;color:#bba78a">持ち帰った戦利品</div><div class="row">${lootChips(RUN.loot)}</div><div class="row"><button class="btn" id="home">拠点へ戻る</button></div>`);$('#home').onclick=endToHub};
   $('#goNext').onclick=()=>{RUN.php=Math.min(RUN.pmax,RUN.php+heal);RUN.floor++;startFloor()};
 }
+// 帰還できる階：全5階なら2F・4Fをクリアしたあと、全6階なら3F・5Fをクリアしたあとだけ（それ以外は次の階へ進むしかない）
+const RETURN_FLOORS={5:[2,4],6:[3,5]};
+const returnFloors=D=>RETURN_FLOORS[D.floors.length]||[];
+const canReturnAt=(D,f)=>returnFloors(D).includes(f);   // f＝クリアした階（1から数える）
 const FLOOR_HEAL=0.2;   // 次の階へ進むときに回復する割合（最大HPの20%）
 const isLast2=()=>RUN.floor+1===RUN.D.floors.length-1;
 // 倒れたとき：装備中の5つ（武器＋防具4部位）からランダムに1〜3つを失う（1つ33%／2つ33%／3つ34%）
