@@ -1042,12 +1042,15 @@ function startFloor(){
   if(isBossFloor()){B.warn=WARN_TIME;sfx('warning')}
 }
 const WALK_TIME=1.9;    // 歩いて奥へ進む演出の長さ（秒）。最後の0.7秒で敵が姿を現す
+const WALK_ZOOM=0.72;   // 歩きはじめの背景の大きさ（1＝いつもの大きさ。小さいほど遠くから寄っていく）
 const WALK_APPEAR=0.7;
 function drawWalk(){
   const t=B.walkMax-B.walk,k=Math.min(1,t/(B.walkMax-WALK_APPEAR)),ap=Math.max(0,1-B.walk/WALK_APPEAR),ease=1-Math.pow(1-k,2);
   const cx=W/2,cy=H*0.4,bob=Math.abs(Math.sin(t*Math.PI/0.4))*Math.min(10,H*0.012)*(1-ap),sway=Math.sin(t*Math.PI/0.4)*Math.min(5,W*0.008)*(1-ap);
-  // 背景：奥（画面中央の少し上）へ向かってズームしながら、歩く揺れ
-  ctx.save();ctx.translate(cx+sway,cy-bob);const zs=1.35-0.35*ease;ctx.scale(zs,zs);ctx.translate(-cx,-cy);drawBG();ctx.restore();
+  // 背景：引き（遠く・小さく）から寄り（いつもの大きさ）へ、奥に近づいていく。歩く揺れつき
+  //   縮小して空いた画面のふちは暗がり（黒）にする
+  ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);
+  ctx.save();ctx.translate(cx+sway,cy-bob);const zs=WALK_ZOOM+(1-WALK_ZOOM)*ease;ctx.scale(zs,zs);ctx.translate(-cx,-cy);drawBG();ctx.restore();
   // 奥の暗がりから敵が近づいてくる（小さく暗い → 大きく、はっきり）
   if(ap>0){const e=1-Math.pow(1-ap,3),s=0.45+0.55*e;
     ctx.save();ctx.globalAlpha=Math.min(1,ap*1.6);ctx.translate(cx,cy+(1-e)*H*0.05);ctx.scale(s,s);ctx.translate(-cx,-cy);drawEnemy();ctx.restore();
