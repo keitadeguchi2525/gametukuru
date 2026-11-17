@@ -474,7 +474,7 @@ function perkText(pk){if(!pk)return '';const o=[],pc=v=>Math.round(v*100);
     else if(k==='critDmg')o.push(`会心ダメージ ${sg(pc(v))}%`);else if(k==='heal')o.push(`パリィ成功でHP${+v.toFixed(1)}回復`);
     else if(k==='dodgePts')o.push(`回避成功で体勢 +${Math.round(v)}pt`);
     else if(k==='dmgCut')o.push(`被ダメージ ${Math.round(v*100)}%カット`);
-    else if(k==='gPoison')o.push(`攻撃時 1/${Math.round(1/G_POISON_CH)}で敵を毒に（最大HPの${Math.round(G_POISON_PCT*100)}%×${G_POISON_TICKS}回）`);
+    else if(k==='gPoison')o.push(`攻撃時 1/${Math.round(1/G_POISON_CH)}で敵を毒に（最大HPの${Math.round(G_POISON_PCT*100)}%×★1・2は${G_POISON_TICKS[1]}回／★3・4は${G_POISON_TICKS[3]}回／★5は${G_POISON_TICKS[5]}回）`);
     else if(k==='gBolt')o.push(`攻撃時 1/${Math.round(1/G_BOLT_CH)}で落雷（最大HPの${Math.round(G_BOLT_PCT*100)}%）`);
     else if(k==='gFreeze')o.push(`崩すと敵が凍り崩し時間 +${G_FREEZE_SEC}秒／攻撃時 1/${Math.round(1/G_FREEZE_CH)}で氷撃（最大HPの${Math.round(G_FREEZE_PCT*100)}%）`);
     else if(k==='gBeam')o.push(`攻撃時 1/${Math.round(1/G_BEAM_CH)}で闇の光線（最大HPの${Math.round(G_BEAM_PCT*100)}%）`)}
@@ -1336,13 +1336,15 @@ function strike(p,f,x,y,ang){
   if(TUT){tutEvent('hit');if(B.hp<=B.maxHp*0.2)B.hp=B.maxHp}   // チュートリアルの敵は倒れない
   if(B.hp<=0&&!B.over){victory();return}
   // ボス武器の追加効果
-  if(perk('gPoison')&&Math.random()<G_POISON_CH){B.epoison.push({ticks:G_POISON_TICKS,next:1});sfx('poison');float('毒にした！',B.tf.x,B.tf.y-B.tf.u*0.6,'#b0ff40',24,1)}
+  if(perk('gPoison')&&Math.random()<G_POISON_CH){B.epoison.push({ticks:poisonTicks(),next:1});sfx('poison');float('毒にした！',B.tf.x,B.tf.y-B.tf.u*0.6,'#b0ff40',24,1)}
   if(perk('gBolt')&&Math.random()<G_BOLT_CH)specialHit(G_BOLT_PCT,'bolt');
   if(perk('gBeam')&&Math.random()<G_BEAM_CH)specialHit(G_BEAM_PCT,'beam');
   if(perk('gFreeze')&&Math.random()<G_FREEZE_CH)specialHit(G_FREEZE_PCT,'ice');
 }
 // ===== ボス武器の追加効果（数値） =====
-const G_POISON_CH=0.1,G_POISON_PCT=0.01,G_POISON_TICKS=7;   // 毒：1/10で、最大HPの1%を1秒ごとに7回（v16で2%×5回から変更）
+const G_POISON_CH=0.1,G_POISON_PCT=0.01;   // 毒：1/10で、最大HPの1%を1秒ごとに（回数はダンジョンの★で変わる）
+const G_POISON_TICKS={1:7,2:7,3:6,4:6,5:5};   // ★ごとの毒の回数（★1・2＝7回で合計7%、★3・4＝6回で6%、★5＝5回で5%）
+const poisonTicks=()=>G_POISON_TICKS[RUN&&RUN.D?RUN.D.stars:1]||7;
 const G_BOLT_CH=1/12,G_BOLT_PCT=0.08;                      // 落雷：1/12で最大HPの8%（v16で1/15・7%から変更）
 const G_BEAM_CH=0.1,G_BEAM_PCT=0.10;                       // 闇の光線：1/10で最大HPの10%
 const G_FREEZE_SEC=1;                                      // 凍結：この武器で崩すと崩し時間+1秒
