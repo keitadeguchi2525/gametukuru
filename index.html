@@ -81,6 +81,7 @@ h1{font-weight:900;font-size:30px;letter-spacing:.06em;text-align:center;color:#
 #pauseOv .box{background:linear-gradient(#2e2116,#1d140d);border:2px solid #c98a3a;border-radius:16px;padding:22px 22px 18px;width:min(340px,90vw);text-align:center}
 #pauseOv h2{font-size:26px;font-weight:900;color:#ffe2ad;margin-bottom:6px}#pauseOv p{font-size:14px;color:#d8c6aa;line-height:1.6;margin:6px 0}
 #pauseOv .pbtns{display:flex;flex-direction:column;gap:10px;margin-top:14px}#pauseOv .btn{font-size:16px;padding:12px}
+#pauseOv .tstep{font-size:12px;color:#c98a3a;font-weight:700;letter-spacing:.1em}#pauseOv .tintro{text-align:left;font-size:15px;line-height:1.75;color:#ead8bc}#pauseOv .tintro b{color:#ffd58a}#pauseOv .tsub{font-size:13px;color:#bba78a}#pauseOv .tsub b{color:#e0cba8}
 #pauseOv .audio{margin:12px 0 0}#pauseOv .sbtn{font-size:14px;padding:8px 16px}
 #pauseOv .btn.danger{background:linear-gradient(#e0644a,#a8321e);color:#fff3ea;box-shadow:0 3px 0 #5a1a0e}
 .audio{display:flex;gap:8px;justify-content:center;margin:-4px 0 14px}
@@ -758,6 +759,8 @@ const SFX={
   armor:()=>{noise(0.8,{vol:0.35,f:250,ftype:'lowpass'});tone(55,0.8,{vol:0.4})},
   crack:()=>noise(0.25,{vol:0.35,f:1800,q:2}),
   shatter:()=>{noise(0.6,{vol:0.45,f:1200,to:300});[60,67,72].forEach((m,i)=>tone(mf(m),0.4,{type:'triangle',vol:0.12,at:0.1+i*0.05}))},
+  step:()=>{noise(0.09,{vol:0.22,f:180,q:0.9});tone(70,0.08,{type:'sine',vol:0.12,to:45})},
+  appear:()=>{tone(110,0.5,{type:'sawtooth',vol:0.07,to:55,attack:0.05});noise(0.45,{vol:0.1,f:400,q:0.6})},
   warning:()=>{for(let i=0;i<3;i++){tone(660,0.32,{type:'square',vol:0.09,to:880,at:i*0.7,attack:0.02});tone(880,0.32,{type:'square',vol:0.09,to:660,at:i*0.7+0.34,attack:0.02})}noise(0.5,{vol:0.12,f:120,q:0.7,at:0})},
   roar:()=>{tone(70,1.0,{type:'sawtooth',vol:0.15,to:50,attack:0.1});noise(1.0,{vol:0.3,f:300,q:0.8,attack:0.1})},
   curse:()=>{tone(mf(61),0.9,{vol:0.12,det:-30});tone(mf(67),0.9,{vol:0.1,det:20})},
@@ -953,6 +956,7 @@ function renderHub(){
     h+=`<div class="row" style="margin-top:24px"><button class="btn sub2" data-act="reset">データをリセット</button></div>`;
     }
   }else{
+    h+=`<div class="card" style="text-align:center;border-color:#c98a3a"><p style="margin:0 0 10px">はじめての人は、まずここから！ 実際の戦闘で操作を練習できます${S.tutDone?'（クリア済み ✔）':''}</p><button class="btn" data-act="tutorial">▶ チュートリアルをはじめる</button></div>`;
     h+=`<div class="card how"><h3>遊び方</h3>
     <div class="sect">⚔ 戦い方</div><ul>
     <li>敵の<b>動き</b>を見て、攻撃が来る方向へ<b>スワイプではじく（パリィ）</b>。</li>
@@ -984,6 +988,7 @@ function renderHub(){
 document.querySelector('.tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b){tab=b.dataset.tab;renderHub()}});
 $('#panel').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled)return;const act=b.dataset.act;
   if(act==='hunt')startDungeon(+b.dataset.i);
+  else if(act==='tutorial'){startTutorial()}
   else if(act==='bossrush'){const i=+b.dataset.i;sfx('start');const D=DUNGEONS[i],pmax=100+armStat().hp;RUN={i,D,floor:D.floors.length-1,loot:{},php:pmax,pmax,test:true};startFloor()}
   else if(act==='gacha'){rollGacha(b.dataset.b)}
   else if(act==='itab'){invTab=b.dataset.v;renderHub()}
@@ -1017,6 +1022,82 @@ const PC=()=>({x:W/2,y:H*0.62});           // パリィ判定の中心
 const PP=()=>({x:W/2,y:H*0.82});           // プレイヤー胸元
 
 let RUN=null;
+// ===== チュートリアル（遊び方の画面のボタンから）=====
+// 本物の戦闘画面で5つのステップを練習する。倒れない・素材も装備も増減しない
+let TUT=null;
+const TUT_STEPS=[
+  {id:'parry',title:'攻撃をはじく',need:3,slow:1.6,
+   intro:'敵の攻撃は、<b>攻撃が来た方向へスワイプ</b>して<b>はじき返します（パリィ）</b>。<br>攻撃が来る場所に<b>輪</b>が出ます。輪が縮んで<b>黄色</b>になったら合図！<br><span class="tsub">チュートリアルでは、はじく向きを<b>矢印</b>で教えます（本番では出ません）。PCはマウスでドラッグ。</span>',
+   goal:'攻撃を3回はじこう'},
+  {id:'breath',title:'ブレス・投擲をよける',need:2,slow:1.5,
+   intro:'口元に<b>⚠マーク</b>が出る攻撃（ブレス・投擲）は<b>はじけません</b>。<br>赤い点線の側に飛んでくるので、<b>反対側へ回避</b>しよう。<br><span class="tsub">画面の左下・右下の<b>回避ボタン</b>（PCは <b>A＝左／D＝右</b>）。光っているボタンが正解。</span>',
+   goal:'ブレスを2回よけよう'},
+  {id:'mix',title:'いろいろな攻撃',seq:['heavy','delay','combo'],slow:1.3,
+   intro:'敵の攻撃にはいくつか種類があります。<br>・<b>強撃</b>：赤く光る大振り。はじくと体勢が大きく崩れる<br>・<b>フェイント</b>：振りかぶりが<b>途中で止まる</b>。あわてずに待ってからはじく<br>・<b>連撃</b>：何回も続けて来る。1発ずつはじこう',
+   goal:''},
+  {id:'attack',title:'敵を攻撃する',slow:1.5,
+   intro:'パリィを重ねると敵の<b>体勢が崩れます</b>。崩れている間だけ攻撃できます。<br>敵の体を<b>押したまま、ぐりぐりこする</b>と攻撃。速くこするほど強い！<br><span class="tsub">角や腕などの<b>部位</b>を壊すと、素材が多く手に入ります。</span>',
+   goal:'1回はじいて崩し、こすって攻撃しよう'},
+  {id:'hz',title:'落ちてくるものをよける',need:2,noAtk:true,
+   intro:'ダンジョンによっては、<b>頭上から物が落ちてきます</b>（落石など）。<br>⚠と足元の印が出たら、<b>左右どちらかへ回避</b>しよう。はじくことはできません。',
+   goal:'落石を2回よけよう'}];
+const tutCur=()=>TUT&&TUT_STEPS[TUT.step];
+function startTutorial(){sfx('start');const D=DUNGEONS[0],pmax=100+armStat().hp;
+  RUN={i:0,D,floor:0,loot:{},php:pmax,pmax,test:true,tut:true};TUT={step:0,cnt:0,seqI:0,hits:0};startFloor();B.g.hzCD=1e9;B.timer=99;tutIntro()}
+function tutIntro(){const st=tutCur();PAUSED=true;TUT.intro=true;
+  $('#pauseBox').innerHTML=`<div class="tstep">チュートリアル　${TUT.step+1} / ${TUT_STEPS.length}</div><h2>${st.title}</h2><p class="tintro">${st.intro}</p>
+    <div class="pbtns"><button class="btn" id="tutGo">やってみる</button><button class="btn sub2" id="tutQuit">チュートリアルをやめる</button></div>`;
+  $('#pauseOv').classList.remove('hidden');
+  $('#tutGo').onclick=()=>{sfx('click');TUT.intro=false;$('#pauseOv').classList.add('hidden');PAUSED=false;ptr=null;last=performance.now();tutBegin()};
+  $('#tutQuit').onclick=()=>{sfx('click');endTutorial()}}
+function tutBegin(){const st=tutCur();TUT.cnt=0;TUT.seqI=0;TUT.hits=0;TUT.wait=false;
+  B.php=B.pmax;B.posture=0;B.state='idle';B.atk=null;B.flurry=null;B.combo=0;B.timer=1.0;B.hz=[];B.g.hzCD=1e9;
+  if(st.id==='attack')B.posture=needNow()-1;      // 次に1回はじけば崩れる
+  if(st.id==='hz')B.g.hzCD=1.2}
+function tutMove(){const st=tutCur();if(st.id==='breath')return 'breath';if(st.id==='mix')return ['heavy','delay','combo'][Math.min(TUT.seqI,2)];return 'slash'}
+// 進み具合（ev＝できごと）
+function tutEvent(ev,ok){if(!TUT||TUT.wait||!B)return;const st=tutCur();
+  if(st.id==='parry'&&ev==='parry'){TUT.cnt++;B.posture=0}
+  else if(st.id==='breath'&&ev==='dodge'){TUT.cnt++;B.posture=0}
+  else if(st.id==='hz'&&ev==='hzdodge')TUT.cnt++;
+  else if(st.id==='mix'){const k=st.seq[TUT.seqI];B.posture=0;
+    if((k==='heavy'&&ev==='parryHeavy')||(k==='delay'&&ev==='parryDelay')||(k==='combo'&&ev==='flurry'&&ok)){TUT.seqI++;sfx('bonus');float('OK！',W/2,H*0.3,'#9fffc0',34,0.9)}
+    else if(k==='combo'&&ev==='flurry')float('おしい！ もう一度',W/2,H*0.3,'#ffd58a',24,1.1);
+    if(TUT.seqI>=st.seq.length)tutNext();return}
+  else if(st.id==='attack'){if(ev==='hit')TUT.hits++;
+    if(ev==='breakEnd'){if(TUT.hits>=3)return tutNext();float('もう一度！ 崩れている間にこすろう',W/2,H*0.3,'#ffd58a',22,1.4);B.posture=needNow()-1}return}
+  else return;
+  if(st.need&&TUT.cnt>=st.need)tutNext()}
+function tutNext(){TUT.wait=true;sfx('clear');float('クリア！',W/2,H*0.36,'#9fffc0',46,1.2);
+  setTimeout(()=>{if(!TUT||!B)return;B.atk=null;B.flurry=null;B.state='idle';B.timer=99;B.hz=[];
+    TUT.step++;if(TUT.step>=TUT_STEPS.length)tutDone();else tutIntro()},1300)}
+function tutDone(){PAUSED=true;TUT.intro=true;sfx('fanfare');S.tutDone=true;save();
+  $('#pauseBox').innerHTML=`<h2 style="color:#bdf0a8">チュートリアル完了！</h2><p class="tintro">これで基本はばっちり！<br>本番では<b>矢印は出ません</b>。敵の動きをよく見て、攻撃が来る方向を読もう。<br><span class="tsub">ダンジョンでは、決まった階でしか帰還できません。倒れると素材と装備を失うので、引き際も大事！</span></p>
+    <div class="pbtns"><button class="btn" id="tutEnd">拠点へ戻る</button></div>`;
+  $('#pauseOv').classList.remove('hidden');$('#tutEnd').onclick=()=>{sfx('click');endTutorial()}}
+function endTutorial(){TUT=null;endToHub()}
+// 画面の上のほうに、いまのステップと進み具合、はじく向きの矢印
+function drawTut(){if(!TUT||B.walk>0)return;const st=tutCur();if(!st)return;
+  let goal=st.goal,prog='';
+  if(st.need)prog=`${Math.min(TUT.cnt,st.need)} / ${st.need}`;
+  if(st.id==='mix'){const nm={heavy:'強撃をはじこう（赤く光る大振り）',delay:'フェイントを待ってからはじこう',combo:'連撃を全部はじこう'};goal=nm[st.seq[Math.min(TUT.seqI,2)]]||'';prog=`${Math.min(TUT.seqI,3)} / 3`}
+  if(st.id==='attack'&&B.state==='broken'){goal='敵の体を押したまま、こすって攻撃！';prog=`${TUT.hits} ヒット`}
+  const y=HUD_TOP+64,w=Math.min(W-24,420),x=(W-w)/2;
+  ctx.save();ctx.fillStyle='rgba(20,13,8,0.88)';ctx.strokeStyle='#c98a3a';ctx.lineWidth=1.5;ctx.beginPath();ctx.roundRect(x,y,w,52,12);ctx.fill();ctx.stroke();
+  ctx.textAlign='left';ctx.font="700 12px 'M PLUS 1p'";ctx.fillStyle='#c98a3a';ctx.fillText(`チュートリアル ${TUT.step+1}/${TUT_STEPS.length}　${st.title}`,x+12,y+18);
+  ctx.font="900 15px 'M PLUS 1p'";ctx.fillStyle='#ffe2ad';ctx.fillText(goal,x+12,y+40);
+  if(prog){ctx.textAlign='right';ctx.font="900 18px 'M PLUS 1p'";ctx.fillStyle='#9fffc0';ctx.fillText(prog,x+w-12,y+40)}
+  ctx.restore();
+  // はじく向きのヒント（チュートリアルだけ）
+  const a=B.atk;if(B.state!=='windup'||!a||a.res||a.fail)return;const pp=PC();
+  if(a.kind==='breath')return;   // ブレスは元から「〇へ回避」の表示が出る
+  if(a.holdLeft>0&&a.t>=a.holdAt){hudText('止まった！ まだ待って…',W/2,H*0.5,"900 22px 'M PLUS 1p'",'#ffd58a');return}
+  const v=DV[needDir(a)],ready=a.t>=a.w-earlyWin(),L=Math.min(W,H)*0.16,cx=pp.x,cy=pp.y;
+  ctx.save();ctx.translate(cx,cy);ctx.rotate(Math.atan2(v.y,v.x));ctx.globalAlpha=ready?1:0.5;
+  ctx.fillStyle=ready?'#fff27a':'#bfe8ff';ctx.strokeStyle='rgba(0,0,0,0.7)';ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(-L*0.6,-L*0.12);ctx.lineTo(L*0.25,-L*0.12);ctx.lineTo(L*0.25,-L*0.3);ctx.lineTo(L*0.7,0);ctx.lineTo(L*0.25,L*0.3);ctx.lineTo(L*0.25,L*0.12);ctx.lineTo(-L*0.6,L*0.12);ctx.closePath();ctx.stroke();ctx.fill();ctx.restore();
+  hudText(ready?'いま！ スワイプ！':`${DNAME[needDir(a)]}へスワイプする準備`,W/2,cy+L*1.0,"900 18px 'M PLUS 1p'",ready?'#fff27a':'#bfe8ff');
+}
 function startDungeon(i){sfx('start');const D=DUNGEONS[i];const pmax=100+armStat().hp;RUN={i,D,floor:0,loot:{},php:pmax,pmax};startFloor()}
 function floorEnemy(){const id=RUN.D.floors[RUN.floor],E=EN(id);if(!E.minion)return E;
   const m=1+0.12*RUN.floor;
@@ -1034,10 +1115,38 @@ function startFloor(){
   $('#hub').classList.add('hidden');$('#battle').classList.remove('hidden');$('#result').classList.add('hidden');
   resize();
   bgm(RUN.D.id+(isBossFloor()?'b':''));
-  // ボス階：戦闘の前に WARNING!! の演出（そのあいだボスは攻撃しない）
+  // まず「奥へ歩いて進む」演出 → 奥に敵がいた！（そのあいだ敵は攻撃しない）
+  // ボス階は歩きながら WARNING!!（歩きの長さを WARNING と同じにして、歩き終わりにボスが現れて咆哮）
+  B.walkMax=isBossFloor()?WARN_TIME:WALK_TIME;B.walk=B.walkMax;B.stepT=0.15;
   if(isBossFloor()){B.warn=WARN_TIME;sfx('warning')}
-  else{float(`${RUN.D.name}  ${RUN.floor+1}F`,W/2,H*0.46,'#ffd58a',30,1.6);float(E.name,W/2,H*0.53,'#e8d4b4',24,1.6)}
 }
+const WALK_TIME=1.9;    // 歩いて奥へ進む演出の長さ（秒）。最後の0.7秒で敵が姿を現す
+const WALK_ZOOM=0.72;   // 歩きはじめの背景の大きさ（1＝いつもの大きさ。小さいほど遠くから寄っていく）
+const WALK_APPEAR=0.7;
+function drawWalk(){
+  const t=B.walkMax-B.walk,k=Math.min(1,t/(B.walkMax-WALK_APPEAR)),ap=Math.max(0,1-B.walk/WALK_APPEAR),ease=1-Math.pow(1-k,2);
+  const cx=W/2,cy=H*0.4,bob=Math.abs(Math.sin(t*Math.PI/0.4))*Math.min(10,H*0.012)*(1-ap),sway=Math.sin(t*Math.PI/0.4)*Math.min(5,W*0.008)*(1-ap);
+  // 背景：引き（遠く・小さく）から寄り（いつもの大きさ）へ、奥に近づいていく。歩く揺れつき
+  //   縮小して空いた画面のふちは暗がり（黒）にする
+  ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);
+  ctx.save();ctx.translate(cx+sway,cy-bob);const zs=WALK_ZOOM+(1-WALK_ZOOM)*ease;ctx.scale(zs,zs);ctx.translate(-cx,-cy);drawBG();ctx.restore();
+  // 奥の暗がりから敵が近づいてくる（小さく暗い → 大きく、はっきり）
+  if(ap>0){const e=1-Math.pow(1-ap,3),s=0.45+0.55*e;
+    ctx.save();ctx.globalAlpha=Math.min(1,ap*1.6);ctx.translate(cx,cy+(1-e)*H*0.05);ctx.scale(s,s);ctx.translate(-cx,-cy);drawEnemy();ctx.restore();
+    // シルエット：最初は黒く、だんだん色が戻る
+    const g=ctx.createRadialGradient(cx,cy,10,cx,cy,Math.max(W,H)*0.6);g.addColorStop(0,`rgba(0,0,0,${0.55*(1-e)})`);g.addColorStop(1,`rgba(0,0,0,${0.35*(1-e)})`);ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
+  // 手前の暗さ（歩いているあいだは視界のふちが暗い）
+  const v=ctx.createRadialGradient(cx,cy,Math.min(W,H)*0.18,cx,cy,Math.max(W,H)*0.72);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,`rgba(0,0,0,${0.75-0.35*ap})`);ctx.fillStyle=v;ctx.fillRect(0,0,W,H);
+  // プレイヤー（歩いて上下にゆれる）
+  ctx.save();ctx.translate(0,-bob*0.6);drawPlayer();ctx.restore();
+  // 文字
+  ctx.textAlign='center';if(isBossFloor())return;   // ボス階は WARNING!! の文字だけ
+  if(ap<=0)hudText(`${TUT?'練習場':RUN.floor+1+'F'} へ進む${'.'.repeat(1+Math.floor(t/0.3)%3)}`,cx,H*0.24,"900 22px 'M PLUS 1p'",'#e8d4b4');
+  else hudText(isBossFloor()?'……！':'敵だ！',cx,H*0.2,`900 ${Math.round(26+10*Math.min(1,ap*3))}px 'M PLUS 1p'`,isBossFloor()?'#ff9a7a':'#ffd58a');
+}
+// 歩く演出が終わったとき
+function walkDone(){B.walk=0;
+  if(TUT){}else if(!isBossFloor()){B.timer=1.2;float(`${RUN.D.name}  ${RUN.floor+1}F`,W/2,H*0.46,'#ffd58a',30,1.4);float(B.E.name,W/2,H*0.53,'#e8d4b4',24,1.4)}}
 const WARN_TIME=2.6;   // ボス前の WARNING!! 演出の長さ（秒）
 const WARN_AFTER=1.0;  // 演出が終わってからボスが最初に攻撃するまでの秒数
 function drawWarning(){
@@ -1077,12 +1186,13 @@ function burst(x,y,c,n=14,sp=260,add=false){for(let i=0;i<n;i++){const a=Math.ra
 function dropIcon(k,x,y,delay=0){fx.icons.push({k,x,y,vx:rand(-120,120),vy:rand(-380,-260),t:-delay,life:1.6})}
 
 // --- 敵の攻撃 ---
-function pickMove(){const m=B.E.moves,tot=m.reduce((a,b)=>a+b[1],0);let r=Math.random()*tot;for(const[k,w]of m){if((r-=w)<0)return k}return 'slash'}
+function pickMove(){if(TUT)return tutMove();const m=B.E.moves,tot=m.reduce((a,b)=>a+b[1],0);let r=Math.random()*tot;for(const[k,w]of m){if((r-=w)<0)return k}return 'slash'}
 const SPD=0.72,IDLE=0.5;   // 攻撃速度・頻度の全体倍率
 const OPP={R:'L',L:'R',U:'D',D:'U',UR:'DL',DL:'UR',UL:'DR',DR:'UL'};
 function nextAttack(){
   const E=B.E;B.state='idle';
   if(B.flurry){B.timer=0.06;return}
+  if(TUT){B.combo=0;B.timer=1.1;return}
   if(B.combo>0){B.combo--;B.timer=0.16}else{B.combo=ri(0,E.combo);B.timer=rand(E.idle[0],E.idle[1])*IDLE*(B.g.phase2?0.7:1)}
 }
 function beginAttack(){
@@ -1091,7 +1201,7 @@ function beginAttack(){
   if(B.flurry){const d=B.flurry.dirs[B.flurry.idx++];fl=true;
     if(d[0]==='B'){kind='breath';dir='D';w=Math.max(0.34,E.windup*SPD*0.5)*ph}else{kind='slash';dir=d;w=Math.max(0.36,E.windup*SPD*0.55)*ph}}
   else{kind=pickMove();w=E.windup*SPD*rand(0.92,1.08)*ph;
-    if(kind==='combo'){const n=ri(E.flurry[0],E.flurry[1]);B.flurry={dirs:Array.from({length:n},(_,i)=>i>0&&Math.random()<BREATH_IN_FLURRY?(Math.random()<0.5?'BL':'BR'):DIRKEYS[ri(0,7)]),idx:1,ok:0,total:n};
+    if(kind==='combo'){const n=TUT?3:ri(E.flurry[0],E.flurry[1]);B.flurry={dirs:Array.from({length:n},(_,i)=>i>0&&!TUT&&Math.random()<BREATH_IN_FLURRY?(Math.random()<0.5?'BL':'BR'):DIRKEYS[ri(0,7)]),idx:1,ok:0,total:n};
       dir=B.flurry.dirs[0];kind='slash';fl=true;w*=1.15}
     else dir=DIRKEYS[ri(0,7)]}
   const a={kind,dir,t:0,w,res:false,fail:false,lunged:false,holdAt:0,holdLeft:0,impactAt:null,fl,cursed:B.g.curse>0&&kind!=='breath'};
@@ -1100,6 +1210,7 @@ function beginAttack(){
   if(kind==='heavy')a.w*=1.4;
   if(kind==='breath'&&!fl)a.w*=BREATH_WINDUP;   // ブレス/投擲は溜めを短く（以前は×1.35）
   if(kind==='delay'){a.holdAt=a.w*rand(0.5,0.68);a.holdLeft=rand(0.3,0.55)}
+  if(TUT){a.w*=tutCur().slow||1;if(a.holdLeft){a.holdAt=a.w*0.55;a.holdLeft+=0.3}}   // チュートリアルはゆっくり
   B.atk=a;B.state='windup';
   if(kind==='heavy')sfx('heavyWind');if(kind==='breath')sfx('charge',a.w);
   // ヴォルガ：雷速モード中は、振りかぶりの途中で雷光が走って攻撃の向きが反対側へ入れ替わることがある
@@ -1129,7 +1240,7 @@ function afterResolve(){ // 1回の攻撃が終わったあとの共通処理
   B.state='recover';B.timer=a.res?0.22:0.3;
 }
 function finishFlurry(){
-  const f=B.flurry;B.flurry=null;
+  const f=B.flurry;B.flurry=null;if(TUT)tutEvent('flurry',f.ok===f.total);
   if(f.ok===f.total&&!f.dodged){B.posture+=PT;sfx('bonus');float(`${f.total}連撃 見切り！ 体勢+${PT}`,W/2,H*0.26,'#9fe0ff',24,1.3)}
   if(B.posture>=needNow())enterBroken();else{B.state='recover';B.timer=0.3}
 }
@@ -1152,6 +1263,7 @@ function tryParry(ang){
   B.recoil=0.3;B.shake=perfect?10:a.kind==='heavy'?9:5;
   if(a.warped){B.posture+=PT;float(`雷光転移を見切った！ 体勢+${PT}`,c.x,c.y+14,'#bff4ff',20,1.1)}
   if(a.fl)B.flurry.ok++;
+  if(TUT)tutEvent(a.fl?(tutCur().id==='parry'?'parry':''):a.kind==='heavy'?'parryHeavy':a.kind==='delay'?'parryDelay':'parry');
   afterResolve();
 }
 // 回避に成功すると INVINCIBLE 秒のあいだ無敵。ただし効くのは「落下物がからむとき」だけ
@@ -1196,7 +1308,7 @@ function resolveHit(){
     // 連撃中は「⚠ブレス/投擲を回避」はさばいた扱い。普通の攻撃を回避すると、回避ビルドでなければ連撃ボーナスはなくなる
     const dg=dodgeGain();
     if(a.fl&&B.flurry){if(a.kind==='breath'||dg>0)B.flurry.ok++;else{B.flurry.dodged=true;float('回避（体勢は増えない）',W/2,H*0.7+34,'#cdb89a',16,0.9)}}
-    sfx('dodgeOk');float('回避成功！',W/2,H*0.7,'#9fffc0',30,0.9);
+    sfx('dodgeOk');float('回避成功！',W/2,H*0.7,'#9fffc0',30,0.9);if(TUT&&a.kind==='breath')tutEvent('dodge');
     if(dg>0){addPosture(dg,W/2,H*0.7+34,'見切り');burst(W/2,H*0.7,'#9fffc0',16,300,true);startCounter()}
     return}
   const mul=(a.kind==='heavy'?1.6:a.kind==='breath'?1.35:1)*(a.fl?0.6:1);
@@ -1216,6 +1328,7 @@ function strike(p,f,x,y,ang){
   burst(x,y,crit?'#ff9a6a':'#ffcf8a',crit?14:7,crit?340:220);B.shake=Math.max(B.shake,crit?7:3);
   fx.slashes.push({ang,life:0.14,max:0.14,c:W_(S.eqW).glow,at:{x,y},small:true});
   if(!p.body&&!p.broken){p.hp-=Math.round(dmg*perk('part'));if(p.hp<=0)breakPart(p)}
+  if(TUT){tutEvent('hit');if(B.hp<=B.maxHp*0.2)B.hp=B.maxHp}   // チュートリアルの敵は倒れない
   if(B.hp<=0&&!B.over){victory();return}
   // ボス武器の追加効果
   if(perk('gPoison')&&Math.random()<G_POISON_CH){B.epoison.push({ticks:G_POISON_TICKS,next:1});sfx('poison');float('毒にした！',B.tf.x,B.tf.y-B.tf.u*0.6,'#b0ff40',24,1)}
@@ -1329,18 +1442,18 @@ let PAUSED=false;
 const canPause=()=>B&&!B.over&&$('#result').classList.contains('hidden');
 function pauseGame(){if(PAUSED||!canPause())return;PAUSED=true;ptr=null;sfx('click');pauseMenu()}
 function pauseMenu(){
-  $('#pauseBox').innerHTML=`<h2>ポーズ中</h2><p>${RUN.D.name}　${RUN.floor+1}F / ${RUN.D.floors.length}F</p>
+  $('#pauseBox').innerHTML=`<h2>ポーズ中</h2><p>${TUT?'チュートリアル':`${RUN.D.name}　${RUN.floor+1}F / ${RUN.D.floors.length}F`}</p>
     <div class="audio"><button class="sbtn" id="pzSfx"></button><button class="sbtn" id="pzBgm"></button></div>
-    <div class="pbtns"><button class="btn" id="pzResume">戦闘に戻る</button><button class="btn sub2" id="pzQuit">あきらめて帰る（敗北扱い）</button></div>`;
+    <div class="pbtns"><button class="btn" id="pzResume">戦闘に戻る</button><button class="btn sub2" id="pzQuit">${TUT?'チュートリアルをやめる':'あきらめて帰る（敗北扱い）'}</button></div>`;
   $('#pauseOv').classList.remove('hidden');
   $('#pzResume').onclick=resumeGame;updateAudioButtons();
   $('#pzSfx').onclick=()=>{setAudio('sfx',!SND.opt.sfx);sfx('click')};$('#pzBgm').onclick=()=>{setAudio('bgm',!SND.opt.bgm);sfx('click')};
-  $('#pzQuit').onclick=()=>{sfx('click');
+  $('#pzQuit').onclick=()=>{sfx('click');if(TUT){endTutorial();return}
     $('#pauseBox').innerHTML=`<h2 style="color:#ff9a7a">本当にあきらめる？</h2><p>倒れたときと同じ扱いになります。<br><b style="color:#ffb0a0">${RUN.test?'この探索の戦利品を失います（テスト挑戦なので装備は失わない）':'この探索の戦利品と、装備中の5つのうちランダムに1〜3つを失います'}</b></p>
       <div class="pbtns"><button class="btn danger" id="pzYes">あきらめる</button><button class="btn sub2" id="pzNo">やめる（ポーズに戻る）</button></div>`;
     $('#pzNo').onclick=()=>{sfx('click');pauseMenu()};
     $('#pzYes').onclick=giveUp}}
-function resumeGame(){if(!PAUSED)return;PAUSED=false;ptr=null;$('#pauseOv').classList.add('hidden');last=performance.now();sfx('click')}
+function resumeGame(){if(!PAUSED||(TUT&&TUT.intro))return;PAUSED=false;ptr=null;$('#pauseOv').classList.add('hidden');last=performance.now();sfx('click')}
 function giveUp(){PAUSED=false;$('#pauseOv').classList.add('hidden');if(!B||B.over)return;B.over=true;bgm(null);died()}
 $('#pause').onclick=e=>{e.stopPropagation();PAUSED?resumeGame():pauseGame()};
 addEventListener('keydown',e=>{if(!B)return;const k=e.key.toLowerCase();if(k==='escape'||k==='p'){e.preventDefault();PAUSED?resumeGame():pauseGame()}});
@@ -1348,6 +1461,8 @@ addEventListener('keydown',e=>{if(!B)return;const k=e.key.toLowerCase();if(k==='
 document.addEventListener('visibilitychange',()=>{if(document.hidden)pauseGame()});
 
 function died(){
+  // チュートリアルでは倒れない：体力を戻して続ける
+  if(TUT){if(!B)return;B.over=false;B.php=B.pmax;B.atk=null;B.flurry=null;B.state='idle';B.timer=1.2;bgm(RUN.D.id);float('チュートリアルなので体力が戻った！',W/2,H*0.3,'#9fffc0',22,1.6);return}
   sfx('death');
   const lost={};addLoot(lost,RUN.loot);addLoot(lost,B.loot);
   // ボスに直接挑む（テスト用）で負けたときは装備を失わない
@@ -1902,12 +2017,12 @@ function drawHUD(){
   ctx.save();
   // いちばん上：ダンジョン名・階・未確定の戦利品（左右のボタンのあいだ）
   if(RUN){const n=Object.values(RUN.loot).reduce((a,b)=>a+b,0)+Object.values(B.loot).reduce((a,b)=>a+b,0);
-    const fl=`${RUN.floor+1}F / ${RUN.D.floors.length}F${isBossFloor()?' BOSS':''}`,lt=`戦利品 ${n}`;
-    let fs=14;const meas=()=>{ctx.font=`700 ${fs}px 'M PLUS 1p'`;const a=ctx.measureText(RUN.D.name+'　').width;ctx.font=`900 ${fs+1}px 'M PLUS 1p'`;const b2=ctx.measureText(fl+'　').width;ctx.font=`700 ${fs}px 'M PLUS 1p'`;return a+b2+ctx.measureText(lt).width};
+    const fl=TUT?`${Math.min(TUT.step+1,TUT_STEPS.length)} / ${TUT_STEPS.length}`:`${RUN.floor+1}F / ${RUN.D.floors.length}F${isBossFloor()?' BOSS':''}`,lt=TUT?'':`戦利品 ${n}`;
+    const dn=TUT?'チュートリアル':RUN.D.name;let fs=14;const meas=()=>{ctx.font=`700 ${fs}px 'M PLUS 1p'`;const a=ctx.measureText(dn+'　').width;ctx.font=`900 ${fs+1}px 'M PLUS 1p'`;const b2=ctx.measureText(fl+'　').width;ctx.font=`700 ${fs}px 'M PLUS 1p'`;return a+b2+ctx.measureText(lt).width};
     // ♪ボタンの右から ❚❚ボタンの左までのあいだに収める
     const L0=($('#pause').offsetWidth||44)+18,R0=W-L0,room=R0-L0-24;fs=14;while(fs>10&&meas()>room)fs--;const tw=meas(),x0=Math.max(L0+12,Math.min(W/2-tw/2,R0-12-tw));
     ctx.fillStyle='rgba(20,13,8,0.72)';ctx.strokeStyle='rgba(201,138,58,0.55)';ctx.lineWidth=1;ctx.beginPath();ctx.roundRect(x0-12,8,tw+24,34,10);ctx.fill();ctx.stroke();
-    ctx.textAlign='left';ctx.font=`700 ${fs}px 'M PLUS 1p'`;ctx.fillStyle='#e8d4b4';ctx.fillText(RUN.D.name+'　',x0,30);let x=x0+ctx.measureText(RUN.D.name+'　').width;
+    ctx.textAlign='left';ctx.font=`700 ${fs}px 'M PLUS 1p'`;ctx.fillStyle='#e8d4b4';ctx.fillText(dn+'　',x0,30);let x=x0+ctx.measureText(dn+'　').width;
     ctx.font=`900 ${fs+1}px 'M PLUS 1p'`;ctx.fillStyle=isBossFloor()?'#ff9a7a':'#ffd58a';ctx.fillText(fl+'　',x,30);x+=ctx.measureText(fl+'　').width;
     ctx.font=`700 ${fs}px 'M PLUS 1p'`;ctx.fillStyle=n?'#ffc0b0':'#bba78a';ctx.fillText(lt,x,30)}
   // 敵の名前と体力
@@ -2026,7 +2141,7 @@ function updateHazards(dt){const hz=hazard();
     if(ic.t>=ic.w+LATE){ic.landed=true;const win=dodgeWin(),inv=invVsHazard(),ok=inv||(B.dodgeAt>=B.t-LATE-win&&B.dodgeAt<=B.t);const pp=PP();if(ok&&!inv)grantInv('hz');
       sfx({rock:'rock',bolt:'thunder',ice:'iceCrash',dark:'darkBeam'}[ic.type]);burst(ic.x,pp.y-30,hz.c,30,480,true);B.shake=Math.max(B.shake,12);
       if(ic.type==='bolt'||ic.type==='dark')fx.flash={c:hz.c,life:0.2,max:0.2};
-      if(ok){float(`${hz.name}を回避！`,W/2,H*0.62,'#bff4ff',26,0.9);const dg=dodgeGain();if(dg>0){addPosture(dg,W/2,H*0.62+30,'見切り');startCounter()}}
+      if(ok){float(`${hz.name}を回避！`,W/2,H*0.62,'#bff4ff',26,0.9);if(TUT)tutEvent('hzdodge');const dg=dodgeGain();if(dg>0){addPosture(dg,W/2,H*0.62+30,'見切り');startCounter()}}
       else{const dmg=Math.round(B.E.dmg*HZ_DMG*rand(0.9,1.1)*100/(100+armStat().def)*cutMul());sfx('hurt',true);B.php-=dmg;B.hurt=0.5;B.shake=20;B.posture=Math.max(0,B.posture-PT);
         float(`${hz.name}が直撃！ -${dmg}`,W/2,H*0.74,'#ff5a4a',34,1.0);if(B.php<=0){B.php=0;B.over=true;bgm(null);setTimeout(died,900)}}}}
   B.hz=B.hz.filter(ic=>!ic.landed||ic.life<0.4)}
@@ -2100,6 +2215,10 @@ function gimmicks(dt){
   }
 }
 function update(dt){
+  if(B.walk>0){B.walk-=dt;B.stepT-=dt;
+    if(B.walk>WALK_APPEAR&&B.stepT<=0){B.stepT=0.4;sfx('step')}
+    if(!B.appeared&&B.walk<=WALK_APPEAR){B.appeared=true;if(!isBossFloor())sfx('appear')}
+    if(B.walk<=0)walkDone();if(!(B.warn>0))return}
   if(B.warn>0){B.warn-=dt;B.shake=Math.max(B.shake,B.warn>WARN_TIME-0.3?8:0);for(const k of['shake'])B[k]=Math.max(0,B[k]-dt*20);
     if(B.warn<=0){B.warn=0;B.timer=WARN_AFTER;B.roar=1.2;B.shake=18;sfx('roar');float(`BOSS ${B.E.name}`,W/2,H*0.53,'#ff7a5a',34,1.6)}return}
   B.t+=dt;
@@ -2121,7 +2240,7 @@ function update(dt){
   if(B.over)return;
   { // 瀕死の鼓動（体力35%未満で、減るほど速く）
     const r=B.php/B.pmax;if(r<0.35&&r>0){B.hb=(B.hb||0)-dt;if(B.hb<=0){sfx('heart');B.hb=60/(70+(0.35-r)*240)}}}
-  const n=needNow();if(n>B.lastNeed){B.lastNeed=n;sfx('warn');float(`敵が警戒を強めた！ 必要ポイント +${PT}`,W/2,H*0.2,'#ff9a6a',20,1.6)}
+  const n=needNow();if(!TUT&&n>B.lastNeed){B.lastNeed=n;sfx('warn');float(`敵が警戒を強めた！ 必要ポイント +${PT}`,W/2,H*0.2,'#ff9a6a',20,1.6)}
   gimmicks(dt);if(B.over)return;
   if(B.epoison.length){ // ボス武器の毒：敵に1秒ごとダメージ
     for(const p of B.epoison){p.next-=dt;if(p.next<=0&&p.ticks>0){p.next+=1;p.ticks--;const d=Math.max(1,Math.round(B.maxHp*G_POISON_PCT*(B.g.armor>0?0.2:1)));B.hp-=d;guardPhase();
@@ -2131,7 +2250,8 @@ function update(dt){
     let d=0;for(const p of B.poison){const k=Math.min(dt,p.left);d+=p.dps*k*cutMul();p.left-=dt}B.poison=B.poison.filter(p=>p.left>0);
     B.php-=d;B.poisonAcc+=d;if(B.poisonAcc>=4){float('-'+Math.round(B.poisonAcc),W/2+rand(-30,30),H*0.78,'#b0ff40',18,0.7);B.poisonAcc=0}
     if(B.php<=0){B.php=0;B.over=true;bgm(null);setTimeout(died,900);return}}
-  if(B.state==='idle'){B.timer-=dt;if(B.timer<=0)beginAttack()}
+  if(TUT&&tutCur()&&tutCur().id==='hz'&&!B.hz.length&&B.g.hzCD>1.6&&!TUT.wait)B.g.hzCD=1.6;   // チュートリアルの落石は間をあけずに降らす
+  if(B.state==='idle'){B.timer-=dt;if(B.timer<=0){if(TUT&&(tutCur().noAtk||TUT.wait))B.timer=0.5;else beginAttack()}}
   else if(B.state==='windup'){
     if(a.holdLeft>0&&a.t>=a.holdAt)a.holdLeft-=dt;else a.t+=dt;
     if(a.warpAt&&!a.warped&&a.t>=a.warpAt){const p0=attackPoint(a);a.warped=true;a.dir=OPP[a.dir];const p1=attackPoint(a),t=B.tf; // 雷光転移：向きが反対へ
@@ -2143,7 +2263,7 @@ function update(dt){
     if(!a.lunged&&a.t>=a.w){a.lunged=true;if(!a.res)impact()}
     if(!a.res&&a.t>=a.w+LATE){resolveHit();if(!B.over)afterResolve()}}
   else if(B.state==='recover'){B.timer-=dt;if(B.timer<=0)nextAttack()}
-  else if(B.state==='broken'){B.brokenT-=dt;if(B.brokenT<=0){B.frozenBreak=false;B.posture=0;B.state='idle';B.timer=1.0;B.combo=0;float('体勢を立て直した',W/2,H*0.25,'#cdb89a',20,1)}}
+  else if(B.state==='broken'){B.brokenT-=dt;if(B.brokenT<=0){if(TUT)setTimeout(()=>tutEvent('breakEnd'),0);B.frozenBreak=false;B.posture=0;B.state='idle';B.timer=1.0;B.combo=0;float('体勢を立て直した',W/2,H*0.25,'#cdb89a',20,1)}}
 }
 
 let last=performance.now();
@@ -2151,7 +2271,8 @@ function loop(now){
   const dt=Math.min(0.05,(now-last)/1000);last=now;
   if(B){if(!PAUSED)update(dt);
     ctx.save();if(B.shake>0)ctx.translate((Math.random()-0.5)*B.shake,(Math.random()-0.5)*B.shake);
-    drawBG();drawEnemy();drawBreath();drawTelegraph();drawPlayer();if(B.flRow&&B.atk&&B.atk.fl)drawFlurryRow(W/2,B.flRow.y,B.flRow.col);drawHazards();drawFX(dt);drawSpecialFX(dt);ctx.restore();drawOrbs();drawCold();drawLowHP();drawHUD();drawGimmickHUD();if(B.warn>0)drawWarning();
+    if(B.walk>0){drawWalk();ctx.restore();if(B.warn>0)drawWarning();requestAnimationFrame(loop);return}
+    drawBG();drawEnemy();drawBreath();drawTelegraph();drawPlayer();if(B.flRow&&B.atk&&B.atk.fl)drawFlurryRow(W/2,B.flRow.y,B.flRow.col);drawHazards();drawFX(dt);drawSpecialFX(dt);ctx.restore();drawOrbs();drawCold();drawLowHP();drawHUD();if(!TUT)drawGimmickHUD();drawTut();if(B.warn>0)drawWarning();
     if(B.g.curse>0){const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.3,W/2,H/2,Math.max(W,H)*0.7);g.addColorStop(0,'rgba(120,0,200,0)');g.addColorStop(1,'rgba(120,0,200,0.35)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
     if(fx.flash){ctx.fillStyle=rgba(fx.flash.c,0.45*fx.flash.life/fx.flash.max);ctx.fillRect(0,0,W,H)}
     if(B.hurt>0){const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.3,W/2,H/2,Math.max(W,H)*0.7);g.addColorStop(0,'rgba(255,0,0,0)');g.addColorStop(1,`rgba(220,20,10,${B.hurt})`);ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
