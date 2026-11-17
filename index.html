@@ -1342,7 +1342,7 @@ function strike(p,f,x,y,ang){
   if(perk('gFreeze')&&Math.random()<G_FREEZE_CH)specialHit(G_FREEZE_PCT,'ice');
 }
 // ===== ボス武器の追加効果（数値） =====
-const G_POISON_CH=0.1,G_POISON_PCT=0.02,G_POISON_TICKS=5;   // 毒：1/10で、最大HPの2%を1秒ごとに5回
+const G_POISON_CH=0.1,G_POISON_PCT=0.01,G_POISON_TICKS=7;   // 毒：1/10で、最大HPの1%を1秒ごとに7回（v16で2%×5回から変更）
 const G_BOLT_CH=1/15,G_BOLT_PCT=0.07;                      // 落雷：1/15で最大HPの7%
 const G_BEAM_CH=0.1,G_BEAM_PCT=0.10;                       // 闇の光線：1/10で最大HPの10%
 const G_FREEZE_SEC=1;                                      // 凍結：この武器で崩すと崩し時間+1秒
