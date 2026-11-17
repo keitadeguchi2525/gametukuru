@@ -122,9 +122,9 @@ h1{font-weight:900;font-size:30px;letter-spacing:.06em;text-align:center;color:#
   <div class="tabs">
     <button data-tab="hunt" class="on">ダンジョン</button>
     <button data-tab="forge">工房</button>
-    <button data-tab="gacha">ガチャ</button>
     <button data-tab="inv">持ち物</button>
     <button data-tab="stat">ステータス</button>
+    <button data-tab="gacha">ガチャ</button>
     <button data-tab="how">遊び方</button>
   </div>
   <div id="panel"></div>
@@ -474,7 +474,7 @@ function perkText(pk){if(!pk)return '';const o=[],pc=v=>Math.round(v*100);
     else if(k==='critDmg')o.push(`会心ダメージ ${sg(pc(v))}%`);else if(k==='heal')o.push(`パリィ成功でHP${+v.toFixed(1)}回復`);
     else if(k==='dodgePts')o.push(`回避成功で体勢 +${Math.round(v)}pt`);
     else if(k==='dmgCut')o.push(`被ダメージ ${Math.round(v*100)}%カット`);
-    else if(k==='gPoison')o.push(`攻撃時 1/${Math.round(1/G_POISON_CH)}で敵を毒に（最大HPの${Math.round(G_POISON_PCT*100)}%×${G_POISON_TICKS}回）`);
+    else if(k==='gPoison')o.push(`攻撃時 1/${Math.round(1/G_POISON_CH)}で敵を毒に（最大HPの${Math.round(G_POISON_PCT*100)}%×★1・2は${G_POISON_TICKS[1]}回／★3・4は${G_POISON_TICKS[3]}回／★5は${G_POISON_TICKS[5]}回）`);
     else if(k==='gBolt')o.push(`攻撃時 1/${Math.round(1/G_BOLT_CH)}で落雷（最大HPの${Math.round(G_BOLT_PCT*100)}%）`);
     else if(k==='gFreeze')o.push(`崩すと敵が凍り崩し時間 +${G_FREEZE_SEC}秒／攻撃時 1/${Math.round(1/G_FREEZE_CH)}で氷撃（最大HPの${Math.round(G_FREEZE_PCT*100)}%）`);
     else if(k==='gBeam')o.push(`攻撃時 1/${Math.round(1/G_BEAM_CH)}で闇の光線（最大HPの${Math.round(G_BEAM_PCT*100)}%）`)}
@@ -747,7 +747,12 @@ const SFX={
   zap:()=>{noise(0.15,{vol:0.3,f:4000,q:3});tone(1800,0.12,{type:'square',vol:0.06,to:400})},
   break:()=>{tone(110,0.5,{vol:0.45,to:50});tone(mf(64),0.3,{type:'triangle',vol:0.12,at:0.05});tone(mf(60),0.4,{type:'triangle',vol:0.12,at:0.15})},
   hit:()=>{noise(0.07,{vol:0.22,f:2500,q:1.5});tone(240,0.06,{type:'square',vol:0.05,to:120})},
-  crit:()=>{noise(0.1,{vol:0.32,f:4000});tone(900,0.15,{type:'triangle',vol:0.15,to:500})},
+  // 会心：ズバッ（鋭い斬撃音）＋ドンッ（重い手ごたえ）＋キィーン（澄んだ金属の響き）。毎回少し音の高さを変えて聞き飽きにくくする
+  crit:()=>{const k=Math.pow(2,ri(-1,2)/12);
+    noise(0.09,{vol:0.28,f:7000*k,to:2200,q:0.8,ftype:'highpass'});noise(0.05,{vol:0.22,f:3200,q:2});
+    tone(170,0.14,{vol:0.3,to:55});tone(1400*k,0.07,{type:'triangle',vol:0.12,to:2600*k});
+    [96,103].forEach((m,i)=>tone(mf(m)*k,0.32-i*0.06,{vol:0.075-i*0.02,at:0.025,det:i?8:-8}));
+    tone(mf(108)*k,0.16,{vol:0.03,at:0.04})},
   partBreak:()=>{noise(0.35,{vol:0.4,f:800,ftype:'lowpass'});tone(90,0.3,{vol:0.4,to:45});[76,83,88].forEach((m,i)=>tone(mf(m),0.25,{type:'triangle',vol:0.12,at:0.15+i*0.06}))},
   kill:()=>{tone(60,1.0,{vol:0.5,to:30});noise(1.0,{vol:0.3,f:500,to:100,ftype:'lowpass'})},
   rare:()=>[84,88,91,96,100].forEach((m,i)=>tone(mf(m),0.3,{vol:0.14,at:i*0.06})),
@@ -1331,14 +1336,16 @@ function strike(p,f,x,y,ang){
   if(TUT){tutEvent('hit');if(B.hp<=B.maxHp*0.2)B.hp=B.maxHp}   // チュートリアルの敵は倒れない
   if(B.hp<=0&&!B.over){victory();return}
   // ボス武器の追加効果
-  if(perk('gPoison')&&Math.random()<G_POISON_CH){B.epoison.push({ticks:G_POISON_TICKS,next:1});sfx('poison');float('毒にした！',B.tf.x,B.tf.y-B.tf.u*0.6,'#b0ff40',24,1)}
+  if(perk('gPoison')&&Math.random()<G_POISON_CH){B.epoison.push({ticks:poisonTicks(),next:1});sfx('poison');float('毒にした！',B.tf.x,B.tf.y-B.tf.u*0.6,'#b0ff40',24,1)}
   if(perk('gBolt')&&Math.random()<G_BOLT_CH)specialHit(G_BOLT_PCT,'bolt');
   if(perk('gBeam')&&Math.random()<G_BEAM_CH)specialHit(G_BEAM_PCT,'beam');
   if(perk('gFreeze')&&Math.random()<G_FREEZE_CH)specialHit(G_FREEZE_PCT,'ice');
 }
 // ===== ボス武器の追加効果（数値） =====
-const G_POISON_CH=0.1,G_POISON_PCT=0.02,G_POISON_TICKS=5;   // 毒：1/10で、最大HPの2%を1秒ごとに5回
-const G_BOLT_CH=1/15,G_BOLT_PCT=0.07;                      // 落雷：1/15で最大HPの7%
+const G_POISON_CH=0.1,G_POISON_PCT=0.01;   // 毒：1/10で、最大HPの1%を1秒ごとに（回数はダンジョンの★で変わる）
+const G_POISON_TICKS={1:7,2:7,3:6,4:6,5:5};   // ★ごとの毒の回数（★1・2＝7回で合計7%、★3・4＝6回で6%、★5＝5回で5%）
+const poisonTicks=()=>G_POISON_TICKS[RUN&&RUN.D?RUN.D.stars:1]||7;
+const G_BOLT_CH=1/12,G_BOLT_PCT=0.08;                      // 落雷：1/12で最大HPの8%（v16で1/15・7%から変更）
 const G_BEAM_CH=0.1,G_BEAM_PCT=0.10;                       // 闇の光線：1/10で最大HPの10%
 const G_FREEZE_SEC=1;                                      // 凍結：この武器で崩すと崩し時間+1秒
 const G_FREEZE_CH=1/12,G_FREEZE_PCT=0.08;                  // 氷撃：1/12で最大HPの8%
