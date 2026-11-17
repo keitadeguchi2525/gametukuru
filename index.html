@@ -758,6 +758,8 @@ const SFX={
   armor:()=>{noise(0.8,{vol:0.35,f:250,ftype:'lowpass'});tone(55,0.8,{vol:0.4})},
   crack:()=>noise(0.25,{vol:0.35,f:1800,q:2}),
   shatter:()=>{noise(0.6,{vol:0.45,f:1200,to:300});[60,67,72].forEach((m,i)=>tone(mf(m),0.4,{type:'triangle',vol:0.12,at:0.1+i*0.05}))},
+  step:()=>{noise(0.09,{vol:0.22,f:180,q:0.9});tone(70,0.08,{type:'sine',vol:0.12,to:45})},
+  appear:()=>{tone(110,0.5,{type:'sawtooth',vol:0.07,to:55,attack:0.05});noise(0.45,{vol:0.1,f:400,q:0.6})},
   warning:()=>{for(let i=0;i<3;i++){tone(660,0.32,{type:'square',vol:0.09,to:880,at:i*0.7,attack:0.02});tone(880,0.32,{type:'square',vol:0.09,to:660,at:i*0.7+0.34,attack:0.02})}noise(0.5,{vol:0.12,f:120,q:0.7,at:0})},
   roar:()=>{tone(70,1.0,{type:'sawtooth',vol:0.15,to:50,attack:0.1});noise(1.0,{vol:0.3,f:300,q:0.8,attack:0.1})},
   curse:()=>{tone(mf(61),0.9,{vol:0.12,det:-30});tone(mf(67),0.9,{vol:0.1,det:20})},
@@ -1034,10 +1036,35 @@ function startFloor(){
   $('#hub').classList.add('hidden');$('#battle').classList.remove('hidden');$('#result').classList.add('hidden');
   resize();
   bgm(RUN.D.id+(isBossFloor()?'b':''));
-  // ボス階：戦闘の前に WARNING!! の演出（そのあいだボスは攻撃しない）
+  // まず「奥へ歩いて進む」演出 → 奥に敵がいた！（そのあいだ敵は攻撃しない）
+  // ボス階は歩きながら WARNING!!（歩きの長さを WARNING と同じにして、歩き終わりにボスが現れて咆哮）
+  B.walkMax=isBossFloor()?WARN_TIME:WALK_TIME;B.walk=B.walkMax;B.stepT=0.15;
   if(isBossFloor()){B.warn=WARN_TIME;sfx('warning')}
-  else{float(`${RUN.D.name}  ${RUN.floor+1}F`,W/2,H*0.46,'#ffd58a',30,1.6);float(E.name,W/2,H*0.53,'#e8d4b4',24,1.6)}
 }
+const WALK_TIME=1.9;    // 歩いて奥へ進む演出の長さ（秒）。最後の0.7秒で敵が姿を現す
+const WALK_APPEAR=0.7;
+function drawWalk(){
+  const t=B.walkMax-B.walk,k=Math.min(1,t/(B.walkMax-WALK_APPEAR)),ap=Math.max(0,1-B.walk/WALK_APPEAR),ease=1-Math.pow(1-k,2);
+  const cx=W/2,cy=H*0.4,bob=Math.abs(Math.sin(t*Math.PI/0.4))*Math.min(10,H*0.012)*(1-ap),sway=Math.sin(t*Math.PI/0.4)*Math.min(5,W*0.008)*(1-ap);
+  // 背景：奥（画面中央の少し上）へ向かってズームしながら、歩く揺れ
+  ctx.save();ctx.translate(cx+sway,cy-bob);const zs=1.35-0.35*ease;ctx.scale(zs,zs);ctx.translate(-cx,-cy);drawBG();ctx.restore();
+  // 奥の暗がりから敵が近づいてくる（小さく暗い → 大きく、はっきり）
+  if(ap>0){const e=1-Math.pow(1-ap,3),s=0.45+0.55*e;
+    ctx.save();ctx.globalAlpha=Math.min(1,ap*1.6);ctx.translate(cx,cy+(1-e)*H*0.05);ctx.scale(s,s);ctx.translate(-cx,-cy);drawEnemy();ctx.restore();
+    // シルエット：最初は黒く、だんだん色が戻る
+    const g=ctx.createRadialGradient(cx,cy,10,cx,cy,Math.max(W,H)*0.6);g.addColorStop(0,`rgba(0,0,0,${0.55*(1-e)})`);g.addColorStop(1,`rgba(0,0,0,${0.35*(1-e)})`);ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
+  // 手前の暗さ（歩いているあいだは視界のふちが暗い）
+  const v=ctx.createRadialGradient(cx,cy,Math.min(W,H)*0.18,cx,cy,Math.max(W,H)*0.72);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,`rgba(0,0,0,${0.75-0.35*ap})`);ctx.fillStyle=v;ctx.fillRect(0,0,W,H);
+  // プレイヤー（歩いて上下にゆれる）
+  ctx.save();ctx.translate(0,-bob*0.6);drawPlayer();ctx.restore();
+  // 文字
+  ctx.textAlign='center';if(isBossFloor())return;   // ボス階は WARNING!! の文字だけ
+  if(ap<=0)hudText(`${RUN.floor+1}F へ進む${'.'.repeat(1+Math.floor(t/0.3)%3)}`,cx,H*0.24,"900 22px 'M PLUS 1p'",'#e8d4b4');
+  else hudText(isBossFloor()?'……！':'敵だ！',cx,H*0.2,`900 ${Math.round(26+10*Math.min(1,ap*3))}px 'M PLUS 1p'`,isBossFloor()?'#ff9a7a':'#ffd58a');
+}
+// 歩く演出が終わったとき
+function walkDone(){B.walk=0;
+  if(!isBossFloor()){B.timer=1.2;float(`${RUN.D.name}  ${RUN.floor+1}F`,W/2,H*0.46,'#ffd58a',30,1.4);float(B.E.name,W/2,H*0.53,'#e8d4b4',24,1.4)}}
 const WARN_TIME=2.6;   // ボス前の WARNING!! 演出の長さ（秒）
 const WARN_AFTER=1.0;  // 演出が終わってからボスが最初に攻撃するまでの秒数
 function drawWarning(){
@@ -2100,6 +2127,10 @@ function gimmicks(dt){
   }
 }
 function update(dt){
+  if(B.walk>0){B.walk-=dt;B.stepT-=dt;
+    if(B.walk>WALK_APPEAR&&B.stepT<=0){B.stepT=0.4;sfx('step')}
+    if(!B.appeared&&B.walk<=WALK_APPEAR){B.appeared=true;if(!isBossFloor())sfx('appear')}
+    if(B.walk<=0)walkDone();if(!(B.warn>0))return}
   if(B.warn>0){B.warn-=dt;B.shake=Math.max(B.shake,B.warn>WARN_TIME-0.3?8:0);for(const k of['shake'])B[k]=Math.max(0,B[k]-dt*20);
     if(B.warn<=0){B.warn=0;B.timer=WARN_AFTER;B.roar=1.2;B.shake=18;sfx('roar');float(`BOSS ${B.E.name}`,W/2,H*0.53,'#ff7a5a',34,1.6)}return}
   B.t+=dt;
@@ -2151,6 +2182,7 @@ function loop(now){
   const dt=Math.min(0.05,(now-last)/1000);last=now;
   if(B){if(!PAUSED)update(dt);
     ctx.save();if(B.shake>0)ctx.translate((Math.random()-0.5)*B.shake,(Math.random()-0.5)*B.shake);
+    if(B.walk>0){drawWalk();ctx.restore();if(B.warn>0)drawWarning();requestAnimationFrame(loop);return}
     drawBG();drawEnemy();drawBreath();drawTelegraph();drawPlayer();if(B.flRow&&B.atk&&B.atk.fl)drawFlurryRow(W/2,B.flRow.y,B.flRow.col);drawHazards();drawFX(dt);drawSpecialFX(dt);ctx.restore();drawOrbs();drawCold();drawLowHP();drawHUD();drawGimmickHUD();if(B.warn>0)drawWarning();
     if(B.g.curse>0){const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.3,W/2,H/2,Math.max(W,H)*0.7);g.addColorStop(0,'rgba(120,0,200,0)');g.addColorStop(1,'rgba(120,0,200,0.35)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
     if(fx.flash){ctx.fillStyle=rgba(fx.flash.c,0.45*fx.flash.life/fx.flash.max);ctx.fillRect(0,0,W,H)}
