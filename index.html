@@ -474,7 +474,7 @@ function perkText(pk){if(!pk)return '';const o=[],pc=v=>Math.round(v*100);
     else if(k==='critDmg')o.push(`会心ダメージ ${sg(pc(v))}%`);else if(k==='heal')o.push(`パリィ成功でHP${+v.toFixed(1)}回復`);
     else if(k==='dodgePts')o.push(`回避成功で体勢 +${Math.round(v)}pt`);
     else if(k==='dmgCut')o.push(`被ダメージ ${Math.round(v*100)}%カット`);
-    else if(k==='gPoison')o.push(`攻撃時 1/${Math.round(1/G_POISON_CH)}で敵を毒に（${Math.round(G_POISON_PCT*100)}%×★1・2は${G_POISON_TICKS[1]}回／★3・4は${G_POISON_TICKS[3]}回／★5は${G_POISON_TICKS[5]}回）`);
+    else if(k==='gPoison')o.push(`攻撃時 1/${Math.round(1/G_POISON_CH)}で敵を毒に`);
     else if(k==='gBolt')o.push(`攻撃時 1/${Math.round(1/G_BOLT_CH)}で落雷（最大HPの${Math.round(G_BOLT_PCT*100)}%）`);
     else if(k==='gFreeze')o.push(`崩すと敵が凍り崩し時間 +${G_FREEZE_SEC}秒／攻撃時 1/${Math.round(1/G_FREEZE_CH)}で氷撃（最大HPの${Math.round(G_FREEZE_PCT*100)}%）`);
     else if(k==='gBeam')o.push(`攻撃時 1/${Math.round(1/G_BEAM_CH)}で闇の光線（最大HPの${Math.round(G_BEAM_PCT*100)}%）`)}
