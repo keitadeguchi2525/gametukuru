@@ -1132,9 +1132,10 @@ function drawWalk(){
   const t=B.walkMax-B.walk,k=Math.min(1,t/(B.walkMax-WALK_APPEAR)),ap=Math.max(0,1-B.walk/WALK_APPEAR),ease=1-Math.pow(1-k,2);
   const cx=W/2,cy=H*0.4,bob=Math.abs(Math.sin(t*Math.PI/0.4))*Math.min(10,H*0.012)*(1-ap),sway=Math.sin(t*Math.PI/0.4)*Math.min(5,W*0.008)*(1-ap);
   // 背景：引き（遠く・小さく）から寄り（いつもの大きさ）へ、奥に近づいていく。歩く揺れつき
-  //   縮小して空いた画面のふちは暗がり（黒）にする
+  //   縮小しても画面のふちまで背景が届くように、まわりに鏡に映した背景をつなげて描く（drawBGWide）
   ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);
-  ctx.save();ctx.translate(cx+sway,cy-bob);const zs=WALK_ZOOM+(1-WALK_ZOOM)*ease;ctx.scale(zs,zs);ctx.translate(-cx,-cy);drawBG();ctx.restore();
+  ctx.save();ctx.translate(cx+sway,cy-bob);const zs=WALK_ZOOM+(1-WALK_ZOOM)*ease;ctx.scale(zs,zs);ctx.translate(-cx,-cy);drawBGWide();ctx.restore();
+  bgVignette();
   // 奥の暗がりから敵が近づいてくる（小さく暗い → 大きく、はっきり）
   if(ap>0){const e=1-Math.pow(1-ap,3),s=0.45+0.55*e;
     ctx.save();ctx.globalAlpha=Math.min(1,ap*1.6);ctx.translate(cx,cy+(1-e)*H*0.05);ctx.scale(s,s);ctx.translate(-cx,-cy);drawEnemy();ctx.restore();
@@ -1651,12 +1652,25 @@ function bgUnder(g,R,hz){
   for(const side of[-1,1])for(let i=0;i<3;i++){const x0=W*(0.06+i*0.08+R()*0.03),x=side<0?x0:W-x0,len=H*(0.12+R()*0.2);
     for(let y=0;y<len;y+=9){g.beginPath();g.ellipse(x,y,(y/9)%2?2.5:4,5,0,0,Math.PI*2);g.stroke()}}
 }
+function bgCanvas(theme){const key=`${theme}|${W}x${H}@${DPR}`;
+  if(!BGCACHE||BGCACHE.key!==key)BGCACHE={key,c:buildBG(theme)};return BGCACHE.c}
+function bgVignette(){const v=ctx.createRadialGradient(W/2,H*0.45,Math.min(W,H)*0.2,W/2,H*0.5,Math.max(W,H)*0.75);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.6)');ctx.fillStyle=v;ctx.fillRect(0,0,W,H)}
 function drawBG(){
-  const theme=bgTheme(),key=`${theme}|${W}x${H}@${DPR}`;
-  if(!BGCACHE||BGCACHE.key!==key)BGCACHE={key,c:buildBG(theme)};
-  ctx.drawImage(BGCACHE.c,0,0,W,H);
+  const theme=bgTheme();
+  ctx.drawImage(bgCanvas(theme),0,0,W,H);
   drawBGAnim(theme);
-  const v=ctx.createRadialGradient(W/2,H*0.45,Math.min(W,H)*0.2,W/2,H*0.5,Math.max(W,H)*0.75);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.6)');ctx.fillStyle=v;ctx.fillRect(0,0,W,H);
+  bgVignette();
+}
+// 縮めて描いても画面のふちが空かないように、背景のまわりに「鏡に映した背景」をつなげて描く（歩く演出用）
+//   反転してつなぐので、つなぎ目の色や形がぴったり合う。ふちを暗くする処理（bgVignette）は呼んだ側で画面全体にかける
+function drawBGWide(){
+  const theme=bgTheme(),c=bgCanvas(theme);
+  for(let j=-1;j<=1;j++)for(let i=-1;i<=1;i++){const fx=i!==0,fy=j!==0;
+    ctx.save();ctx.translate(i*W+(fx?W:0),j*H+(fy?H:0));ctx.scale(fx?-1:1,fy?-1:1);ctx.drawImage(c,0,0,W,H);ctx.restore()}
+  // つなげた部分は外側ほど暗くして、反転した形が目立たないようにする
+  const sh=(x0,y0,x1,y1,rx,ry,rw,rh)=>{const g=ctx.createLinearGradient(x0,y0,x1,y1);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,0.85)');ctx.fillStyle=g;ctx.fillRect(rx,ry,rw,rh)},dx=W*0.22,dy=H*0.22;
+  sh(0,0,0,-dy,-W,-H,W*3,H);sh(0,H,0,H+dy,-W,H,W*3,H);sh(0,0,-dx,0,-W,-H,W,H*3);sh(W,0,W+dx,0,W,-H,W,H*3);
+  drawBGAnim(theme);
 }
 // 体力が減るほど、画面の周りから赤いトンネルが迫る（HUDの文字は上に描くので読める）
 const LOWHP_START=0.85;   // 体力がこの割合を切ると出はじめる
