@@ -1120,7 +1120,7 @@ function startFloor(){
   const E=floorEnemy();
   B={E,hp:E.hp,maxHp:E.hp,parts:E.parts.map((p,k)=>({...p,maxHp:p.hp||0,hp:p.hp||0,broken:false,flash:0,seed:k*13+5})),
      posture:0,state:'idle',timer:2.0,atk:null,combo:0,brokenT:0,brokenMax:1,bonus:0,php:RUN.php,pmax:RUN.pmax,loot:{},over:false,
-     shake:0,lunge:0,recoil:0,pAnim:null,dAnim:null,hurt:0,t:0,fade:1,tf:{x:0,y:0,rot:0,sc:1,u:1},bounce:0,dodgeAt:-9,dodgeCD:0,stam:STAM_MAX,stamT:0,lastNeed:0,deathT:0,flurry:null,roar:0,
+     shake:0,lunge:0,recoil:0,pAnim:null,dAnim:null,hurt:0,t:0,fade:1,tf:{x:0,y:0,rot:0,sc:1,u:1},bounce:0,dodgeAt:-9,dodgeCD:0,stam:STAM_MAX,stamP:0,stamWait:0,lastNeed:0,deathT:0,flurry:null,roar:0,
      g:{charge:0,storm:0,armor:0,armorMax:3,armorDone:false,phase2:false,curse:0,curseCD:5,regenAcc:0,orbCD:ORB_FIRST,hzCD:0,blizzard:false}};
   B.orbs=[];B.hz=[];B.poison=[];B.poisonAcc=0;B.epoison=[];B.frozenBreak=false;if(hazard())B.g.hzCD=hzEvery()*rand(0.6,0.9);
   B.lastNeed=needNow();
@@ -1298,13 +1298,14 @@ function startCounter(){if(B.state==='broken'||B.over)return;B.counterT=COUNTER_
 const canRub=()=>!B.over&&(B.state==='broken'||B.counterT>0);
 // ===== 回避のスタミナ（v16）=====
 // 回避1回でスタミナを1使う。満タンは5（続けて回避できるのは5回まで）。0のあいだは回避できない
-// 最後に回避してから STAM_DELAY 秒は回復しない。そのあと STAM_REGEN 秒ごとに1つずつ回復する（1つ目は回避の STAM_DELAY＋STAM_REGEN 秒後）。装備では変わらない
+// 最後に回避してから STAM_DELAY 秒は回復が止まる。そのあと STAM_REGEN 秒で丸が1つ満ちる。
+// 回復の途中で回避しても使うのは1つだけで、途中までたまった分は残る。装備では変わらない
 const STAM_MAX=5,STAM_REGEN=0.8,STAM_DELAY=0.6;
 function doDodge(dir='R'){if(PAUSED)return;
   if(!B||B.over||B.dodgeCD>0)return;
   if(B.noDodgeT>0){if(!B.lockMsg){B.lockMsg=0.3;sfx('fail');float('体勢が崩れて回避できない！',W/2,H*0.7,'#ff8f7a',20,0.7)}return}
   if(B.stam<1){if(!B.lockMsg){B.lockMsg=0.3;sfx('fail');float('スタミナ切れ！ 少し待とう',W/2,H*0.7,'#ffd27a',20,0.7)}return}
-  B.stam--;B.stamT=STAM_DELAY+STAM_REGEN;   // stamT＝次の1つが戻るまでの残り時間（はじめの STAM_DELAY 秒は待つだけ）
+  B.stam--;B.stamWait=STAM_DELAY;   // 使うのはちょうど1つ。回復中の丸のたまり具合（stamP）はそのまま残し、少しのあいだ止めるだけ
   B.dodgeCD=0.45;B.dodgeAt=B.t;B.dodgeDir=dir;sfx('dodge');B.dAnim={t:0,dur:0.38,side:dir==='L'?-1:1};
 }
 function impact(){
@@ -1688,7 +1689,7 @@ function drawBGWide(){
 }
 // 回避ボタンの下に、残りのスタミナを5つの丸で出す（回復中の丸は少しずつ満ちる）
 function drawStam(){const html=Array.from({length:STAM_MAX},(_,i)=>{
-    const f=i<B.stam?1:(i===B.stam&&B.stamT<=STAM_REGEN?1-B.stamT/STAM_REGEN:0);
+    const f=i<B.stam?1:(i===B.stam?B.stamP:0);
     return `<i class="${i<B.stam?'on':''}" style="--f:${f.toFixed(2)}"></i>`}).join('');
   if(html!==drawStam.last){drawStam.last=html;for(const el of stamEls)el.innerHTML=html}
   for(const el of stamEls)el.classList.toggle('empty',B.stam<1)}
@@ -2271,7 +2272,8 @@ function update(dt){
   if(fx.flash){fx.flash.life-=dt;if(fx.flash.life<=0)fx.flash=null}
   if(B.dying)B.fade=Math.max(0,B.fade-dt*0.7);
   // スタミナの回復（最後の回避から少し待つと、1つずつ戻る）
-  if(B.stam<STAM_MAX){B.stamT-=dt;if(B.stamT<=0){B.stam++;B.stamT=STAM_REGEN}}
+  //   stamWait＝回避直後の待ち時間（このあいだは止まる）、stamP＝回復中の丸のたまり具合（0〜1）
+  if(B.stam<STAM_MAX){if(B.stamWait>0)B.stamWait-=dt;else{B.stamP+=dt/STAM_REGEN;if(B.stamP>=1){B.stam++;B.stamP=B.stam<STAM_MAX?B.stamP-1:0}}}
   const a=B.atk;
   const locked=B.noDodgeT>0||!!(B.state==='windup'&&a&&a.noDodge);
   const hzLive=!!(B.hz&&B.hz.some(i=>!i.landed&&i.t>=0)),br=B.state==='windup'&&a&&a.kind==='breath';
