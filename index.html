@@ -93,6 +93,12 @@ h1{font-weight:900;font-size:30px;letter-spacing:.06em;text-align:center;color:#
 .dodgebtn small{display:block;font-size:10px;font-weight:700;opacity:.7}
 .dodgebtn.warn{border-color:#ff5a5a;background:radial-gradient(circle at 40% 35%,rgba(255,90,90,.7),rgba(90,10,10,.8));animation:pulse .35s infinite alternate}
 .dodgebtn.cd{opacity:.45}
+.dodgebtn.tired{border-color:#8a7a55;background:radial-gradient(circle at 40% 35%,rgba(120,105,70,.6),rgba(40,32,18,.85));color:#c9b98f;animation:none}
+.stam{position:absolute;bottom:148px;width:84px;display:flex;justify-content:center;gap:5px;pointer-events:none}
+#stamL{left:16px}#stamR{right:16px}
+.stam i{width:11px;height:11px;border-radius:50%;border:1.5px solid rgba(255,220,120,.75);background:linear-gradient(to top,#ffd85a calc(var(--f)*100%),rgba(0,0,0,.45) calc(var(--f)*100%));box-shadow:0 0 4px rgba(0,0,0,.6)}
+.stam i.on{background:#ffd85a;box-shadow:0 0 6px rgba(255,210,80,.7)}
+.stam.empty i{border-color:rgba(255,120,90,.8)}
 .dodgebtn.lock{border-color:#777;background:radial-gradient(circle at 40% 35%,rgba(110,110,110,.7),rgba(30,30,30,.85));color:#aaa;animation:none}
 .dodgebtn.lock::after{content:'✕';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:58px;color:rgba(255,90,90,.75);font-weight:900}
 @keyframes pulse{to{transform:scale(1.1);box-shadow:0 0 28px rgba(255,80,80,.8)}}
@@ -135,6 +141,7 @@ h1{font-weight:900;font-size:30px;letter-spacing:.06em;text-align:center;color:#
   <button id="pause" title="ポーズ（Esc / P）">❚❚</button>
   <button id="dodgeL" class="dodgebtn">← 回避<small>A</small></button>
   <button id="dodgeR" class="dodgebtn">回避 →<small>D</small></button>
+  <div id="stamL" class="stam"></div><div id="stamR" class="stam"></div>
   <div id="result" class="hidden"><div class="box" id="resultBox"></div></div>
   <div id="pauseOv" class="hidden"><div class="box" id="pauseBox"></div></div>
 </div>
@@ -968,7 +975,8 @@ function renderHub(){
     <li>輪が縮んで<b>黄色</b>になったらはじく合図。ぴったりなら <b>PERFECT</b>。</li>
     <li><b>⚠マーク</b>の攻撃ははじけない。飛んでくる側の<b>反対へ回避</b>。頭上から降ってくるものも回避でよける。</li>
     <li>途中で止まる攻撃は<b>フェイント</b>。あわててスワイプしないこと。</li>
-    <li>パリィに失敗すると、<b>少しの間</b>回避できなくなる。</li></ul>
+    <li>パリィに失敗すると、<b>少しの間</b>回避できなくなる。</li>
+    <li>回避には<b>スタミナ</b>を使う。続けて回避できるのは<b>5回まで</b>。回避ボタンの上の丸が残りで、少し待つと回復する。</li></ul>
     <div class="sect">💥 攻める</div><ul>
     <li>パリィを重ねると敵の<b>体勢が崩れる</b>。崩れている間だけ攻撃できる。</li>
     <li>敵の体を<b>押したまま、こする</b>と攻撃。速くこするほど強い。</li>
@@ -1035,7 +1043,7 @@ const TUT_STEPS=[
    intro:'敵の攻撃は、<b>攻撃が来た方向へスワイプ</b>して<b>はじき返します（パリィ）</b>。<br>攻撃が来る場所に<b>輪</b>が出ます。輪が縮んで<b>黄色</b>になったら合図！<br><span class="tsub">チュートリアルでは、はじく向きを<b>矢印</b>で教えます（本番では出ません）。PCはマウスでドラッグ。</span>',
    goal:'攻撃を3回はじこう'},
   {id:'breath',title:'ブレス・投擲をよける',need:2,slow:1.5,
-   intro:'口元に<b>⚠マーク</b>が出る攻撃（ブレス・投擲）は<b>はじけません</b>。<br>赤い点線の側に飛んでくるので、<b>反対側へ回避</b>しよう。<br><span class="tsub">画面の左下・右下の<b>回避ボタン</b>（PCは <b>A＝左／D＝右</b>）。光っているボタンが正解。</span>',
+   intro:'口元に<b>⚠マーク</b>が出る攻撃（ブレス・投擲）は<b>はじけません</b>。<br>赤い点線の側に飛んでくるので、<b>反対側へ回避</b>しよう。<br><span class="tsub">画面の左下・右下の<b>回避ボタン</b>（PCは <b>A＝左／D＝右</b>）。光っているボタンが正解。<br>回避には<b>スタミナ</b>を使います。続けてよけられるのは<b>5回まで</b>（ボタンの上の丸が残り。少し待つと回復）。</span>',
    goal:'ブレスを2回よけよう'},
   {id:'mix',title:'いろいろな攻撃',seq:['heavy','delay','combo'],slow:1.3,
    intro:'敵の攻撃にはいくつか種類があります。<br>・<b>強撃</b>：赤く光る大振り。はじくと体勢が大きく崩れる<br>・<b>フェイント</b>：振りかぶりが<b>途中で止まる</b>。あわてずに待ってからはじく<br>・<b>連撃</b>：何回も続けて来る。1発ずつはじこう',
@@ -1112,7 +1120,7 @@ function startFloor(){
   const E=floorEnemy();
   B={E,hp:E.hp,maxHp:E.hp,parts:E.parts.map((p,k)=>({...p,maxHp:p.hp||0,hp:p.hp||0,broken:false,flash:0,seed:k*13+5})),
      posture:0,state:'idle',timer:2.0,atk:null,combo:0,brokenT:0,brokenMax:1,bonus:0,php:RUN.php,pmax:RUN.pmax,loot:{},over:false,
-     shake:0,lunge:0,recoil:0,pAnim:null,dAnim:null,hurt:0,t:0,fade:1,tf:{x:0,y:0,rot:0,sc:1,u:1},bounce:0,dodgeAt:-9,dodgeCD:0,lastNeed:0,deathT:0,flurry:null,roar:0,
+     shake:0,lunge:0,recoil:0,pAnim:null,dAnim:null,hurt:0,t:0,fade:1,tf:{x:0,y:0,rot:0,sc:1,u:1},bounce:0,dodgeAt:-9,dodgeCD:0,stam:STAM_MAX,stamT:0,lastNeed:0,deathT:0,flurry:null,roar:0,
      g:{charge:0,storm:0,armor:0,armorMax:3,armorDone:false,phase2:false,curse:0,curseCD:5,regenAcc:0,orbCD:ORB_FIRST,hzCD:0,blizzard:false}};
   B.orbs=[];B.hz=[];B.poison=[];B.poisonAcc=0;B.epoison=[];B.frozenBreak=false;if(hazard())B.g.hzCD=hzEvery()*rand(0.6,0.9);
   B.lastNeed=needNow();
@@ -1288,9 +1296,15 @@ function failLock(){if(B.atk&&B.atk.fl)return;B.noDodgeT=PARRY_FAIL_LOCK}   // �
 // 回避カウンター（回避ビルドだけ）：回避に成功した直後の少しの間、崩していなくても敵をこすって攻撃できる
 function startCounter(){if(B.state==='broken'||B.over)return;B.counterT=COUNTER_TIME;sfx('parry')}
 const canRub=()=>!B.over&&(B.state==='broken'||B.counterT>0);
+// ===== 回避のスタミナ（v16）=====
+// 回避1回でスタミナを1使う。満タンは5（続けて回避できるのは5回まで）。0のあいだは回避できない
+// 最後に回避してから STAM_DELAY 秒たつと、STAM_REGEN 秒ごとに1つずつ回復する。装備では変わらない
+const STAM_MAX=5,STAM_REGEN=0.8,STAM_DELAY=0.6;
 function doDodge(dir='R'){if(PAUSED)return;
   if(!B||B.over||B.dodgeCD>0)return;
   if(B.noDodgeT>0){if(!B.lockMsg){B.lockMsg=0.3;sfx('fail');float('体勢が崩れて回避できない！',W/2,H*0.7,'#ff8f7a',20,0.7)}return}
+  if(B.stam<1){if(!B.lockMsg){B.lockMsg=0.3;sfx('fail');float('スタミナ切れ！ 少し待とう',W/2,H*0.7,'#ffd27a',20,0.7)}return}
+  B.stam--;B.stamT=STAM_DELAY;
   B.dodgeCD=0.45;B.dodgeAt=B.t;B.dodgeDir=dir;sfx('dodge');B.dAnim={t:0,dur:0.38,side:dir==='L'?-1:1};
 }
 function impact(){
@@ -1514,7 +1528,7 @@ function gesture(dx,dy){
   if(B.state==='windup'&&!B.atk.res&&!B.atk.fail){tryParry(ang);return}
   if(hitTest(ptr?ptr.sx:W/2,ptr?ptr.sy:H/2)){const c=PC();burst(c.x,c.y-120,'#ccc',8,160);float('ガキン！ 弾かれた',W/2,H*0.3,'#cfc4b4',18,0.8);float('まず体勢を崩せ！',W/2,H*0.25,'#ffb070',18,1)}
 }
-const dodgeBtns={L:$('#dodgeL'),R:$('#dodgeR')};
+const dodgeBtns={L:$('#dodgeL'),R:$('#dodgeR')},stamEls=[$('#stamL'),$('#stamR')];
 for(const d of['L','R'])dodgeBtns[d].addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();doDodge(d)});
 // 隠しコマンド（テスト用）：拠点の「遊び方」画面で Q を1.5秒以内に5回 → 全ダンジョン解放＋全素材を100個追加
 let qTimes=[];
@@ -1672,6 +1686,12 @@ function drawBGWide(){
   sh(0,0,0,-dy,-W,-H,W*3,H);sh(0,H,0,H+dy,-W,H,W*3,H);sh(0,0,-dx,0,-W,-H,W,H*3);sh(W,0,W+dx,0,W,-H,W,H*3);
   drawBGAnim(theme);
 }
+// 回避ボタンの下に、残りのスタミナを5つの丸で出す（回復中の丸は少しずつ満ちる）
+function drawStam(){const html=Array.from({length:STAM_MAX},(_,i)=>{
+    const f=i<B.stam?1:(i===B.stam&&B.stamT<=STAM_REGEN?1-B.stamT/STAM_REGEN:0);
+    return `<i class="${i<B.stam?'on':''}" style="--f:${f.toFixed(2)}"></i>`}).join('');
+  if(html!==drawStam.last){drawStam.last=html;for(const el of stamEls)el.innerHTML=html}
+  for(const el of stamEls)el.classList.toggle('empty',B.stam<1)}
 // 体力が減るほど、画面の周りから赤いトンネルが迫る（HUDの文字は上に描くので読める）
 const LOWHP_START=0.85;   // 体力がこの割合を切ると出はじめる
 function drawLowHP(){
@@ -2250,6 +2270,8 @@ function update(dt){
   if(B.dAnim){B.dAnim.t+=dt;if(B.dAnim.t>B.dAnim.dur)B.dAnim=null}
   if(fx.flash){fx.flash.life-=dt;if(fx.flash.life<=0)fx.flash=null}
   if(B.dying)B.fade=Math.max(0,B.fade-dt*0.7);
+  // スタミナの回復（最後の回避から少し待つと、1つずつ戻る）
+  if(B.stam<STAM_MAX){B.stamT-=dt;if(B.stamT<=0){B.stam++;B.stamT=STAM_REGEN}}
   const a=B.atk;
   const locked=B.noDodgeT>0||!!(B.state==='windup'&&a&&a.noDodge);
   const hzLive=!!(B.hz&&B.hz.some(i=>!i.landed&&i.t>=0)),br=B.state==='windup'&&a&&a.kind==='breath';
@@ -2257,7 +2279,8 @@ function update(dt){
     bt.classList.toggle('lock',locked&&!B.over);
     // 光らせるのは「よけるべき側」のボタン。落下物とパリィ失敗はどちらでもよいので両方
     bt.classList.toggle('warn',!locked&&!B.over&&(hzLive||(br&&safeSide(a)===d)||(B.state==='windup'&&a&&a.fail&&a.kind!=='breath')));
-    bt.classList.toggle('cd',B.dodgeCD>0)}
+    bt.classList.toggle('cd',B.dodgeCD>0);bt.classList.toggle('tired',B.stam<1&&!locked&&!B.over)}
+  drawStam();
   if(B.over)return;
   { // 瀕死の鼓動（体力35%未満で、減るほど速く）
     const r=B.php/B.pmax;if(r<0.35&&r>0){B.hb=(B.hb||0)-dt;if(B.hb<=0){sfx('heart');B.hb=60/(70+(0.35-r)*240)}}}
