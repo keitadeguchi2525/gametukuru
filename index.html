@@ -1298,13 +1298,13 @@ function startCounter(){if(B.state==='broken'||B.over)return;B.counterT=COUNTER_
 const canRub=()=>!B.over&&(B.state==='broken'||B.counterT>0);
 // ===== 回避のスタミナ（v16）=====
 // 回避1回でスタミナを1使う。満タンは5（続けて回避できるのは5回まで）。0のあいだは回避できない
-// 最後に回避してから STAM_DELAY 秒たつと、STAM_REGEN 秒ごとに1つずつ回復する。装備では変わらない
+// 最後に回避してから STAM_DELAY 秒は回復しない。そのあと STAM_REGEN 秒ごとに1つずつ回復する（1つ目は回避の STAM_DELAY＋STAM_REGEN 秒後）。装備では変わらない
 const STAM_MAX=5,STAM_REGEN=0.8,STAM_DELAY=0.6;
 function doDodge(dir='R'){if(PAUSED)return;
   if(!B||B.over||B.dodgeCD>0)return;
   if(B.noDodgeT>0){if(!B.lockMsg){B.lockMsg=0.3;sfx('fail');float('体勢が崩れて回避できない！',W/2,H*0.7,'#ff8f7a',20,0.7)}return}
   if(B.stam<1){if(!B.lockMsg){B.lockMsg=0.3;sfx('fail');float('スタミナ切れ！ 少し待とう',W/2,H*0.7,'#ffd27a',20,0.7)}return}
-  B.stam--;B.stamT=STAM_DELAY;
+  B.stam--;B.stamT=STAM_DELAY+STAM_REGEN;   // stamT＝次の1つが戻るまでの残り時間（はじめの STAM_DELAY 秒は待つだけ）
   B.dodgeCD=0.45;B.dodgeAt=B.t;B.dodgeDir=dir;sfx('dodge');B.dAnim={t:0,dur:0.38,side:dir==='L'?-1:1};
 }
 function impact(){
