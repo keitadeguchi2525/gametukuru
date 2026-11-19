@@ -345,7 +345,7 @@ const COMBO_W_MINION=3,COMBO_W_BOSS=5;   // 連撃の出やすさ（技の重み
 const FLURRY={golm:[2,3],lumina:[3,4],volga:[3,4],glacier:[4,5],necros:[4,5],pebble:[2,2],moss:[2,3],mothling:[2,3],beetle:[2,3],sparkling:[2,3],stormwyv:[3,4],frostwolf:[3,4],icewraith:[3,4],wraith:[3,4],lich:[3,5]};
 for(const e of[...ENEMIES,...MINIONS]){e.flurry=FLURRY[e.id];e.moves=[...e.moves,['combo',e.minion?COMBO_W_MINION:COMBO_W_BOSS]]}
 // 敵の体力。部位体力は本体の33%（目安：普通の武器で2か所、狙い続ければ3か所）
-const ENEMY_HP={pebble:400,moss:650,golm:1300,mothling:650,beetle:950,lumina:2000,sparkling:900,stormwyv:1350,volga:3000,frostwolf:1600,icewraith:2200,glacier:4500,wraith:2000,lich:2600,necros:6000};
+const ENEMY_HP={pebble:400,moss:650,golm:1300,mothling:650,beetle:950,lumina:2000,sparkling:900,stormwyv:1350,volga:3000,frostwolf:1600,icewraith:2200,glacier:4000,wraith:2000,lich:2600,necros:6000};
 const PART_RATIO=0.33;
 // 敵の攻撃力：適正防具で通常攻撃1発 ≒ 最大HPの1/3
 //  ★1=岩甲一式+0 / ★2=岩甲一式+3 / ★3=★2の防具一式+3 / ★4=雷鱗一式+3 / ★5=★4の防具一式+2 を「適正」とした値（雑魚は階層補正込みで同程度）
