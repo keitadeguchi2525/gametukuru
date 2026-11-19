@@ -2058,6 +2058,100 @@ function drawVolga(g){
   label(g,'雷竜ヴォルガ','★3 BOSS　嵐を呼ぶ雷の竜');
 }
 
+// 雷竜ヴォルガ（元の見た目ベース版）：丸みのある青い竜。頭に黄色い稲妻の1本角、横に大きく広げた翼、
+// 右下に氷色のとげが並ぶ尾。うろこ・腹の板・翼の骨と膜・爪を描き込んで少しリアルにした
+const VSK=['#8ab8ee','#4a7cbc','#24467a','#0c1a34'];
+function vPart(g,p,box,cols=VSK){shade(g,p,box,cols);tex(g,p,NZF,0.4,'overlay',0.55);tex(g,p,NZ,0.3,'overlay',1);
+  edgeDark(g,p,box[2]*0.45,'rgba(4,10,26,0.7)',box[2]*0.14);rim(g,p,'rgba(170,230,255,0.8)',2)}
+// うろこ（小さな弧を並べる）
+function vScales(g,p,x0,y0,x1,y1,sz,col='rgba(10,24,50,0.16)',hi='rgba(180,225,255,0.08)'){g.save();g.clip(p);g.lineWidth=1.3;
+  for(let y=y0,r=0;y<y1;y+=sz*0.62,r++)for(let x=x0+(r%2)*sz*0.5;x<x1;x+=sz){
+    g.strokeStyle=col;g.beginPath();g.arc(x,y,sz*0.5,0.15*Math.PI,0.85*Math.PI);g.stroke();
+    g.strokeStyle=hi;g.beginPath();g.arc(x,y-1.5,sz*0.42,1.15*Math.PI,1.6*Math.PI);g.stroke()}g.restore()}
+function claw(g,x,y,dx,dy,w){const p=poly([[x-w,y],[x+dx,y+dy],[x+w,y]]);shade(g,p,[x,y,w*2+Math.abs(dy)],['#ffffff','#e4ecf4','#8a98a8','#2a3440']);rim(g,p,'rgba(255,255,255,0.8)',1)}
+function drawVolga3(g){
+  const RG=g;const G=sec=>(ART.L===null||ART.L===sec)?RG:ART.D;g=G('env');
+  // 背景：嵐の峡谷の空。遠くで雷が光る
+  const bg=g.createLinearGradient(0,0,0,S);bg.addColorStop(0,'#2a3c5c');bg.addColorStop(0.6,'#121c32');bg.addColorStop(1,'#060a14');g.fillStyle=bg;g.fillRect(0,0,S,S);
+  g.save();g.filter='blur(18px)';const R=rng(5);for(let i=0;i<14;i++){g.fillStyle=`rgba(${60+R()*40},${80+R()*40},${120+R()*40},0.35)`;g.beginPath();g.ellipse(R()*S,R()*200,90+R()*80,30+R()*30,0,0,Math.PI*2);g.fill()}g.restore();
+  glow(g,320,120,330,'rgba(120,200,255,0.22)');bolt(g,90,0,60,170,13,1.6);bolt(g,560,0,600,140,29,1.4);
+  g.save();g.filter='blur(14px)';g.fillStyle='rgba(0,0,0,0.65)';g.beginPath();g.ellipse(320,575,240,28,0,0,Math.PI*2);g.fill();g.restore();
+
+  // 翼（画面左を描いて左右反転）：腕の骨→手首→4本の指の骨、骨のあいだに膜
+  mirror(RG,(s)=>{let g=G(s>0?'limbS':'limbE');
+    const root=[248,262],elb=[168,186],wr=[104,150],tips=[[18,196],[28,292],[78,350],[150,346]],back=[246,330];
+    const m=new Path2D();m.moveTo(back[0],back[1]);m.lineTo(root[0],root[1]);m.quadraticCurveTo(206,200,elb[0],elb[1]);m.lineTo(wr[0],wr[1]);
+    m.quadraticCurveTo(50,160,tips[0][0],tips[0][1]);let pv=tips[0];
+    for(const t of[...tips.slice(1),back]){const mx=(pv[0]+t[0])/2,my=(pv[1]+t[1])/2;m.quadraticCurveTo(mx+(wr[0]-mx)*0.32,my+(wr[1]-my)*0.32,t[0],t[1]);pv=t}m.closePath();
+    const mg=g.createRadialGradient(wr[0],wr[1],10,wr[0]+40,wr[1]+80,240);mg.addColorStop(0,'#5d90d0');mg.addColorStop(0.5,'#33609e');mg.addColorStop(1,'#16305a');g.fillStyle=mg;g.fill(m);
+    tex(g,m,NZS,0.35,'overlay',1);tex(g,m,NZF,0.25,'overlay',0.7);
+    // 膜の筋と、ふちを走る小さな稲妻
+    g.save();g.clip(m);g.strokeStyle='rgba(150,210,255,0.18)';g.lineWidth=1.2;for(const t of tips)for(let k=1;k<5;k++){g.beginPath();g.moveTo(wr[0],wr[1]);g.quadraticCurveTo((wr[0]+t[0])/2+k*7,(wr[1]+t[1])/2+k*9,t[0]+k*14,t[1]-k*4);g.stroke()}g.restore();
+    edgeDark(g,m,36,'rgba(4,10,30,0.6)',12);rim(g,m,'rgba(150,225,255,0.55)',2);
+    bolt(g,tips[1][0]+6,tips[1][1]-10,tips[2][0]+8,tips[2][1]-12,41,0.9,'rgba(170,240,255,A)',false);
+    // 骨
+    const bone=(a,b,w)=>{g.save();g.lineCap='round';g.strokeStyle='#14284a';g.lineWidth=w;g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.stroke();
+      g.strokeStyle='rgba(140,190,240,0.55)';g.lineWidth=w*0.3;g.beginPath();g.moveTo(a[0]+1,a[1]-w*0.25);g.lineTo(b[0]+1,b[1]-w*0.25);g.stroke();g.restore()};
+    bone(root,elb,20);bone(elb,wr,15);for(const t of tips)bone(wr,t,7);
+    const kn=new Path2D();kn.arc(wr[0],wr[1],11,0,Math.PI*2);vPart(g,kn,[wr[0],wr[1],12]);claw(g,wr[0]-4,wr[1]-8,-14,-22,5);
+  });
+
+  g=G('front');
+  // 尾（画面右下へのびて先が持ち上がる）。上のふちに氷色のとげ
+  const tl=new Path2D();tl.moveTo(380,440);tl.bezierCurveTo(470,520,560,500,600,420);tl.quadraticCurveTo(612,398,604,388);tl.bezierCurveTo(560,452,480,470,400,400);tl.closePath();
+  vPart(g,tl,[490,460,120]);vScales(g,tl,380,380,620,520,16);
+  for(let i=0;i<6;i++){const t=0.12+i*0.15,x=400+(600-400)*t,y=402+Math.sin(t*Math.PI)*58-t*30;const h=24-i*2.2;
+    const sp=poly([[x-8,y+4],[x+3,y-h],[x+9,y+4]]);g.save();g.shadowColor='#9ff0ff';g.shadowBlur=14;shade(g,sp,[x,y-h/2,h],['#ffffff','#c8f6ff','#6ac0e8','#2a6a9a']);g.restore();rim(g,sp,'rgba(255,255,255,0.9)',1)}
+  { const tb=poly([[598,392],[632,350],[612,402]]);g.save();g.shadowColor='#9ff0ff';g.shadowBlur=16;shade(g,tb,[612,380,30],['#ffffff','#c8f6ff','#6ac0e8','#2a6a9a']);g.restore() }
+
+  // 後ろ脚（太く、地面に3本の爪）
+  mirror(g,(s)=>{const th=new Path2D();th.ellipse(232,470,58,66,-0.25,0,Math.PI*2);vPart(g,th,[232,470,66]);vScales(g,th,170,400,300,540,14);
+    const ft=new Path2D();ft.ellipse(222,548,52,20,0,0,Math.PI*2);vPart(g,ft,[222,548,50]);
+    for(const[x,dx]of[[188,-10],[214,-3],[242,4]])claw(g,x,556,dx,16,6)});
+
+  // 胴（丸みのある胸と腹）
+  const body=new Path2D();body.moveTo(320,224);body.bezierCurveTo(410,226,452,300,446,380);body.bezierCurveTo(440,470,390,530,320,532);
+  body.bezierCurveTo(250,530,200,470,194,380);body.bezierCurveTo(188,300,230,226,320,224);body.closePath();
+  vPart(g,body,[320,360,170]);vScales(g,body,190,220,450,540,18);
+  // 腹の板（クリーム色がかった水色の段）
+  const belly=new Path2D();belly.ellipse(320,392,66,130,0,0,Math.PI*2);
+  g.save();g.clip(belly);shade(g,belly,[320,392,130],['#f0f6ff','#bcd2ea','#7c96b8','#3a4e6c']);
+  for(let y=280;y<530;y+=22){g.strokeStyle='rgba(30,50,80,0.55)';g.lineWidth=2.4;g.beginPath();g.moveTo(240,y);g.quadraticCurveTo(320,y+12,400,y);g.stroke();
+    g.strokeStyle='rgba(255,255,255,0.35)';g.lineWidth=1.2;g.beginPath();g.moveTo(240,y+3);g.quadraticCurveTo(320,y+15,400,y+3);g.stroke()}g.restore();
+  edgeDark(g,belly,30,'rgba(10,20,40,0.55)',8);
+  // 体を走る雷の光るすじ
+  glowLine(g,[[232,300],[214,350,222,410],[236,460]],1.6);glowLine(g,[[408,300],[426,350,418,410],[404,460]],1.6);
+
+  // 前脚（短く、胸の前で構える）
+  mirror(g,(s)=>{const a=new Path2D();a.moveTo(226,284);a.bezierCurveTo(186,326,200,396,256,428);a.lineTo(290,410);a.bezierCurveTo(262,384,262,334,288,300);a.closePath();
+    g.save();g.filter='blur(8px)';g.fillStyle='rgba(2,8,20,0.55)';g.translate(10,10);g.fill(a);g.restore();
+    vPart(g,a,[240,350,80],['#a6cdf6','#5a8cca','#2a5088','#0e1e3c']);vScales(g,a,200,290,290,430,12);const h=new Path2D();h.ellipse(272,418,20,15,0.4,0,Math.PI*2);vPart(g,h,[272,418,20]);
+    for(const[x,y,dx]of[[260,428,-6],[272,432,0],[284,428,6]])claw(g,x,y,dx,14,4)});
+
+  // 首と頭（丸い頭、短い鼻先、横に張り出したひれ）
+  g.save();g.filter='blur(10px)';g.fillStyle='rgba(2,8,20,0.6)';g.beginPath();g.ellipse(320,238,70,26,0,0,Math.PI*2);g.fill();g.restore();
+  mirror(g,(s)=>{for(const[y,l]of[[150,60],[172,52],[194,40]]){const f=poly([[266,y-8],[266-l,y-22+(y-150)*0.5],[262,y+10]]);
+    shade(g,f,[240,y,40],['#9cc8f4','#4a7cbc','#1a3866','#081428']);rim(g,f,'rgba(180,235,255,0.7)',1.4)}});
+  const head=new Path2D();head.ellipse(320,166,66,58,0,0,Math.PI*2);vPart(g,head,[320,160,66]);vScales(g,head,250,104,390,230,13);
+  const snout=new Path2D();snout.ellipse(320,206,44,30,0,0,Math.PI*2);vPart(g,snout,[320,196,44],['#a8ccf2','#5a8cc8','#2a4c80','#0e1e3a']);
+  // 口（少し開いて牙、奥が光る）
+  const mouth=new Path2D();mouth.moveTo(288,220);mouth.quadraticCurveTo(320,246,352,220);mouth.quadraticCurveTo(320,232,288,220);g.fillStyle='#0a1020';g.fill(mouth);glow(g,320,228,22,'rgba(150,235,255,0.7)');
+  for(const x of[296,344])claw(g,x,222,0,9,3.5);
+  g.fillStyle='#0a1426';for(const x of[306,334]){g.beginPath();g.ellipse(x,200,4.5,3,0,0,Math.PI*2);g.fill()}
+  // 目（黄色く光る、縦長のひとみ）と眉のでっぱり
+  mirror(g,(s)=>{const e=new Path2D();e.moveTo(272,164);e.quadraticCurveTo(290,148,306,162);e.quadraticCurveTo(290,172,272,164);
+    g.save();g.shadowColor='#fff27a';g.shadowBlur=16;g.fillStyle='#ffe85a';g.fill(e);g.restore();glow(g,289,162,24,'rgba(255,240,120,0.55)');
+    g.fillStyle='#2a1a00';g.beginPath();g.ellipse(290,162,2.5,7,0,0,Math.PI*2);g.fill();
+    const br=poly([[262,156],[290,138],[312,150],[290,146]]);vPart(g,br,[290,146,26],['#6a9ad6','#2c5490','#132a50','#060e1e'])});
+  // 黄色い稲妻の角
+  const hn=poly([[304,124],[312,92],[298,88],[318,52],[306,50],[326,8],[334,48],[322,52],[338,86],[326,90],[336,124]]);
+  glow(g,320,70,90,'rgba(255,230,90,0.45)');g.save();g.shadowColor='#ffe060';g.shadowBlur=22;
+  const hg=g.createLinearGradient(300,124,340,10);hg.addColorStop(0,'#c88410');hg.addColorStop(0.5,'#ffd84a');hg.addColorStop(1,'#fffbe0');g.fillStyle=hg;g.fill(hn);g.restore();
+  rim(g,hn,'rgba(255,255,230,0.95)',1.6);edgeDark(g,hn,8,'rgba(120,60,0,0.6)',3);
+  g=G('env');
+  label(g,'雷竜ヴォルガ（元の見た目ベース）','丸い頭・黄色い稲妻の角・横に広い翼・氷色のとげの尾はそのまま。うろこと骨・膜を描き込み');
+}
+
 // 氷霊獣グラシエル：白い毛並みの巨獣。肩と背から氷の結晶がつき出す。曲がった角、牙、赤く光る目。手のまわりに冷気
 // 毛の房（先が細くなる曲がった房）
 function tuft(g,x,y,len,ang,w,cols,curl=0.25){const ex=x+Math.cos(ang)*len,ey=y+Math.sin(ang)*len,nx=-Math.sin(ang),ny=Math.cos(ang);
@@ -2231,7 +2325,7 @@ function drawNecrosA(g){
   label(g,'冥王ネクロス（A案）','★5 BOSS　骨の鎧と王冠、黒い炎をまとう冥界の王');
 }
 
-const FN={golm:drawGolm,lumina:drawLumina,volga:drawVolga,glacier:drawGlacier,necros:drawNecrosA};
+const FN={golm:drawGolm,lumina:drawLumina,volga:drawVolga3,glacier:drawGlacier,necros:drawNecrosA};
 let ready=false;
 function draw(id,g,layer=null){if(!ready){initNoise();const c=document.createElement('canvas');c.width=c.height=1;ART.D=c.getContext('2d');ready=true}
   ART.L=layer;try{FN[id](g)}finally{ART.L=null}}
@@ -2243,12 +2337,12 @@ return {draw,ids:Object.keys(FN),size:S};
 const ART_CFG={
   golm:{k:270,ax:320,ay:340,piv:[232,226],hand:[128,500],swg:4.2,parts:{body:[320,360,190,180],back:[320,282,130,70],legR:[140,430,74,105],legL:[500,430,74,105],head:[320,228,66,56]}},
   lumina:{k:235,ax:320,ay:300,flap:1,piv:[306,262],hand:[170,240],swg:1.2,parts:{wingR:[178,262,135,170],wingL:[462,262,135,170],tail:[320,420,30,100],body:[320,262,32,52],head:[320,202,24,24]}},
-  volga:{k:245,ax:320,ay:320,piv:[276,246],hand:[110,230],swg:1.2,parts:{wingR:[112,222,105,150],wingL:[528,222,105,150],tail:[430,560,110,32],body:[320,330,76,92],head:[320,150,40,58]}},
+  volga:{k:250,ax:320,ay:340,piv:[248,262],hand:[70,250],swg:1.2,parts:{wingR:[118,250,105,105],wingL:[522,250,105,105],tail:[512,452,100,40],body:[320,385,118,148],head:[320,150,64,82]}},
   glacier:{k:250,ax:320,ay:340,piv:[224,240],hand:[160,494],swg:4.2,parts:{legR:[156,430,62,95],legL:[484,430,62,95],body:[320,370,140,135],back:[320,214,150,46],head:[320,196,46,50]}},
   necros:{k:240,ax:320,ay:330,piv:[268,262],hand:[214,420],swg:2.8,parts:{body:[320,390,72,120],armR:[214,372,42,74],armL:[426,372,42,74],core:[320,330,36,36],head:[320,176,52,62]}},
 };
 // 新しい絵を使うボス。ここから名前を消すと、そのボスは前の見た目（当たり判定の位置も前のまま）に戻る
-const ART_USE=['necros'];   // ほかのボス（golm・lumina・volga・glacier）の新しい絵もコードには残っている。ここに足すと使える
+const ART_USE=['volga','necros'];   // ほかのボス（golm・lumina・glacier）の新しい絵もコードには残っている。ここに足すと使える
 const artOn=id=>!!ART_CFG[id]&&ART_USE.includes(id);
 const ART_RES=1.2,ART_LAYERS=['back','limbS','limbE','front'];let ART_CACHE={};
 // 絵は1体ぶん4枚を、1枚ずつ間をあけて作る（ダンジョンに入ったときに先に作っておく）
