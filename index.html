@@ -2200,7 +2200,7 @@ function drawNecrosA(g){
     const brace=poly([[200,360],[230,356],[228,396],[202,402]]);bonePart(g,brace,[214,378,24]);
     for(const[x,a]of[[198,-0.5],[210,-0.2],[222,0.1],[232,0.4]]){const c=new Path2D();c.moveTo(x-4,412);c.quadraticCurveTo(x+Math.sin(a)*12-3,430,x+Math.sin(a)*16,448);c.quadraticCurveTo(x+Math.sin(a)*6+3,428,x+4,412);c.closePath();bonePart(g,c,[x,428,14])}
     // 手から黒い炎
-    darkFlame(g,214,430,90,60,40,1);
+    {/* 剣：手ににぎった大剣。刃は下（外側ななめ下）へ。黒い刀身、ふちが紫に光る、骨のつばとつか */const hx=212,hy=424,tx=128,ty=626,an=Math.atan2(ty-hy,tx-hx),nx=-Math.sin(an),ny=Math.cos(an),L=Math.hypot(tx-hx,ty-hy),P=(t,w)=>[hx+(tx-hx)*t+nx*w,hy+(ty-hy)*t+ny*w];const bl=poly([P(0.08,-9),P(0.08,9),P(0.82,7),P(1,0),P(0.82,-7)]);const bg2=g.createLinearGradient(...P(0.5,-9),...P(0.5,9));bg2.addColorStop(0,'#2a2034');bg2.addColorStop(0.5,'#5a4a6a');bg2.addColorStop(0.52,'#140c1c');bg2.addColorStop(1,'#08040c');g.fillStyle=bg2;g.fill(bl);tex(g,bl,NZF,0.35,'overlay',0.5);g.save();g.globalCompositeOperation='lighter';g.filter='blur(3px)';g.strokeStyle='rgba(180,80,255,0.55)';g.lineWidth=5;g.stroke(bl);g.filter='none';g.strokeStyle='rgba(230,180,255,0.9)';g.lineWidth=1.2;g.stroke(bl);g.restore();g.save();g.globalCompositeOperation='lighter';g.strokeStyle='rgba(200,120,255,0.6)';g.lineWidth=1;g.beginPath();g.moveTo(...P(0.12,0));g.lineTo(...P(0.8,0));g.stroke();g.restore();const gd=poly([P(0.02,-26),P(0.07,-22),P(0.1,0),P(0.07,22),P(0.02,26),P(0.05,0)]);bonePart(g,gd,[...P(0.06,0),26]);const gr2=poly([P(-0.12,-4),P(0.02,-4),P(0.02,4),P(-0.12,4)]);bonePart(g,gr2,[...P(-0.05,0),12]);const pm=new Path2D();pm.arc(...P(-0.14,0),6,0,Math.PI*2);bonePart(g,pm,[...P(-0.14,0),7]);glow(g,...P(-0.14,0),14,'rgba(190,90,255,0.6)')}    darkFlame(g,214,430,60,44,40,0.7);
   });
   g=G('front');
   // 首
@@ -2237,7 +2237,6 @@ function draw(id,g,layer=null){if(!ready){initNoise();const c=document.createEle
   ART.L=layer;try{FN[id](g)}finally{ART.L=null}}
 return {draw,ids:Object.keys(FN),size:S};
 })();
-
 // ボスの絵の置き方：k＝絵の何pxがゲームの1u（敵の大きさの基準）か、ax/ay＝敵の中心にあたる絵の位置
 // piv＝腕・翼を回す軸（肩・付け根）、hand＝手（翼の先）の位置、swg＝振りの大きさ（大きいほど高く振り上げる）。どちらも画面左の腕で、右は左右反転
 // parts＝部位の当たり判定を絵に合わせる（絵の上の位置と大きさ[px]：中心x,中心y,横半径,縦半径）。flap＝翅をはばたかせる
