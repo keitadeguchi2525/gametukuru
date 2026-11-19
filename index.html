@@ -345,11 +345,11 @@ const COMBO_W_MINION=3,COMBO_W_BOSS=5;   // 連撃の出やすさ（技の重み
 const FLURRY={golm:[2,3],lumina:[3,4],volga:[3,4],glacier:[4,5],necros:[4,5],pebble:[2,2],moss:[2,3],mothling:[2,3],beetle:[2,3],sparkling:[2,3],stormwyv:[3,4],frostwolf:[3,4],icewraith:[3,4],wraith:[3,4],lich:[3,5]};
 for(const e of[...ENEMIES,...MINIONS]){e.flurry=FLURRY[e.id];e.moves=[...e.moves,['combo',e.minion?COMBO_W_MINION:COMBO_W_BOSS]]}
 // 敵の体力。部位体力は本体の33%（目安：普通の武器で2か所、狙い続ければ3か所）
-const ENEMY_HP={pebble:400,moss:650,golm:1300,mothling:650,beetle:950,lumina:2000,sparkling:900,stormwyv:1350,volga:3000,frostwolf:1600,icewraith:2200,glacier:4000,wraith:2000,lich:2600,necros:6000};
+const ENEMY_HP={pebble:400,moss:650,golm:1300,mothling:650,beetle:950,lumina:2000,sparkling:900,stormwyv:1350,volga:3000,frostwolf:1600,icewraith:1800,glacier:4000,wraith:2000,lich:2600,necros:6000};
 const PART_RATIO=0.33;
 // 敵の攻撃力：適正防具で通常攻撃1発 ≒ 最大HPの1/3
 //  ★1=岩甲一式+0 / ★2=岩甲一式+3 / ★3=★2の防具一式+3 / ★4=雷鱗一式+3 / ★5=★4の防具一式+2 を「適正」とした値（雑魚は階層補正込みで同程度）
-const ENEMY_DMG={pebble:37,moss:35,golm:40,mothling:42,beetle:40,lumina:46,sparkling:46,stormwyv:44,volga:50,frostwolf:52,icewraith:50,glacier:55,wraith:54,lich:50,necros:52};
+const ENEMY_DMG={pebble:37,moss:35,golm:40,mothling:42,beetle:40,lumina:46,sparkling:46,stormwyv:44,volga:50,frostwolf:52,icewraith:45,glacier:55,wraith:54,lich:50,necros:52};
 for(const e of[...ENEMIES,...MINIONS]){e.dmg=ENEMY_DMG[e.id];e.hp=ENEMY_HP[e.id];e.parts=e.parts.map(p=>p.hp?{...p,hp:Math.round(e.hp*PART_RATIO)}:p)}
 const EN=id=>ENEMIES.find(e=>e.id===id)||MINIONS.find(e=>e.id===id);
 // 並び順＝解放順（★1→★5）。idはセーブに使うので変えない
@@ -357,7 +357,7 @@ const DUNGEONS=[
   {id:'d1',name:'岩窟の迷宮',stars:1,desc:'岩の獣が棲む洞窟。最奥には群れの主が待つという。',floors:['pebble','pebble','moss','moss','golm']},
   {id:'f1',name:'妖蛾の森',stars:2,desc:'月光が差す夜の森。妖しく光る鱗粉が舞っている。',floors:['mothling','mothling','beetle','beetle','lumina']},
   {id:'d2',name:'雷鳴の峡谷',stars:3,desc:'雷が鳴りやまない峡谷。空を裂く影が見えるという。',floors:['sparkling','sparkling','stormwyv','stormwyv','volga']},
-  {id:'g1',name:'氷霧の霊廟',stars:4,desc:'霧氷に閉ざされた霊廟。天井には無数のつららが垂れている。',floors:['frostwolf','frostwolf','icewraith','icewraith','icewraith','glacier']},
+  {id:'g1',name:'氷霧の霊廟',stars:4,desc:'霧氷に閉ざされた霊廟。天井には無数のつららが垂れている。',floors:['frostwolf','frostwolf','icewraith','icewraith','glacier']},
   {id:'d3',name:'冥界の塔',stars:5,desc:'亡者がさまよう塔。頂上には冥界の王が君臨する。',floors:['wraith','wraith','lich','lich','lich','necros']},
 ];
 
@@ -2811,7 +2811,7 @@ function drawOrbs(){if(!B.orbs||!B.orbs.length)return;
 const HAZARDS={
   d1:{type:'rock',name:'落石',every:15,dbl:0,dmg:0.9,c:'#c8a070'},   // dmg：被弾ダメージ倍率（通常攻撃比）。適正装備で最大HPの約30%になるように
   d2:{type:'bolt',name:'落雷',every:13,dbl:0,dmg:1.0,c:'#fff27a'},
-  g1:{type:'ice',name:'落氷',every:10,boss:7,dbl:0.25,tri:0.1,dmg:0.6,c:'#bff4ff'},   // つららは数が多いので約20%   // boss：ボス戦だけの間隔／tri：ボス戦で3連続の確率
+  g1:{type:'ice',name:'落氷',every:10,boss:8.5,dbl:0.25,tri:0.03,dmg:0.6,c:'#bff4ff'},   // つららは数が多いので約20%   // boss：ボス戦だけの間隔／tri：ボス戦で3連続の確率
   d3:{type:'dark',name:'闇の光線',every:7.5,dbl:0,dmg:1.03,c:'#c060ff'},
 };
 const HZ_WARN=1.15,HZ_DMG=1.0,HZ_MINION_MUL=1.5;   // 落ちるまでの予兆の秒数／被弾ダメージ倍率の初期値（HAZARDS の dmg がないとき）／雑魚戦の間隔倍率
