@@ -2248,7 +2248,7 @@ const ART_CFG={
   necros:{k:240,ax:320,ay:330,piv:[268,262],hand:[214,420],swg:2.8,parts:{body:[320,390,72,120],armR:[214,372,42,74],armL:[426,372,42,74],core:[320,330,24,24],head:[320,176,52,62]}},
 };
 // 新しい絵を使うボス。ここから名前を消すと、そのボスは前の見た目（当たり判定の位置も前のまま）に戻る
-const ART_USE=['golm','lumina','volga','glacier','necros'];
+const ART_USE=['necros'];   // ほかのボス（golm・lumina・volga・glacier）の新しい絵もコードには残っている。ここに足すと使える
 const artOn=id=>!!ART_CFG[id]&&ART_USE.includes(id);
 const ART_RES=1.2,ART_LAYERS=['back','limbS','limbE','front'];let ART_CACHE={};
 // 絵は1体ぶん4枚を、1枚ずつ間をあけて作る（ダンジョンに入ったときに先に作っておく）
