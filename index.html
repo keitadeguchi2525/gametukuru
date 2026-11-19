@@ -276,7 +276,7 @@ ENEMIES.push(
      {id:'head',name:'触角',x:0,y:-0.3,rx:0.15,ry:0.13,c:'#e8dcf8',hp:1,mat:[['antenna',2]],deco:'featherAntenna',eyes:true},
     ]}),
   makeBoss('golm',{id:'glacier',name:'氷霊獣グラシエル',stars:4,tint:'#b8e4ff',gimmick:'cold',ice:1,
-    gdesc:'【寒さ】戦っている間、寒さで3秒ごとに自分のHPが1ずつ減る。HP50%を切ると吹雪になり、3秒ごとに5ずつ減る。HP50%以下では、つららが2本続けて落ちてくることも。',
+    gdesc:'【寒さ】戦っている間、寒さで3秒ごとに自分のHPが1ずつ減る。HP50%を切ると吹雪になり、3秒ごとに3ずつ減る。HP50%以下では、つららが2本続けて落ちてくることも。',
     desc:'霊廟を守る氷の獣。霧の中から襲いかかる。',
     hp:4500,need:[4,8],needEvery:21,breakTime:3.4,windup:0.78,idle:[0.65,1.2],combo:3,
     moves:[['slash',5],['heavy',2],['delay',3],['breath',2]],breath:{type:'fire',name:'凍てつく息',c:'#cfefff'},
@@ -1237,7 +1237,7 @@ const earlyWin=()=>Math.min(0.3,B.atk.w*0.45)*perk('parry');
 const dodgeWin=()=>DODGEWIN*perk('dodge');
 // ★4 グラシエル【寒さ】：時間がたつほどパリィ・回避の受付が短くなる（最低×0.6）。HP50%以下の吹雪でさらに×0.85
 // グラシエル（★4）の寒さ：COLD_EVERY 秒ごとに自分のHPが減る。ボスHP50%以下（吹雪）で BLIZZARD_DMG に増える（防御では減らない）
-const COLD_EVERY=3,COLD_DMG=1,BLIZZARD_DMG=5;
+const COLD_EVERY=3,COLD_DMG=1,BLIZZARD_DMG=3;
 const coldDmg=()=>B.g.blizzard?BLIZZARD_DMG:COLD_DMG;
 const needDir=a=>a.cursed?a.dir:OPP[a.dir];   // 攻撃が来た方向へはじき返す（呪い中は逆）
 function enterBroken(extra=0){
