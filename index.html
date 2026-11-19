@@ -2809,12 +2809,12 @@ function drawOrbs(){if(!B.orbs||!B.orbs.length)return;
 // ===== 落下物（ダンジョンごと）：ボスや雑魚の攻撃とは別に頭上から降ってくる。パリィ不可、回避でのみ避けられる =====
 //   every＝ボス戦での平均の間隔（秒）。雑魚戦は ×HZ_MINION_MUL でゆっくり。dbl＝2連続で降る確率
 const HAZARDS={
-  d1:{type:'rock',name:'落石',every:15,dbl:0,c:'#c8a070'},
-  d2:{type:'bolt',name:'落雷',every:13,dbl:0,c:'#fff27a'},
-  g1:{type:'ice',name:'落氷',every:10,boss:7,dbl:0.25,tri:0.1,c:'#bff4ff'},   // boss：ボス戦だけの間隔／tri：ボス戦で3連続の確率
-  d3:{type:'dark',name:'闇の光線',every:7.5,dbl:0,c:'#c060ff'},
+  d1:{type:'rock',name:'落石',every:15,dbl:0,dmg:0.9,c:'#c8a070'},   // dmg：被弾ダメージ倍率（通常攻撃比）。適正装備で最大HPの約30%になるように
+  d2:{type:'bolt',name:'落雷',every:13,dbl:0,dmg:1.0,c:'#fff27a'},
+  g1:{type:'ice',name:'落氷',every:10,boss:7,dbl:0.25,tri:0.1,dmg:0.6,c:'#bff4ff'},   // つららは数が多いので約20%   // boss：ボス戦だけの間隔／tri：ボス戦で3連続の確率
+  d3:{type:'dark',name:'闇の光線',every:7.5,dbl:0,dmg:1.03,c:'#c060ff'},
 };
-const HZ_WARN=1.15,HZ_DMG=1.5,HZ_MINION_MUL=1.5;   // 落ちるまでの予兆の秒数／被弾ダメージ倍率（通常攻撃比）／雑魚戦の間隔倍率
+const HZ_WARN=1.15,HZ_DMG=1.0,HZ_MINION_MUL=1.5;   // 落ちるまでの予兆の秒数／被弾ダメージ倍率の初期値（HAZARDS の dmg がないとき）／雑魚戦の間隔倍率
 const hazard=()=>RUN&&HAZARDS[RUN.D.id];
 const hzEvery=()=>{const h=hazard();return isBossFloor()?(h.boss||h.every):h.every*HZ_MINION_MUL};
 function spawnHazard(delay=0){const hz=hazard();const x=W/2+rand(-0.18,0.18)*Math.min(W,600);
@@ -2826,7 +2826,7 @@ function updateHazards(dt){const hz=hazard();
       sfx({rock:'rock',bolt:'thunder',ice:'iceCrash',dark:'darkBeam'}[ic.type]);burst(ic.x,pp.y-30,hz.c,30,480,true);B.shake=Math.max(B.shake,12);
       if(ic.type==='bolt'||ic.type==='dark')fx.flash={c:hz.c,life:0.2,max:0.2};
       if(ok){float(`${hz.name}を回避！`,W/2,H*0.62,'#bff4ff',26,0.9);if(TUT)tutEvent('hzdodge');const dg=dodgeGain();if(dg>0){addPosture(dg,W/2,H*0.62+30,'見切り');startCounter()}}
-      else{const dmg=Math.round(B.E.dmg*HZ_DMG*rand(0.9,1.1)*100/(100+armStat().def)*cutMul());sfx('hurt',true);B.php-=dmg;B.hurt=0.5;B.shake=20;B.posture=Math.max(0,B.posture-PT);
+      else{const dmg=Math.round(B.E.dmg*(hz.dmg||HZ_DMG)*rand(0.9,1.1)*100/(100+armStat().def)*cutMul());sfx('hurt',true);B.php-=dmg;B.hurt=0.5;B.shake=20;B.posture=Math.max(0,B.posture-PT);
         float(`${hz.name}が直撃！ -${dmg}`,W/2,H*0.74,'#ff5a4a',34,1.0);if(B.php<=0){B.php=0;B.over=true;bgm(null);setTimeout(died,900)}}}}
   B.hz=B.hz.filter(ic=>!ic.landed||ic.life<0.4)}
 function drawHazards(){if(!B.hz||!B.hz.length)return;const hz=hazard();if(!hz)return;const pp=PP(),gy=pp.y-20,top=150;
@@ -2856,6 +2856,14 @@ function drawHazards(){if(!B.hz||!B.hz.length)return;const hz=hazard();if(!hz)re
       ctx.beginPath();ctx.ellipse(0,0,r,r*0.3,0,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.ellipse(0,0,r*0.7,r*0.21,0,0,Math.PI*2);ctx.stroke();ctx.restore();ctx.save();
       ctx.strokeStyle=rgba('#c060ff',0.15+0.5*k);ctx.lineWidth=2+6*k+fall*20;ctx.beginPath();ctx.moveTo(ic.x,0);ctx.lineTo(ic.x,gy+10);ctx.stroke()}
     ctx.restore();
+    // 闇の光線：外から縮んでくる輪が足元の魔法陣に重なったら回避（重なると黄色く光って「回避！」）
+    if(T==='dark'){const Rt=60,rr=Rt+(130-Rt)*Math.max(0,1-ic.t/(ic.w+(LATE-dodgeWin())/2));ctx.save();
+      ctx.strokeStyle=inWin?'#fff27a':'rgba(240,190,255,0.9)';ctx.lineWidth=inWin?6:3;ctx.shadowColor=inWin?'#fff27a':'#c060ff';ctx.shadowBlur=inWin?22:10;
+      ctx.beginPath();ctx.ellipse(ic.x,gy+10,rr,rr*0.3,0,0,Math.PI*2);ctx.stroke();
+      if(inWin){ctx.fillStyle='rgba(255,240,120,0.25)';ctx.beginPath();ctx.ellipse(ic.x,gy+10,Rt,Rt*0.3,0,0,Math.PI*2);ctx.fill();
+        ctx.font="900 26px 'M PLUS 1p',sans-serif";ctx.textAlign='center';ctx.lineWidth=5;ctx.strokeStyle='rgba(0,0,0,0.85)';ctx.shadowBlur=0;
+        ctx.strokeText('回避！',ic.x,gy-30);ctx.fillStyle='#fff27a';ctx.fillText('回避！',ic.x,gy-30)}
+      ctx.restore()}
     if(!fall)warnIcon(ic.x+46,top-20,26+3*Math.sin(B.t*20),inWin?'#ff4af0':hz.c)}
   const live=B.hz.filter(i=>!i.landed&&i.t>=0);
   if(live.length)label(`⚠ ${hz.name}！ 落ちる瞬間に回避`,dodgeWin()>=Math.min(...live.map(i=>i.w-i.t))?'#ff4af0':hz.c,H*0.4)}
