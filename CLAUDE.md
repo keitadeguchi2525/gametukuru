@@ -22,6 +22,7 @@
 - ガチャ：`rollGacha()`、排出率は `GACHA_ODDS`、討伐の証の出る確率は `PROOF_RATE`（証は `MATS` の `proof_ボスid`）。ボス武器は `WEAPONS` の `gacha:` つき、追加効果は `G_POISON_*` / `G_BOLT_*` / `G_BEAM_*` / `G_FREEZE_SEC` / `cutMul()` と `specialHit()`。
 - ボスのギミックは `gimmicks()`、`enterBroken()`、`guardPhase()` あたり。鱗粉の玉は `spawnOrbs()`/`updateOrbs()`（毒は `POISON_*`）、ダンジョンごとの落下物は `HAZARDS` と `spawnHazard()`/`updateHazards()`、★4の寒さは `coldMul()`。回避は左右（`doDodge('L'|'R')`、ブレスは `safeSide()` の側へ）。
 - 音は `sfx('名前')`（効果音）と `bgm('曲名')`（BGM）。音の中身は `SFX` と `SONGS` にまとまっている。新しい場面を足したら、合う効果音も鳴らす。
+- ボス5体の見た目は `BOSS_ART`（絵のコード）と `ART_CFG`（絵の置き方と部位の当たり判定の位置）。絵は「奥／画面左の腕・翼／画面右の腕・翼／手前」の4枚に分けて作り（`prepArt()`、ダンジョンに入ったときに先に作る）、`drawArtEnemy()` で重ねて描く。腕・翼の部位は `partOff()` で振りかぶる。1枚の完成図は `BOSS_ART.draw(id,ctx,null)` で描ける。雑魚は今までどおり `drawPart()` で描く
 - 背景は `drawBG()`（ダンジョンごとに `bgCave` / `bgForest` / `bgCanyon` / `bgIce` / `bgUnder`、動く部分は `drawBGAnim()`）。
 
 ## 守ること
