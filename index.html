@@ -1124,6 +1124,8 @@ function startFloor(){
      shake:0,lunge:0,recoil:0,pAnim:null,dAnim:null,hurt:0,t:0,fade:1,tf:{x:0,y:0,rot:0,sc:1,u:1},bounce:0,dodgeAt:-9,dodgeCD:0,stam:STAM_MAX,stamP:0,stamWait:0,lastNeed:0,deathT:0,flurry:null,roar:0,
      g:{charge:0,storm:0,armor:0,armorMax:3,armorDone:false,phase2:false,curse:0,curseCD:5,regenAcc:0,orbCD:ORB_FIRST,hzCD:0,blizzard:false}};
   B.orbs=[];B.hz=[];B.poison=[];B.poisonAcc=0;B.epoison=[];B.frozenBreak=false;if(hazard())B.g.hzCD=hzEvery()*rand(0.6,0.9);
+  // 金色の雑魚：雑魚の階で GOLD_RATE の確率。強さは同じで、倒すとそのダンジョンのボスの討伐の証を必ず落とす（説明には書かない隠し要素）
+  B.golden=!TUT&&!isBossFloor()&&Math.random()<GOLD_RATE;if(B.golden)B.E={...E,name:'金色の'+E.name};
   artParts();if(artOn(E.id)&&!artReady(E.id))prepArt(E.id,true);
   B.lastNeed=needNow();
   fx={parts:[],floats:[],trails:[],slashes:[],bolts:[],zaps:[],icons:[],special:[],flash:null};
@@ -1162,7 +1164,9 @@ function drawWalk(){
 }
 // 歩く演出が終わったとき
 function walkDone(){B.walk=0;
-  if(TUT){}else if(!isBossFloor()){B.timer=1.2;float(`${RUN.D.name}  ${RUN.floor+1}F`,W/2,H*0.46,'#ffd58a',30,1.4);float(B.E.name,W/2,H*0.53,'#e8d4b4',24,1.4)}}
+  if(TUT){}else if(!isBossFloor()){B.timer=1.2;float(`${RUN.D.name}  ${RUN.floor+1}F`,W/2,H*0.46,'#ffd58a',30,1.4);float(B.E.name,W/2,H*0.53,B.golden?'#ffe070':'#e8d4b4',24,1.4);
+    if(B.golden){sfx('rare');float('✦ 金色に光っている…！ ✦',W/2,H*0.6,'#fff0a0',22,1.8)}}}
+const GOLD_RATE=0.05;   // 金色の雑魚が出る確率（雑魚の階ごと）
 const WARN_TIME=2.6;   // ボス前の WARNING!! 演出の長さ（秒）
 const WARN_AFTER=1.0;  // 演出が終わってからボスが最初に攻撃するまでの秒数
 function drawWarning(){
@@ -1406,6 +1410,9 @@ function victory(){
   B.gotProof=false;const pk='proof_'+B.E.id;
   if(!B.E.minion&&MATS[pk]&&Math.random()<PROOF_RATE){B.gotProof=true;B.loot[pk]=(B.loot[pk]||0)+1;dropIcon(pk,t.x,t.y,0.7);
     setTimeout(()=>{sfx('fanfare');float(`${MATS[pk].full}を手に入れた！`,W/2,H*0.38,'#ffd8ff',26,1.8)},700)}
+  // 金色の雑魚：そのダンジョンのボスの討伐の証を必ず落とす
+  if(B.golden){const gk='proof_'+RUN.D.floors[RUN.D.floors.length-1];if(MATS[gk]){B.goldProof=gk;B.loot[gk]=(B.loot[gk]||0)+1;dropIcon(gk,t.x,t.y,0.7);
+    setTimeout(()=>{sfx('fanfare');float(`${MATS[gk].full}を手に入れた！`,W/2,H*0.38,'#ffd8ff',26,1.8)},700)}}
   let d=0;for(const k in drops){dropIcon(k,t.x,t.y,0.5+d);d+=0.08}
   const rk=Object.keys(rares);
   rk.forEach((k,i)=>{dropIcon(k,t.x,t.y,0.9+i*0.15);setTimeout(()=>{sfx('rare');float(`${RARE_NAME[MATS[k].rare]}ドロップ！ ${MATS[k].n}`,W/2,H*0.45+i*44,'#fff0a0',30,1.6);burst(W/2,H*0.45+i*44,'#ffe070',40,500,true)},900+i*300)});
@@ -1430,8 +1437,9 @@ function floorCleared(rares){
     $('#home').onclick=endToHub;return;
   }
   sfx('clear');const heal=Math.round(RUN.pmax*FLOOR_HEAL);
+  const goldHtml=B.goldProof?`<div class="rarebanner" style="color:#ffc8ff">✦ ${MATS[B.goldProof].full} ✦</div>`:'';
   const canRet=canReturnAt(RUN.D,RUN.floor+1),nextRet=returnFloors(RUN.D).find(f=>f>RUN.floor+1)||RUN.D.floors.length;
-  showBox(`<h2 style="color:#ffd58a">${RUN.floor+1}F 突破！</h2>${rareHtml}
+  showBox(`<h2 style="color:#ffd58a">${RUN.floor+1}F 突破！</h2>${goldHtml}${rareHtml}
     <div style="font-size:13px;color:#bba78a">この階の戦利品</div><div class="row">${lootChips(B.loot)}</div>
     <div style="font-size:13px;color:#ffb0a0">未確定の戦利品（倒れると失う）</div><div class="row">${lootChips(RUN.loot)}</div>
     <p style="font-size:14px;margin-bottom:6px">HP ${Math.ceil(RUN.php)} / ${RUN.pmax}　次は <b>${RUN.floor+2}F ${isLast2()?'BOSS ':''}${EN(RUN.D.floors[RUN.floor+1]).name}</b></p>
@@ -2425,12 +2433,17 @@ function drawEnemy(){
   if(glow>0){ctx.shadowColor=heavyCol;ctx.shadowBlur=40*glow}
   const aw=B.state==='windup'&&a;
   const psnE=B.epoison&&B.epoison.length>0,frz=B.frozenBreak&&B.state==='broken';
-  ctx.filter=psnE?'sepia(0.55) hue-rotate(45deg) saturate(2.2) brightness(0.95)':frz?'saturate(0.35) hue-rotate(165deg) brightness(1.3)':'none';
+  ctx.filter=psnE?'sepia(0.55) hue-rotate(45deg) saturate(2.2) brightness(0.95)':frz?'saturate(0.35) hue-rotate(165deg) brightness(1.3)':B.golden?'grayscale(1) sepia(1) saturate(3.2) hue-rotate(-8deg) brightness(1.3) contrast(1.05)':'none';
+  if(B.golden&&!B.dying){const pl=0.6+0.4*Math.sin(B.t*3),g0=ctx.createRadialGradient(0,0,u*0.2,0,0,u*1.25);g0.addColorStop(0,`rgba(255,220,90,${0.35*pl})`);g0.addColorStop(1,'rgba(255,200,60,0)');
+    ctx.save();ctx.filter='none';ctx.fillStyle=g0;ell(0,u*0.05,u*1.25,u*1.1);ctx.fill();ctx.restore()}
   if(artOn(E.id)&&artReady(E.id))drawArtEnemy(u,glow,heavyCol,aw);   // 新しい絵（ボス）
   else for(const p of B.parts){const o=partOff(p,u);ctx.save();ctx.translate(o.ox,o.oy);
     if(glow>0){const act=aw&&(activeLimb(p,a)||(a.kind==='breath'&&p.id==='head'));ctx.shadowColor=heavyCol;ctx.shadowBlur=act?60*glow:12*glow}
     drawPart(p,u,glow);if(B.g.armor>0)drawArmor(p,u);ctx.restore()}
   ctx.filter='none';ctx.shadowBlur=0;
+  if(B.golden&&!B.dying)for(let i=0;i<7;i++){const k=(B.t*0.35+i/7)%1,an=i*2.4+B.t*0.6;   // 金色の雑魚：まわりで光るキラキラ
+    ctx.globalAlpha=B.fade*Math.sin(k*Math.PI);drawStar(Math.cos(an)*u*0.85,Math.sin(an)*u*0.7-k*u*0.3,5+3*Math.sin(k*Math.PI),'#fff2a0')}
+  ctx.globalAlpha=B.fade;
   if(psnE){ // 毒：緑のもや＋泡
     const g2=ctx.createRadialGradient(0,0,u*0.2,0,0,u*1.1);g2.addColorStop(0,'rgba(120,230,40,0.28)');g2.addColorStop(1,'rgba(120,230,40,0)');ctx.fillStyle=g2;ell(0,0,u*1.1,u*1.0);ctx.fill();
     for(let i=0;i<10;i++){const k=(B.t*0.5+i*0.1)%1,bx=Math.sin(i*2.7+B.t)*u*0.6,by=u*0.5-k*u*1.3;ctx.globalAlpha=B.fade*(1-k)*0.8;ctx.strokeStyle='#c8ff60';ctx.lineWidth=2;ell(bx,by,4+i%3*2,4+i%3*2);ctx.stroke()}ctx.globalAlpha=B.fade}
