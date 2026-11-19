@@ -2811,12 +2811,12 @@ function drawOrbs(){if(!B.orbs||!B.orbs.length)return;
 const HAZARDS={
   d1:{type:'rock',name:'落石',every:15,dbl:0,c:'#c8a070'},
   d2:{type:'bolt',name:'落雷',every:13,dbl:0,c:'#fff27a'},
-  g1:{type:'ice',name:'落氷',every:10,dbl:0.25,c:'#bff4ff'},
+  g1:{type:'ice',name:'落氷',every:10,boss:7,dbl:0.25,tri:0.1,c:'#bff4ff'},   // boss：ボス戦だけの間隔／tri：ボス戦で3連続の確率
   d3:{type:'dark',name:'闇の光線',every:7.5,dbl:0,c:'#c060ff'},
 };
 const HZ_WARN=1.15,HZ_DMG=1.5,HZ_MINION_MUL=1.5;   // 落ちるまでの予兆の秒数／被弾ダメージ倍率（通常攻撃比）／雑魚戦の間隔倍率
 const hazard=()=>RUN&&HAZARDS[RUN.D.id];
-const hzEvery=()=>hazard().every*(isBossFloor()?1:HZ_MINION_MUL);
+const hzEvery=()=>{const h=hazard();return isBossFloor()?(h.boss||h.every):h.every*HZ_MINION_MUL};
 function spawnHazard(delay=0){const hz=hazard();const x=W/2+rand(-0.18,0.18)*Math.min(W,600);
   B.hz.push({x,t:-delay,w:HZ_WARN*rand(0.95,1.08),landed:false,life:0,type:hz.type,warned:false})}
 function updateHazards(dt){const hz=hazard();
@@ -2873,8 +2873,10 @@ function gimmicks(dt){
     if(B.state!=='broken'&&B.state!=='orbs'&&!B.hz.length){g.hzCD-=dt;
       if(g.hzCD<=0){spawnHazard(0);
         // 2連続：ダンジョンごとの確率。氷霊獣グラシエルはHP50%以下で50%
-        const dbl=E.id==='glacier'&&B.hp<=B.maxHp*0.5?0.5:hz.dbl;
-        if(Math.random()<dbl){spawnHazard(0.8);float(`${hz.name}が2連続！`,W/2,H*0.3,hz.c,22,1.2)}
+        // 3連続：ボス戦だけ、たまに（tri）
+        const dbl=E.id==='glacier'&&B.hp<=B.maxHp*0.5?0.5:hz.dbl,tri=isBossFloor()?(hz.tri||0):0,r=Math.random();
+        if(r<tri){spawnHazard(0.8);spawnHazard(1.6);float(`${hz.name}が3連続！`,W/2,H*0.3,hz.c,26,1.4)}
+        else if(r<tri+dbl){spawnHazard(0.8);float(`${hz.name}が2連続！`,W/2,H*0.3,hz.c,22,1.2)}
         g.hzCD=hzEvery()*rand(0.8,1.2)}}}
   if(E.gimmick==='cold'&&!g.blizzard&&B.hp<=B.maxHp*0.5){g.blizzard=true;sfx('blizzard');fx.flash={c:'#e8f8ff',life:0.5,max:0.5};B.shake=14;
     float('吹雪！ さらに凍える',W/2,H*0.28,'#e8f8ff',30,1.8);float(`${COLD_EVERY}秒ごとに HP -${BLIZZARD_DMG}`,W/2,H*0.28+30,'#bff4ff',18,1.8)}
