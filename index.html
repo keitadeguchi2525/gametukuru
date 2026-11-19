@@ -1027,7 +1027,7 @@ let B=null,fx={parts:[],floats:[],trails:[],slashes:[],bolts:[],zaps:[],icons:[]
 const rand=(a,b)=>a+Math.random()*(b-a),ri=(a,b)=>Math.floor(rand(a,b+1));
 const ease=k=>1-Math.pow(1-k,3);
 const BREATH_IN_FLURRY=0.3,BREATH_WINDUP=0.8;
-const STORM_CHARGE=16,STORM_TIME=12,STORM_SPEED=0.85,WARP_CHANCE=0.45;   // ヴォルガ：ゲージが溜まる秒数／雷速モードの長さ／溜めの速さ倍率／向きが入れ替わる確率
+const STORM_CHARGE=16/1.9,STORM_TIME=12,STORM_SPEED=0.85,WARP_CHANCE=0.45;   // ヴォルガ：ゲージが溜まる秒数（v16で1.9倍の速さに：約8.4秒）／雷速モードの長さ／溜めの速さ倍率／向きが入れ替わる確率
 const LATE=0.12,PERFECT=0.085,DODGEWIN=0.22,RUB=42,RUBCD=95;
 const COUNTER_TIME=0.5,COUNTER_MUL=0.2;   // 回避カウンター：回避ビルドで回避に成功すると、この秒数だけ敵をこすって攻撃できる（ダメージ倍率）
 const PARRY_FAIL_LOCK=0.5;   // パリィに失敗してから回避できない秒数
