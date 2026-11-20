@@ -221,7 +221,7 @@ const ENEMIES=[
     {id:'legL',name:'左前脚',x:0.58,y:0.5,rx:0.17,ry:0.28,c:'#5e4f40',hp:140,mat:[['claw',2]],deco:'claws',limb:1},
     {id:'head',name:'岩角',x:0,y:-0.42,rx:0.27,ry:0.22,c:'#8c7b64',hp:170,mat:[['hornG',2]],deco:'horns2',eyes:true},
    ]},
-  {id:'volga',name:'雷竜ヴォルガ',stars:3,gimmick:'storm',gdesc:'【雷速モード／雷光転移】雷ゲージが満タンになると12秒間の雷速モード。攻撃が速くなり、振りかぶりの途中で雷光が走ると攻撃の向きが反対側へ入れ替わる。最後まで見てからはじこう。入れ替わった攻撃をパリィすると体勢+25ボーナス。雷角を折るとゲージの溜まりが半分に。',desc:'雷をまとう飛竜。ディレイ攻撃と、パリィ不能の雷ブレスを使う。',
+  {id:'volga',name:'雷竜ヴォルガ',stars:3,gimmick:'storm',gdesc:'【雷速モード／雷光転移】雷ゲージが満タンになると12秒間の雷速モード。攻撃が速くなり、振りかぶりの途中で雷光が走ると攻撃の向きが反対側へ入れ替わる。最後まで見てからはじこう。入れ替わった攻撃をパリィすると体勢+25ボーナス。雷角を折るとゲージの溜まりが半分に。HP50%になると崩しが解けて、すぐ雷速モードになる。',desc:'雷をまとう飛竜。ディレイ攻撃と、パリィ不能の雷ブレスを使う。',
    hp:2600,need:[4,7],needEvery:22,breakTime:3.5,windup:0.85,dmg:28,idle:[0.7,1.3],combo:2,
    moves:[['slash',5],['heavy',2],['delay',2],['breath',2]],breath:{type:'bolt',name:'雷ブレス',c:'#9fe8ff'},
    bg:['#22324e','#0b1120'],eye:'#fff27a',glow:'#7ad0ff',
@@ -2852,6 +2852,7 @@ function guardPhase(){ // 形態変化・岩鎧の境目を一撃で飛び越え
   const E=B.E,g=B.g;
   if(E.gimmick==='curse'&&!g.phase2&&B.hp<=B.maxHp*0.5){B.hp=B.maxHp*0.5;g.trig=true}
   if(E.gimmick==='armor'&&!g.armorDone&&B.hp<=B.maxHp*0.6){B.hp=B.maxHp*0.6;g.trig=true}
+  if(E.gimmick==='storm'&&!g.half&&B.hp<=B.maxHp*0.5){B.hp=B.maxHp*0.5;g.trig=true}
 }
 function cancelBreak(msg){
   B.frozenBreak=false;
@@ -2974,6 +2975,9 @@ function gimmicks(dt){
   if(E.gimmick==='armor'&&!g.armorDone&&(B.hp<=B.maxHp*0.6||g.trig)){g.armorDone=true;g.armor=g.armorMax;
     sfx('armor');float('岩鎧をまとった！',W/2,H*0.28,'#d8c8b0',30,1.8);float('体勢崩し3回目で砕ける',W/2,H*0.28+30,'#d8c8b0',18,1.8);B.shake=16;burst(B.tf.x,B.tf.y,'#9a8a78',40,500);cancelBreak()}
   if(E.gimmick==='storm'){
+    // HP50%：崩しを強制解除して、すぐ雷速モード（v17）
+    if(!g.half&&(B.hp<=B.maxHp*0.5||g.trig)){g.half=true;g.trig=false;cancelBreak();g.charge=0;g.storm=STORM_TIME;fx.flash={c:'#bff4ff',life:0.45,max:0.45};B.shake=20;
+      sfx('thunder');sfx('roar');float('雷竜が怒り狂った！',W/2,H*0.26,'#bff4ff',30,1.8);float('雷速モード！ 雷光が走ったら向きが反対に',W/2,H*0.26+30,'#bff4ff',16,1.8);burst(B.tf.x,B.tf.y,'#dff8ff',50,560,true)}
     if(g.storm>0){g.storm-=dt;if(Math.random()<0.6){const t=B.tf;burst(t.x+rand(-1,1)*t.u*0.7,t.y+rand(-1,1)*t.u*0.6,'#dff8ff',1,220,true)}
       if(g.storm<=0){g.storm=0;float('雷速モードが解けた',W/2,H*0.25,'#cdb89a',20,1)}}
     else{const head=B.parts.find(p=>p.id==='head');g.charge=Math.min(1,g.charge+dt/STORM_CHARGE*(head.broken?0.5:1));
