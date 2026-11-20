@@ -408,7 +408,7 @@ const WEAPONS=[
   {id:'w3',name:'雷鳴刀',atk:27,build:'balance',...WP('d2',['scale','horn','crystal']),shape:'katana',blade:'#fff6b8',glow:'#7ad0ff'},
   {id:'r2',name:'天雷槍ヴァジュラ',atk:26,build:'parry',...WP('d2',['horn']),shape:'vajra',blade:'#fff27a',glow:'#9fe8ff',perk:{parryPts:1.35,part:1.2},rareCost:{thunderorb:1,gekirin:1}},
   {id:'f3',name:'迅雷の短剣',atk:26,build:'dodge',...WP('d2',['crystal','wing']),shape:'katana',blade:'#fffbd0',glow:'#ffe060',perk:{dodgePts:16,dodge:0.93}},
-  {id:'g1',name:'氷牙の大剣',atk:26,build:'parry',...WP('g1',['icefang','mstone']),shape:'great',blade:'#e8f8ff',glow:'#a8e4ff',perk:{parryPts:1.5}},
+  {id:'g1',name:'氷牙の大剣',atk:29,build:'parry',...WP('g1',['icefang','mstone']),shape:'great',blade:'#e8f8ff',glow:'#a8e4ff',perk:{parryPts:1.5}},
   {id:'g2',name:'霜花の刺突剣',atk:31,build:'crit',...WP('g1',['icecrys','frost']),shape:'spear',blade:'#f4fcff',glow:'#cfefff',perk:{crit:0.18,critDmg:0.4,parryPts:0.8}},
   {id:'r6w',name:'時止めの氷刃',atk:33,build:'parry',...WP('g1',['icecrys']),shape:'amber',blade:'#cfe8ff',glow:'#6aa0ff',perk:{parryPts:1.3,parry:1.2,crit:0.08},rareCost:{timeice:1,permafrost:1}},
   {id:'w4',name:'冥刃ネクロ',atk:35,build:'balance',...WP('d3',['shade','crown','core']),shape:'dark',blade:'#a874e8',glow:'#d080ff'},
@@ -426,24 +426,26 @@ for(const w of WEAPONS)if(w.rareCost)w.cost={...w.cost,...w.rareCost};
 const WSTAR={d1:['w1','w2'],f1:['f1','f2'],d2:['w3','f3'],g1:['g1','g2'],d3:['w4','f5']};
 const GACHA_DUNGEON={golm:'d1',lumina:'f1',volga:'d2',glacier:'g1',necros:'d3'};
 for(const w of WEAPONS)if(w.gacha){const best=Math.max(...WSTAR[GACHA_DUNGEON[w.gacha]].map(id=>WEAPONS.find(x=>x.id===id).atk));w.atk=Math.round(best*(1+0.04*MAXLV))}
+// バランス系の武器（普通の武器）は攻撃力 ×BAL_ATK（v17）。ボス武器の攻撃力は上の計算（ボーナス前）のままにするため、このあとで掛ける
+const BAL_ATK=1.1;for(const w of WEAPONS)if(w.build==='balance'&&!w.gacha)w.atk=Math.round(w.atk*BAL_ATK);
 // 防具は「シリーズ」ごとに 頭・胴・手・足 の4部位。シリーズの防御/体力の合計を部位の比率で分ける
 const SLOTS=[{k:'head',n:'頭',r:0.25},{k:'body',n:'胴',r:0.35},{k:'hands',n:'手',r:0.15},{k:'legs',n:'足',r:0.25}];
 // setPerk＝シリーズ全体の効果（4部位そろえると全部、1部位なら部位の割合ぶん）。perkSlot＝その部位だけの追加効果
 const ARMOR_SETS=[
   {id:'a0',title:'旅人',names:['旅人の頭巾','旅人の服','旅人の手袋','旅人の靴'],def:0,hp:0,d:'d1',mats:[],style:'cloth',color:'#7a5a3e',trim:'#c9a070'},
-  {id:'a1',title:'岩甲',build:'balance',names:['岩甲の兜','岩甲の鎧','岩甲の籠手','岩甲の脚甲'],def:10,hp:8,d:'d1',mats:['shell','bone'],style:'plate',color:'#8f7a5e',trim:'#c9b48a'},
+  {id:'a1',title:'岩甲',build:'balance',names:['岩甲の兜','岩甲の鎧','岩甲の籠手','岩甲の脚甲'],def:11,hp:9,d:'d1',mats:['shell','bone'],style:'plate',color:'#8f7a5e',trim:'#c9b48a'},
   {id:'r4',title:'心石',build:'balance',names:['心石の額当て','心石の守り','心石の腕輪','心石の具足'],def:14,hp:12,d:'d1',mats:['shell','bone'],rare:{heartstone:1},perkSlot:'body',perk:{heal:2},perkCost:{heartstone:2},style:'plate',color:'#9a5a3a',trim:'#ff9a5a'},
   {id:'r5',title:'黄金角',build:'parry',names:['黄金角の兜','黄金角の胴鎧','黄金角の籠手','黄金角の脚甲'],def:20,hp:18,d:'d1',mats:['shell','hornG'],rare:{heartstone:1},perkSlot:'head',perk:{parryPts:1.2},perkCost:{goldhorn:1},style:'gold',color:'#a88228',trim:'#fff0a0'},
   {id:'fa',title:'鱗粉',build:'dodge',names:['鱗粉の頭巾','鱗粉の衣','鱗粉の手袋','鱗粉の靴'],def:13,hp:10,d:'f1',mats:['dust','silk'],setPerk:{dodgePts:12,dodge:0.93},style:'cloak',color:'#4a5a24',trim:'#d8ff70'},
   {id:'fb',title:'毒蛾',build:'crit',names:['毒蛾の兜','毒蛾の甲殻','毒蛾の籠手','毒蛾の脚甲'],def:15,hp:11,d:'f1',mats:['mothwing','antenna'],setPerk:{crit:0.5,critDmg:0.2,parryPts:0.9},style:'plate',color:'#5a3a7a',trim:'#e0c0ff'},
   {id:'r9',title:'月光',build:'dodge',names:['月光の冠','月光の羽衣','月光の手袋','月光の靴'],def:17,hp:13,d:'f1',mats:['silk','dust'],rare:{moonsilk:1},setPerk:{dodgePts:14,dodge:0.95},perkSlot:'head',perk:{crit:0.05},perkCost:{fairyeye:1},style:'cloak',color:'#3a3a6a',trim:'#e8ecff'},
-  {id:'a2',title:'雷鱗',build:'balance',names:['雷鱗の兜','雷鱗の鎧','雷鱗の籠手','雷鱗の脚甲'],def:18,hp:15,d:'d2',mats:['scale','wing','tail'],style:'scale',color:'#3e6aa5',trim:'#8cc4ff'},
+  {id:'a2',title:'雷鱗',build:'balance',names:['雷鱗の兜','雷鱗の鎧','雷鱗の籠手','雷鱗の脚甲'],def:20,hp:17,d:'d2',mats:['scale','wing','tail'],style:'scale',color:'#3e6aa5',trim:'#8cc4ff'},
   {id:'r6',title:'逆鱗',build:'dodge',names:['逆鱗の兜','逆鱗の鎧','逆鱗の籠手','逆鱗の脚甲'],def:24,hp:20,d:'d2',mats:['scale','tail'],rare:{gekirin:1},perkSlot:'legs',perk:{dodgePts:8},perkCost:{gekirin:2},style:'scale',color:'#22448a',trim:'#ffffff'},
   {id:'r7',title:'竜眼',build:'parry',names:['竜眼の兜','竜眼の蒼鎧','竜眼の籠手','竜眼の脚甲'],def:30,hp:26,d:'d2',mats:['scale','crystal'],rare:{gekirin:1},perkSlot:'hands',perk:{parryPts:1.15},perkCost:{dragoneye:1,gekirin:1},style:'gold',color:'#1a5a9a',trim:'#a0f0ff'},
-  {id:'ga',title:'霜鎧',build:'parry',names:['霜鎧の兜','霜鎧の胴','霜鎧の籠手','霜鎧の脚甲'],def:28,hp:22,d:'g1',mats:['mstone','icefang'],setPerk:{parryPts:1.3,atk:0.85},style:'plate',color:'#7aa8c8',trim:'#e8f8ff'},
+  {id:'ga',title:'霜鎧',build:'parry',names:['霜鎧の兜','霜鎧の胴','霜鎧の籠手','霜鎧の脚甲'],def:28,hp:22,d:'g1',mats:['mstone','icefang'],setPerk:{parryPts:1.3,atk:0.95},style:'plate',color:'#7aa8c8',trim:'#e8f8ff'},
   {id:'gb',title:'氷晶',build:'crit',names:['氷晶の冠','氷晶の衣','氷晶の手甲','氷晶の靴'],def:24,hp:18,d:'g1',mats:['icecrys','frost'],setPerk:{crit:0.7,critDmg:0.3,parryPts:0.76},style:'scale',color:'#8ac4e4',trim:'#ffffff'},
   {id:'r10',title:'永久氷',build:'parry',names:['永久氷の兜','永久氷の鎧','永久氷の籠手','永久氷の脚甲'],def:32,hp:26,d:'g1',mats:['mstone','frost'],rare:{permafrost:1},setPerk:{parryPts:1.3,atk:0.9},perkSlot:'body',perk:{heal:3},perkCost:{iceheart:1},style:'gold',color:'#4a7aa8',trim:'#dff6ff'},
-  {id:'a3',title:'冥王',build:'balance',names:['冥王の冠帽','冥王の外套','冥王の手甲','冥王の長靴'],def:32,hp:25,d:'d3',mats:['shade','soul','core'],style:'cloak',color:'#5e3a82',trim:'#c060ff'},
+  {id:'a3',title:'冥王',build:'balance',names:['冥王の冠帽','冥王の外套','冥王の手甲','冥王の長靴'],def:35,hp:28,d:'d3',mats:['shade','soul','core'],style:'cloak',color:'#5e3a82',trim:'#c060ff'},
   {id:'r8',title:'魂石',build:'balance',names:['魂石の頭巾','魂石の衣','魂石の手甲','魂石の長靴'],def:38,hp:32,d:'d3',mats:['shade','soul'],rare:{soulstone:1},perkSlot:'body',perk:{heal:3},perkCost:{soulstone:2},style:'cloak',color:'#3a1a5a',trim:'#e0a0ff'},
 ];
 const MULPERK=['parry','part','dodge','parryPts','atk'];   // 掛け算で効く効果（それ以外は足し算）
@@ -1390,7 +1392,7 @@ const poisonTicks=()=>G_POISON_TICKS[RUN&&RUN.D?RUN.D.stars:1]||7;
 const G_BOLT_CH=1/12,G_BOLT_PCT=0.08;                      // 落雷：1/12で最大HPの8%（v16で1/15・7%から変更）
 const G_BEAM_CH=0.1,G_BEAM_PCT=0.10;                       // 闇の光線：1/10で最大HPの10%
 const G_FREEZE_SEC=1;                                      // 凍結：この武器で崩すと崩し時間+1秒
-const G_FREEZE_CH=1/12,G_FREEZE_PCT=0.08;                  // 氷撃：1/12で最大HPの8%
+const G_FREEZE_CH=1/12,G_FREEZE_PCT=0.07;                  // 氷撃：1/12で最大HPの7%（v17で8%から下げた）
 const cutMul=()=>1-Math.min(0.8,perk('dmgCut'));          // 被ダメージの倍率（岩王剣で0.5）
 function specialHit(frac,type){if(!B||B.over)return;const t=B.tf;
   const dmg=Math.max(1,Math.round(B.maxHp*frac*(B.g.armor>0?0.2:1)));B.hp-=dmg;guardPhase();
