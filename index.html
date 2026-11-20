@@ -2693,9 +2693,12 @@ function drawTelegraph(){
   ctx.beginPath();ctx.arc(pt.x,pt.y,r,0,Math.PI*2);ctx.stroke();
   ctx.lineWidth=2;ctx.globalAlpha=0.7;ctx.strokeStyle='#fff';ctx.beginPath();ctx.arc(pt.x,pt.y,rMin,0,Math.PI*2);ctx.stroke();
   ctx.globalAlpha=a.fail?0.3:0.35+0.4*inWin;ctx.fillStyle=col;ctx.beginPath();ctx.arc(pt.x,pt.y,rMin*0.6,0,Math.PI*2);ctx.fill();ctx.restore();
+  // 雷光で入れ替わった攻撃：輪のまわりに水色のギザギザ（入れ替わった直後は大きく）
+  if(a.warped&&!a.fail){a.warpFx=Math.max(0,(a.warpFx||0)-1/60);const R2=r+10+a.warpFx*40,n=18;ctx.save();ctx.strokeStyle='#bff4ff';ctx.shadowColor='#7ad0ff';ctx.shadowBlur=14;ctx.lineWidth=3;ctx.beginPath();
+    for(let i=0;i<=n;i++){const an=i/n*Math.PI*2+B.t*2,rr=R2+(i%2?7:-5)+Math.sin(B.t*40+i)*2;const x=pt.x+Math.cos(an)*rr,y=pt.y+Math.sin(an)*rr;i?ctx.lineTo(x,y):ctx.moveTo(x,y)}ctx.stroke();ctx.restore()}
   if(a.fl)B.flRow={y:ty+46,col};
   const name=hot?'強撃':a.kind==='delay'?'斬撃':'斬撃';
-  const tx=a.fail?(a.noDodge?'ディレイに釣られた！ 回避もできない':B.noDodgeT>0?`失敗… ${B.noDodgeT.toFixed(1)}秒 回避できない`:'失敗… 今なら回避が間に合う！'):a.cursed?'呪い！ いつもと【逆】へはじけ':a.fl&&B.flurry?`${B.flurry.total}連撃 ${B.flurry.idx}/${B.flurry.total}！`:`${name}！`;
+  const tx=a.fail?(a.noDodge?'ディレイに釣られた！ 回避もできない':B.noDodgeT>0?`失敗… ${B.noDodgeT.toFixed(1)}秒 回避できない`:'失敗… 今なら回避が間に合う！'):a.cursed?'呪い！ いつもと【逆】へはじけ':a.warped?'⚡ 雷光で反転！ 新しい向きをはじけ':a.fl&&B.flurry?`${B.flurry.total}連撃 ${B.flurry.idx}/${B.flurry.total}！`:`${name}！`;
   label(tx,col,ty);
 }
 const GLYPH={R:'→',DR:'↘',D:'↓',DL:'↙',L:'←',UL:'↖',U:'↑',UR:'↗'};
@@ -2823,7 +2826,10 @@ function drawFX(dt){
     for(let j=0;j<3;j++){ctx.lineWidth=j?2:6;ctx.beginPath();ctx.moveTo(h.x,h.y);for(let i=1;i<=8;i++){const t=i/8;ctx.lineTo(h.x+(p.x-h.x)*t+(i<8?rand(-40,40):rand(-60,60)),h.y+(p.y-h.y)*t)}ctx.stroke()}ctx.restore()}
   fx.bolts=fx.bolts.filter(b=>b.life>0);
   for(const z of fx.zaps){z.life-=dt;const al=Math.max(0,z.life/z.max);ctx.save();ctx.globalAlpha=al;ctx.strokeStyle='#f2fdff';ctx.shadowColor='#8fe0ff';ctx.shadowBlur=24;ctx.lineCap='round';
-    for(let j=0;j<2;j++){ctx.lineWidth=j?2:6;ctx.beginPath();ctx.moveTo(z.a.x,z.a.y);for(let i=1;i<10;i++){const k=i/10;ctx.lineTo(z.a.x+(z.b.x-z.a.x)*k+rand(-26,26),z.a.y+(z.b.y-z.a.y)*k+rand(-26,26))}ctx.lineTo(z.b.x,z.b.y);ctx.stroke()}ctx.restore()}
+    if(z.ghost){const r=34;ctx.globalAlpha=al*0.8;ctx.setLineDash([6,6]);ctx.lineWidth=3;ctx.strokeStyle='#9fdcff';ctx.beginPath();ctx.arc(z.a.x,z.a.y,r,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
+      ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(z.a.x-r*0.5,z.a.y-r*0.5);ctx.lineTo(z.a.x+r*0.5,z.a.y+r*0.5);ctx.moveTo(z.a.x+r*0.5,z.a.y-r*0.5);ctx.lineTo(z.a.x-r*0.5,z.a.y+r*0.5);ctx.stroke();ctx.restore();continue}
+    if(z.big)for(let k=0;k<3;k++){const m=0.25+k*0.25,mx=z.a.x+(z.b.x-z.a.x)*m,my=z.a.y+(z.b.y-z.a.y)*m;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(mx,my);ctx.lineTo(mx+rand(-50,50),my+rand(-50,50));ctx.lineTo(mx+rand(-80,80),my+rand(-80,80));ctx.stroke()}
+    for(let j=0;j<2;j++){ctx.lineWidth=j?(z.big?3:2):(z.big?10:6);ctx.beginPath();ctx.moveTo(z.a.x,z.a.y);for(let i=1;i<10;i++){const k=i/10;ctx.lineTo(z.a.x+(z.b.x-z.a.x)*k+rand(-26,26),z.a.y+(z.b.y-z.a.y)*k+rand(-26,26))}ctx.lineTo(z.b.x,z.b.y);ctx.stroke()}ctx.restore()}
   fx.zaps=fx.zaps.filter(z=>z.life>0);
   // パーティクル
   for(const p of fx.parts){p.life-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=p.drag||0.92;p.vy=p.vy*(p.drag||0.92)+(p.grav!=null?p.grav:300)*dt;
@@ -3040,7 +3046,10 @@ function update(dt){
   else if(B.state==='windup'){
     if(a.holdLeft>0&&a.t>=a.holdAt)a.holdLeft-=dt;else a.t+=dt;
     if(a.warpAt&&!a.warped&&a.t>=a.warpAt){const p0=attackPoint(a);a.warped=true;a.dir=OPP[a.dir];const p1=attackPoint(a),t=B.tf; // 雷光転移：向きが反対へ
-      fx.flash={c:'#e8fbff',life:0.12,max:0.12};fx.zaps.push({a:p0,b:p1,life:0.28,max:0.28});sfx('zap');burst(p1.x,p1.y,'#e8fbff',22,420,true);B.shake=Math.max(B.shake,6)}
+      // v17：分かりやすく（太く長い雷光＋空からの雷、元の位置に✕の輪、移った先に「⚡反転！」）
+      fx.flash={c:'#e8fbff',life:0.22,max:0.22};fx.zaps.push({a:p0,b:p1,life:0.45,max:0.45,big:true});fx.zaps.push({a:{x:p1.x+rand(-30,30),y:-20},b:p1,life:0.35,max:0.35});
+      fx.zaps.push({ghost:true,a:p0,b:p0,life:0.6,max:0.6});a.warpFx=0.6;sfx('zap');setTimeout(()=>sfx('zap'),70);burst(p1.x,p1.y,'#e8fbff',36,520,true);B.shake=Math.max(B.shake,12);
+      float('⚡反転！',p1.x,p1.y-64,'#dff8ff',30,0.8)}
     // 冥炎：着弾前から炎を吐く
     if(a.kind==='breath'&&B.E.breath.type==='fire'&&a.t>a.w-Math.min(0.45,a.w*0.75)&&a.t<a.w+0.1){const h=headScreen(),p=breathTarget(a);
       for(let i=0;i<3;i++){const ang=Math.atan2(p.y-h.y,p.x-h.x)+rand(-0.25,0.25),sp=rand(700,1000);fx.parts.push({x:h.x,y:h.y,vx:Math.cos(ang)*sp,vy:Math.sin(ang)*sp,life:rand(0.35,0.55),max:0.55,c:Math.random()<0.5?B.E.breath.c:shade(B.E.breath.c,0.4),r:rand(8,18),add:true,round:true,drag:0.97,grav:0})}}
