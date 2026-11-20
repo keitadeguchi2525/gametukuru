@@ -1256,7 +1256,7 @@ function beginAttack(){
   if(kind==='heavy')sfx('heavyWind');if(kind==='breath')sfx('charge',a.w);
   // ヴォルガ：雷速モード中は、振りかぶりの途中で雷光が走って攻撃の向きが反対側へ入れ替わることがある
   //   入れ替わりは受付が始まる前に必ず起きる（前の向きのままでは弾けない）。溜めが短すぎる攻撃では起きない
-  if(B.g.storm>0&&kind!=='breath'&&a.w>=0.45&&Math.random()<WARP_CHANCE){a.warpAt=Math.max(0.15,a.w-earlyWin()-rand(0.03,0.1));a.warped=false}
+  if(B.g.storm>0&&kind!=='breath'&&a.w>=0.45&&Math.random()<WARP_CHANCE){a.warpAt=Math.max(0.12,a.w-earlyWin()-rand(0.18,0.28));/* v17：反転を早めて反応しやすく（受付が始まる0.18〜0.28秒前） */a.warped=false}
 }
 const earlyWin=()=>Math.min(0.3,B.atk.w*0.45)*perk('parry');
 const dodgeWin=()=>DODGEWIN*perk('dodge');
