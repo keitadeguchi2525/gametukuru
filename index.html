@@ -422,6 +422,12 @@ const WEAPONS=[
   {id:'x3',name:'蒼氷雷槍ブリザード',atk:33,build:'parry',...WPX([['g1',['icefang','mstone'],0.7],['d2',['horn','crystal'],0.3]]),shape:'vajra',blade:'#cfefff',glow:'#7ad0ff',perk:{parryPts:1.45,part:1.15},rareCost:{thunderorb:1,iceheart:1}},
   {id:'x2',name:'月影刀ルナシャドウ',atk:37,build:'dodge',...WPX([['d3',['shade','soul'],0.7],['f1',['dust'],0.3]]),shape:'katana',blade:'#e8e0ff',glow:'#9070ff',perk:{dodgePts:22,dodge:0.96,crit:0.1},rareCost:{fairyeye:1,voidcrystal:1,moonsilk:2}},
   {id:'x4',name:'三宝剣トライアド',atk:40,build:'balance',...WPX([['d3',['shade','crown'],0.6],['d1',['bone'],0.2],['d2',['scale'],0.2]]),shape:'royal',blade:'#fff0c0',glow:'#ffd060',perk:{part:1.25,crit:0.08,parryPts:1.1},rareCost:{goldhorn:1,dragoneye:1,timeice:1}},
+  // v18：各ビルドの武器が6本くらいになるように追加（ほかのダンジョンの素材を組み合わせる）
+  {id:'x8',name:'森月の剣',atk:20,build:'balance',...WPX([['f1',['dust','silk'],0.7],['d1',['bone'],0.3]]),shape:'katana',blade:'#e8f0d8',glow:'#b0e080'},
+  {id:'x7',name:'雷光の細剣',atk:27,build:'crit',...WPX([['d2',['scale','crystal'],0.7],['f1',['antenna'],0.3]]),shape:'spear',blade:'#fff8c0',glow:'#ffe060',perk:{crit:0.15,critDmg:0.25,parryPts:0.72}},
+  {id:'x5',name:'霜雷の太刀',atk:31,build:'balance',...WPX([['g1',['frost','icecrys'],0.7],['d2',['scale'],0.3]]),shape:'katana',blade:'#e0f4ff',glow:'#a0d8ff'},
+  {id:'x6',name:'冥哭の大剣',atk:34,build:'parry',...WPX([['d3',['shade','crown'],0.7],['g1',['icefang'],0.3]]),shape:'great',blade:'#c8b8e8',glow:'#a080ff',perk:{parryPts:1.55}},
+  {id:'x9',name:'冥星の刺剣',atk:35,build:'crit',...WPX([['d3',['shade','core'],0.7],['g1',['icecrys'],0.3]]),shape:'spear',blade:'#f0e8ff',glow:'#c0a0ff',perk:{crit:0.2,critDmg:0.35,parryPts:0.7}},
   {id:'r3',name:'王笏剣ルクスフェル',atk:38,build:'crit',...WP('d3',['soul']),shape:'royal',blade:'#fff6dc',glow:'#ffe070',perk:{crit:0.2,critDmg:0.45,parryPts:0.75},rareCost:{scepter:1,soulstone:2,voidcrystal:1}},
   // ボスの特殊武器：ガチャ限定（工房では作れない。手に入れたら強化はできる）
   {id:'gw_golm',name:'岩王剣ゴルムガルド',atk:20,build:'special',gacha:'golm',...WP('d1',[]),cost:{},shape:'great',blade:'#cbb48e',glow:'#ffb040',perk:{dmgCut:0.5}},
@@ -461,6 +467,14 @@ const ARMOR_SETS=[
   {id:'xa',title:'霧影',build:'dodge',names:['霧影の頭巾','霧影の衣','霧影の手袋','霧影の足袋'],def:28,hp:22,d:'g1',mats:['frost','mstone'],x:['f1',['mothwing']],setPerk:{dodgePts:16,dodge:0.96},style:'cloth',color:'#5a7a9a',trim:'#d0c0ff'},
   {id:'xb',title:'冥翼',build:'dodge',names:['冥翼の仮面','冥翼の羽衣','冥翼の手甲','冥翼の靴'],def:39,hp:33,d:'d3',mats:['shade','soul'],x:['d2',['wing']],rare:{moonsilk:1,soulstone:1},perkSlot:'legs',perk:{dodgePts:8},perkCost:{voidcrystal:1,fairyeye:1},setPerk:{dodgePts:20,dodge:0.97},style:'cloak',color:'#3a2a5a',trim:'#a0e0ff'},
   {id:'xc',title:'星冠',build:'crit',names:['星冠の冠','星冠の衣','星冠の腕輪','星冠の靴'],def:34,hp:27,d:'d3',mats:['shade','core'],x:['g1',['icecrys']],rare:{amber:1},perkSlot:'head',perk:{critDmg:0.2},perkCost:{lunarcrown:1,scepter:1},setPerk:{crit:0.6,critDmg:0.25,parryPts:0.65},style:'gold',color:'#2a3a6a',trim:'#ffe080'},
+  // v18：各ビルドの防具が6つくらいになるように追加
+  {id:'xi',title:'琥珀',build:'crit',names:['琥珀の額冠','琥珀の胸当て','琥珀の腕輪','琥珀の脛当て'],def:13,hp:10,d:'d1',mats:['shell','claw'],rare:{heartstone:1},perkSlot:'head',perk:{crit:0.05},perkCost:{amber:1},setPerk:{crit:0.35,critDmg:0.1,parryPts:0.85},style:'gold',color:'#8a5a20',trim:'#ffc060'},
+  {id:'xg',title:'森守',build:'parry',names:['森守の兜','森守の鎧','森守の籠手','森守の脚甲'],def:15,hp:11,d:'f1',mats:['silk','antenna'],x:['d1',['shell']],setPerk:{parryPts:1.2,atk:0.95},style:'plate',color:'#4a6a3a',trim:'#c0e080'},
+  {id:'xf',title:'雷蛾',build:'crit',names:['雷蛾の冠','雷蛾の衣','雷蛾の手袋','雷蛾の靴'],def:19,hp:14,d:'d2',mats:['scale','crystal'],x:['f1',['mothwing']],setPerk:{crit:0.6,critDmg:0.2,parryPts:0.72},style:'scale',color:'#5a5a2a',trim:'#fff080'},
+  {id:'xj',title:'雷影',build:'dodge',names:['雷影の頭巾','雷影の衣','雷影の手袋','雷影の足袋'],def:19,hp:15,d:'d2',mats:['wing','scale'],x:['f1',['dust']],setPerk:{dodgePts:14,dodge:0.94},style:'cloth',color:'#2a3a5a',trim:'#fff27a'},
+  {id:'xd',title:'霜雷',build:'balance',names:['霜雷の兜','霜雷の鎧','霜雷の籠手','霜雷の脚甲'],def:27,hp:21,d:'g1',mats:['frost','mstone'],x:['d2',['scale']],style:'plate',color:'#4a6a8a',trim:'#e0f0ff'},
+  {id:'xh',title:'冥星',build:'crit',names:['冥星の冠','冥星の衣','冥星の腕輪','冥星の靴'],def:32,hp:24,d:'d3',mats:['shade','core'],x:['g1',['frost']],setPerk:{crit:0.7,critDmg:0.25,parryPts:0.62},style:'scale',color:'#3a2a6a',trim:'#e0c0ff'},
+  {id:'xe',title:'守護竜',build:'parry',names:['守護竜の兜','守護竜の鎧','守護竜の籠手','守護竜の脚甲'],def:40,hp:30,d:'d3',mats:['shade','crown'],x:['d2',['scale']],rare:{soulstone:1},perkSlot:'hands',perk:{parryPts:1.1,heal:2},perkCost:{iceheart:1,gekirin:1},setPerk:{parryPts:1.35},style:'gold',color:'#2a4a7a',trim:'#a0e0ff'},
   {id:'r8',title:'魂石',build:'balance',names:['魂石の頭巾','魂石の衣','魂石の手甲','魂石の長靴'],def:38,hp:32,d:'d3',mats:['shade','soul'],rare:{soulstone:1},perkSlot:'body',perk:{heal:3},perkCost:{soulstone:2},style:'cloak',color:'#3a1a5a',trim:'#e0a0ff'},
 ];
 const MULPERK=['parry','part','dodge','parryPts','atk'];   // 掛け算で効く効果（それ以外は足し算）
