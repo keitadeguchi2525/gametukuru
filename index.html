@@ -1301,7 +1301,9 @@ const dodgeWin=()=>DODGEWIN*perk('dodge');
 // ★4 グラシエル【寒さ】：時間がたつほどパリィ・回避の受付が短くなる（最低×0.6）。HP50%以下の吹雪でさらに×0.85
 // グラシエル（★4）の寒さ：COLD_EVERY 秒ごとに自分のHPが減る。ボスHP50%以下（吹雪）で BLIZZARD_DMG に増える（防御では減らない）
 const COLD_EVERY=3,COLD_DMG=1,BLIZZARD_DMG=3;
-const coldDmg=()=>B.g.blizzard?BLIZZARD_DMG:COLD_DMG;
+// ボスラッシュでは、巡ごとに寒さのダメージも上げる（防御では減らないので、基準の装備の最大HPに対する割合が「倒すのにかかる回数の倍率」と同じだけ増えるように）
+const rushColdMul=lap=>lap>1?rushRef(lap).hp/rushRef(1).hp*rushKillMul(lap):1;
+const coldDmg=()=>(B.g.blizzard?BLIZZARD_DMG:COLD_DMG)*(RUN&&RUN.rush?rushColdMul(RUN.rush.lap):1);
 const needDir=a=>a.cursed?a.dir:OPP[a.dir];   // 攻撃が来た方向へはじき返す（呪い中は逆）
 function enterBroken(extra=0){
   B.frozenBreak=perk('gFreeze')>0;if(B.frozenBreak){extra+=G_FREEZE_SEC;sfx('iceCrash');float(`凍結！ 崩し時間 +${G_FREEZE_SEC}秒`,W/2,H*0.38,'#bff4ff',24,1.4)}
@@ -2782,7 +2784,7 @@ function drawGimmickHUD(){
     if(g.storm>0){ctx.fillStyle='#dff8ff';gtxt(`雷速モード 残り${Math.ceil(g.storm)}秒 — 雷光が走ったら向きが反対に！`,W/2,y-4);bar(W/2-bw/2,y+2,bw,5,g.storm/STORM_TIME,'#dff8ff')}
     else{ctx.fillStyle='#9fe8ff';gtxt('雷ゲージ',W/2,y-4);bar(W/2-bw/2,y+2,bw,5,g.charge,'#9fe8ff')}}
   if(E.gimmick==='orbs'){ctx.fillStyle='#e8ff90';gtxt(B.state==='orbs'?`鱗粉の玉 ${B.orbPop}/${ORB_N} 撃ち落とし`:'鱗粉の玉が出たら素早く撃ち落とせ',W/2,y)}
-  if(E.gimmick==='cold'){ctx.fillStyle=B.g.blizzard?'#ffffff':'#bff4ff';gtxt(`${B.g.blizzard?'❄ 吹雪':'❄ 寒さ'} — ${COLD_EVERY}秒ごとに HP -${coldDmg()}（あと${Math.max(0,COLD_EVERY-(B.g.coldT||0)).toFixed(1)}秒）`,W/2,y)}
+  if(E.gimmick==='cold'){ctx.fillStyle=B.g.blizzard?'#ffffff':'#bff4ff';gtxt(`${B.g.blizzard?'❄ 吹雪':'❄ 寒さ'} — ${COLD_EVERY}秒ごとに HP -${Math.round(coldDmg()*10)/10}（あと${Math.max(0,COLD_EVERY-(B.g.coldT||0)).toFixed(1)}秒）`,W/2,y)}
   {const hz=hazard();if(hz){ctx.fillStyle=hz.c;ctx.font="700 12px 'M PLUS 1p'";gtxt(`${hz.name}に注意（回避でのみ避けられる）`,W/2,y+24)}}
   if(E.gimmick==='curse'){const core=B.parts.find(p=>p.id==='core');const t=[];if(!core.broken)t.push('冥核が再生中（破壊で停止）');if(g.phase2)t.push('第二形態');if(g.curse>0)t.push(`反転の呪い 残り${Math.ceil(g.curse)}秒`);
     ctx.fillStyle=g.curse>0?'#e090ff':'#ff9ab0';gtxt(t.join('　'),W/2,y)}
