@@ -398,6 +398,8 @@ const upgRecipe=(d,m,k)=>({[m]:Math.max(1,Math.round(YIELD[d][m]*k))});
 const MAXLV=5;   // 強化の上限（基本）。ボスラッシュを n巡クリアすると +n×5（maxLv()）
 const maxLv=()=>MAXLV+5*((typeof S!=='undefined'&&S&&S.rushClear)||0);
 const WP=(d,mats)=>({cost:recipe(d,mats,WEAPON_CLEARS),upg:upgRecipe(d,TOPMAT(d),0.08)});
+// ほかのダンジョンの素材も組み合わせる武器：parts＝[[ダンジョン,素材,割合],…]。強化素材は最初のダンジョンのもの
+const WPX=parts=>{const cost={};for(const[d,mats,r]of parts)for(const[m,q]of Object.entries(recipe(d,mats,WEAPON_CLEARS,r)))cost[m]=(cost[m]||0)+q;return {cost,upg:upgRecipe(parts[0][0],TOPMAT(parts[0][0]),0.08)}};
 const WEAPONS=[
   {id:'w0',name:'木の剣',atk:15,...WP('d1',[]),cost:{},shape:'wood',blade:'#b9844a',glow:'#ffd08a'},
   {id:'w1',name:'骨砕きの大剣',atk:19,build:'balance',...WP('d1',['bone','claw']),shape:'great',blade:'#efe4c8',glow:'#fff0d0'},
@@ -414,6 +416,11 @@ const WEAPONS=[
   {id:'r6w',name:'時止めの氷刃',atk:33,build:'parry',...WP('g1',['icecrys']),shape:'amber',blade:'#cfe8ff',glow:'#6aa0ff',perk:{parryPts:1.3,parry:1.2,crit:0.08},rareCost:{timeice:1,permafrost:1}},
   {id:'w4',name:'冥刃ネクロ',atk:35,build:'balance',...WP('d3',['shade','crown','core']),shape:'dark',blade:'#a874e8',glow:'#d080ff'},
   {id:'f5',name:'魂喰らいの鎌',atk:33,build:'dodge',...WP('d3',['shade','soul']),shape:'dark',blade:'#70e0d0',glow:'#a0fff0',perk:{dodgePts:20,dodge:0.92}},
+  // v18：ほかのダンジョンの素材やレア素材を組み合わせた武器
+  {id:'x1',name:'霧影の双刃',atk:30,build:'dodge',...WPX([['g1',['icecrys','frost'],0.7],['f1',['mothwing'],0.3]]),shape:'katana',blade:'#d8f0ff',glow:'#c0a0ff',perk:{dodgePts:18,dodge:0.94}},
+  {id:'x3',name:'蒼氷雷槍ブリザード',atk:33,build:'parry',...WPX([['g1',['icefang','mstone'],0.7],['d2',['horn','crystal'],0.3]]),shape:'vajra',blade:'#cfefff',glow:'#7ad0ff',perk:{parryPts:1.45,part:1.15},rareCost:{thunderorb:1,iceheart:1}},
+  {id:'x2',name:'月影刀ルナシャドウ',atk:37,build:'dodge',...WPX([['d3',['shade','soul'],0.7],['f1',['dust'],0.3]]),shape:'katana',blade:'#e8e0ff',glow:'#9070ff',perk:{dodgePts:22,dodge:0.96,crit:0.1},rareCost:{fairyeye:1,voidcrystal:1,moonsilk:2}},
+  {id:'x4',name:'三宝剣トライアド',atk:40,build:'balance',...WPX([['d3',['shade','crown'],0.6],['d1',['bone'],0.2],['d2',['scale'],0.2]]),shape:'royal',blade:'#fff0c0',glow:'#ffd060',perk:{part:1.25,crit:0.08,parryPts:1.1},rareCost:{goldhorn:1,dragoneye:1,timeice:1}},
   {id:'r3',name:'王笏剣ルクスフェル',atk:38,build:'crit',...WP('d3',['soul']),shape:'royal',blade:'#fff6dc',glow:'#ffe070',perk:{crit:0.2,critDmg:0.45,parryPts:0.75},rareCost:{scepter:1,soulstone:2,voidcrystal:1}},
   // ボスの特殊武器：ガチャ限定（工房では作れない。手に入れたら強化はできる）
   {id:'gw_golm',name:'岩王剣ゴルムガルド',atk:20,build:'special',gacha:'golm',...WP('d1',[]),cost:{},shape:'great',blade:'#cbb48e',glow:'#ffb040',perk:{dmgCut:0.5}},
@@ -449,6 +456,10 @@ const ARMOR_SETS=[
   {id:'a3',title:'冥王',build:'balance',names:['冥王の冠帽','冥王の外套','冥王の手甲','冥王の長靴'],def:35,hp:28,d:'d3',mats:['shade','soul','core'],
     // v17：4部位それぞれに別の効果（前の★までの同じ種類の部位効果より上の数値。弱点なし）
     slotPerks:{head:{crit:0.15,critDmg:0.05},body:{dmgCut:0.10},hands:{parryPts:1.12},legs:{dodgePts:10}},style:'cloak',color:'#5e3a82',trim:'#c060ff'},
+  // v18：ほかのダンジョンの素材やレア素材を組み合わせた防具（x：組み合わせるダンジョンと素材）
+  {id:'xa',title:'霧影',build:'dodge',names:['霧影の頭巾','霧影の衣','霧影の手袋','霧影の足袋'],def:28,hp:22,d:'g1',mats:['frost','mstone'],x:['f1',['mothwing']],setPerk:{dodgePts:16,dodge:0.96},style:'cloth',color:'#5a7a9a',trim:'#d0c0ff'},
+  {id:'xb',title:'冥翼',build:'dodge',names:['冥翼の仮面','冥翼の羽衣','冥翼の手甲','冥翼の靴'],def:39,hp:33,d:'d3',mats:['shade','soul'],x:['d2',['wing']],rare:{moonsilk:1,soulstone:1},perkSlot:'legs',perk:{dodgePts:8},perkCost:{voidcrystal:1,fairyeye:1},setPerk:{dodgePts:20,dodge:0.97},style:'cloak',color:'#3a2a5a',trim:'#a0e0ff'},
+  {id:'xc',title:'星冠',build:'crit',names:['星冠の冠','星冠の衣','星冠の腕輪','星冠の靴'],def:34,hp:27,d:'d3',mats:['shade','core'],x:['g1',['icecrys']],rare:{amber:1},perkSlot:'head',perk:{critDmg:0.2},perkCost:{lunarcrown:1,scepter:1},setPerk:{crit:0.6,critDmg:0.25,parryPts:0.65},style:'gold',color:'#2a3a6a',trim:'#ffe080'},
   {id:'r8',title:'魂石',build:'balance',names:['魂石の頭巾','魂石の衣','魂石の手甲','魂石の長靴'],def:38,hp:32,d:'d3',mats:['shade','soul'],rare:{soulstone:1},perkSlot:'body',perk:{heal:3},perkCost:{soulstone:2},style:'cloak',color:'#3a1a5a',trim:'#e0a0ff'},
 ];
 const MULPERK=['parry','part','dodge','parryPts','atk'];   // 掛け算で効く効果（それ以外は足し算）
@@ -457,7 +468,8 @@ const ARMORS=[];
 const ARMOR_DEF_MUL=1.05;   // 防具の防御力（一式）に一律でかける倍率（v16で5%上げた）
 for(const st of ARMOR_SETS){st.def=Math.round(st.def*ARMOR_DEF_MUL);let dl=st.def,hl=st.hp;
   const ps=SLOTS.map((sl,i)=>{const d=sl.k==='body'?0:Math.floor(st.def*sl.r),h=sl.k==='body'?0:Math.floor(st.hp*sl.r);dl-=d;hl-=h;
-    const cost=recipe(st.d,st.mats,ARMOR_SET_CLEARS,sl.r);
+    const cost=recipe(st.d,st.mats,ARMOR_SET_CLEARS,sl.r*(st.x?0.65:1));
+    if(st.x)for(const[m,q]of Object.entries(recipe(st.x[0],st.x[1],ARMOR_SET_CLEARS,sl.r*0.35)))cost[m]=(cost[m]||0)+q;   // ほかのダンジョンの素材も使う防具
     const isPerk=st.perkSlot===sl.k;Object.assign(cost,isPerk?st.perkCost:(st.rare||{}));
     let pk=null;if(st.setPerk){pk={};for(const[k,v]of Object.entries(st.setPerk))pk[k]=MULPERK.includes(k)?Math.pow(v,sl.r):v*sl.r}
     if(isPerk)pk=mergePerk(pk,st.perk);
