@@ -1153,7 +1153,12 @@ function drawTut(){if(!TUT||B.walk>0)return;const st=tutCur();if(!st)return;
   hudText(ready?'いま！ スワイプ！':`${DNAME[needDir(a)]}へスワイプする準備`,W/2,cy+L*1.0,"900 18px 'M PLUS 1p'",ready?'#fff27a':'#bfe8ff');
 }
 // ===== ボスラッシュ（★5踏破で解放。★1〜★5のボスと連続で戦う。5体で1巡、巡ごとに敵が強くなり、無限に続く） =====
-const RUSH_HP=0.2,RUSH_DMG=0.08;   // 1巡ごとに 敵の体力+20%・攻撃力+8%
+const RUSH_HP=0.2;   // 1巡ごとに 敵の体力+20%
+// 敵の攻撃力は、基準の装備（★5の冥刃ネクロ＋冥王一式を、その巡の強化上限 +5×巡目 まで強化）で受けるダメージの割合が
+// 「倒すのにかかる回数の倍率」と同じだけ少しずつ増えるように、巡ごとに自動で決める（rushDmgMul）
+function rushRef(k){const w=W_('w4'),L=MAXLV*k;let def=0,hp=100;for(const x of ARMORS)if(x.set.id==='a3'){const s=aStat(x,L);def+=s.def;hp+=s.hp}return {atk:wStat(w,L),def,hp}}
+function rushKillMul(lap){const r1=rushRef(1),rk=rushRef(lap);return (1+RUSH_HP*(lap-1))*r1.atk/rk.atk}
+function rushDmgMul(lap){if(lap<=1)return 1;const r1=rushRef(1),rk=rushRef(lap);return rushKillMul(lap)*(100+rk.def)*rk.hp/((100+r1.def)*r1.hp)}
 const rushUnlocked=()=>!!S.cleared.d3;
 // n巡目をクリアした時点で n+1巡目に到達した扱い（クリアしたあと帰還しても数える）
 const rushReached=()=>Math.max(S.rushBest||0,(S.rushClear||0)+1);
@@ -1166,7 +1171,7 @@ const runName=()=>RUN.rush?'ボスラッシュ':RUN.D.name;
 const runFloorText=()=>RUN.rush?`${RUN.rush.lap}巡目 ${RUN.rush.idx+1}/${DUNGEONS.length}`:`${RUN.floor+1}F / ${RUN.D.floors.length}F`;
 function startDungeon(i){sfx('start');const D=DUNGEONS[i];prepArt(D.floors[D.floors.length-1]);const pmax=100+armStat().hp;RUN={i,D,floor:0,loot:{},php:pmax,pmax};startFloor()}
 function floorEnemy(){const id=RUN.D.floors[RUN.floor],E=EN(id);
-  if(RUN.rush&&RUN.rush.lap>1){const l=RUN.rush.lap-1,m=1+RUSH_HP*l;return {...E,hp:Math.round(E.hp*m),dmg:Math.round(E.dmg*(1+RUSH_DMG*l)),parts:E.parts.map(p=>p.hp?{...p,hp:Math.round(p.hp*m)}:p)}}
+  if(RUN.rush&&RUN.rush.lap>1){const l=RUN.rush.lap-1,m=1+RUSH_HP*l;return {...E,hp:Math.round(E.hp*m),dmg:Math.round(E.dmg*rushDmgMul(RUN.rush.lap)),parts:E.parts.map(p=>p.hp?{...p,hp:Math.round(p.hp*m)}:p)}}
   if(!E.minion)return E;
   const m=1+0.12*RUN.floor;
   return {...E,hp:Math.round(E.hp*m),dmg:Math.round(E.dmg*(1+0.06*RUN.floor)),parts:E.parts.map(p=>p.hp?{...p,hp:Math.round(p.hp*m)}:p)}}
@@ -1520,7 +1525,7 @@ function rushCleared(){const r=RUN.rush,heal=Math.round(RUN.pmax*FLOOR_HEAL),nb=
   sfx('fanfare');const n=r.lap;RUN.loot.proof_rush=(RUN.loot.proof_rush||0)+n;S.rushClear=Math.max(S.rushClear||0,n);rushReach(n+1);save();
   showBox(`<h2 style="color:#ffd58a">${n}巡目 クリア！</h2><div class="rarebanner" style="color:#ffe070">✦ ボスラッシュの証 ×${n} ✦</div>
     <div style="font-size:13px;color:#ffb0a0">未確定の戦利品（倒れると失う）</div><div class="row">${lootChips(RUN.loot)}</div>
-    <p style="font-size:14px;margin-bottom:4px">HP ${Math.ceil(RUN.php)} / ${RUN.pmax}　次は <b>${n+1}巡目</b>（敵の体力 +${Math.round(RUSH_HP*n*100)}%・攻撃力 +${Math.round(RUSH_DMG*n*100)}%）</p>
+    <p style="font-size:14px;margin-bottom:4px">HP ${Math.ceil(RUN.php)} / ${RUN.pmax}　次は <b>${n+1}巡目</b>（敵の体力 +${Math.round(RUSH_HP*n*100)}%・攻撃力 ×${rushDmgMul(n+1).toFixed(2)}）</p>
     <p style="font-size:13px;color:#e8d4b4;margin:0 0 8px">${n+1}巡目をクリアすると証が${n+1}個。ここで帰還すれば戦利品は確定する</p>
     <div class="row"><button class="btn sub2" id="goHome">帰還する（持ち帰る）</button><button class="btn" id="goNext">${n+1}巡目へ（HP+${heal}）</button></div>`);
   $('#goHome').onclick=()=>{bankRun();showBox(`<h2 style="color:#bdf0a8">無事に帰還した</h2><p>ボスラッシュ ${n}巡目までクリア</p><div style="font-size:13px;color:#bba78a">持ち帰った戦利品</div><div class="row">${lootChips(RUN.loot)}</div><div class="row"><button class="btn" id="home">拠点へ戻る</button></div>`);$('#home').onclick=endToHub};
