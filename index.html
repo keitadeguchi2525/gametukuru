@@ -1501,7 +1501,8 @@ function breakPart(p){
   burst(pt.x,pt.y,'#ffe08a',40,520,true);B.shake=16;
   if(!RUN.rush)p.mat.forEach(([k,q0],i)=>{const q=q0*uraMul();B.loot[k]=(B.loot[k]||0)+q;for(let j=0;j<Math.min(q,3);j++)dropIcon(k,pt.x,pt.y,i*0.1+j*0.06)});
   sfx('partBreak');float(`${p.name} 破壊！`,pt.x,pt.y-30,'#ffd04a',34,1.4);
-  float(p.mat.map(([k,q])=>`${MATS[k].n}×${q}`).join('  ')+' 獲得',pt.x,pt.y+10,'#bdf0a8',20,1.6);
+  // ボスラッシュでは素材を落とさないので「獲得」は出さない。裏ダンジョンでは実際にもらえる数（(1+k)倍）を出す
+  if(!RUN.rush)float(p.mat.map(([k,q])=>`${MATS[k].n}×${q*uraMul()}`).join('  ')+' 獲得',pt.x,pt.y+10,'#bdf0a8',20,1.6);
 }
 function victory(){
   B.over=true;B.hp=0;B.dying=true;bgm(null);sfx('kill');const drops={},rares={};
