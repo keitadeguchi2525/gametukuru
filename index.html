@@ -905,6 +905,8 @@ let tab='hunt';
 let huntTab='n',uraTier=1;   // ダンジョンの小タブ：n=通常 / u=裏（ボスラッシュと裏ダンジョン）
 // 武器は強さ順（攻撃力の低い順。同じならもとの並び）に並べる
 const byAtk=(a,b)=>a.atk-b.atk||WEAPONS.indexOf(a)-WEAPONS.indexOf(b);
+// 防具も強さ順（シリーズの防御→体力の低い順。部位は部位の防御→体力）
+const byDef=(a,b)=>a.def-b.def||a.hp-b.hp||ARMOR_SETS.indexOf(a.set||a)-ARMOR_SETS.indexOf(b.set||b);
 let buildTab='all';   // 工房・持ち物の武器／防具の小タブ：all=すべて／balance／parry／crit／dodge／special（ボス武器）
 const bOK=b=>buildTab==='all'||b===buildTab;
 const buildTabs=kind=>{if(kind==='a'&&buildTab==='special')buildTab='all';return `<div class="subtabs small">${[['all','すべて'],['balance','バランス'],['parry','パリィ'],['crit','クリティカル'],['dodge','回避'],...(kind==='w'?[['special','ボス武器']]:[])].map(([k,n])=>`<button class="${buildTab===k?'on':''}" data-act="btab" data-v="${k}">${n}</button>`).join('')}</div>`};
@@ -975,7 +977,7 @@ function renderHub(){
       if(ws0.length<WEAPONS.length)h+=`<p class="hint">ほかにも武器がある。素材を1つでも手に入れると表示される（ボス武器はガチャ限定）。</p>`;
     }else{
     h+=buildTabs('a');
-    const sets0=ARMOR_SETS.filter(st=>ARMORS.some(p=>p.set===st&&(S.armors[p.id]!==undefined||hasAnyMat(p.cost)))),sets=sets0.filter(st=>bOK(st.build));
+    const sets0=ARMOR_SETS.filter(st=>ARMORS.some(p=>p.set===st&&(S.armors[p.id]!==undefined||hasAnyMat(p.cost)))),sets=sets0.filter(st=>bOK(st.build)).sort(byDef);
     h+=`<div class="sect">— 防具（頭・胴・手・足） —</div><p style="font-size:12px;color:#a89478;margin:-4px 0 10px">シリーズの部位を全部そろえると合計：防御／体力。強化は1段ごとに 防御+1・体力+1。</p>`;
     sets.forEach(st=>{const ps=ARMORS.filter(p=>p.set===st);const rare=!!st.rare||Object.keys(st.perkCost||{}).length>0;
       h+=`<div class="card ${rare?'rare':''}"><h3>${st.title}シリーズ <span style="font-size:12px;color:#bba78a;font-weight:700">一式 防御${st.def} / 体力+${st.hp}</span> ${buildTag(st.build)}${st.setPerk?` <span class="tag perk">✦ 一式：${perkText(st.setPerk)}</span>`:''}${st.perk?` <span class="tag perk">✦ ${SLOTS.find(x=>x.k===st.perkSlot).n}：${perkText(st.perk)}</span>`:''}</h3>`;
@@ -1049,12 +1051,12 @@ function renderHub(){
     }else if(invTab==='a'){
       const as=armStat();h+=`<div class="buildbox"><b>いまの防具</b>　防御 ${as.def}　／　体力 +${as.hp}</div>`;
       // シリーズでまとめて装備（持っている部位だけ。持っていない部位はそのまま）
-      const sets=ARMOR_SETS.map(st=>{const own=ARMORS.filter(p=>p.set===st&&S.armors[p.id]!==undefined);return {st,own,on:own.length>0&&own.every(p=>S.eq[p.slot]===p.id)}}).filter(o=>o.own.length);
+      const sets=[...ARMOR_SETS].sort(byDef).map(st=>{const own=ARMORS.filter(p=>p.set===st&&S.armors[p.id]!==undefined);return {st,own,on:own.length>0&&own.every(p=>S.eq[p.slot]===p.id)}}).filter(o=>o.own.length);
       h+=`<div class="sect">— シリーズでまとめて装備 —</div><div class="eqsets">${sets.map(o=>`<button class="btn ${o.on?'on':'sub2'} mini bb-${o.st.build||'none'}" data-act="eqset" data-id="${o.st.id}" ${o.on?'disabled style="opacity:1"':''}><img src="${armorIcon(o.own.find(p=>p.slot==='body')||o.own[0])}">${o.st.title}（${o.own.length}/4）${o.st.build?buildTag(o.st.build):'<span class="tag">なし</span>'}${o.on?' ✔':''}</button>`).join('')}</div>
         <div class="hint" style="text-align:left;margin:0 0 4px">持っている部位をまとめて装備します（持っていない部位はいまのまま）</div>`;
       h+=buildTabs('a');
       for(const sl of SLOTS){h+=`<div class="sect">— ${sl.n} —</div><div class="inv2">`;
-        const list=ARMORS.filter(p=>p.slot===sl.k&&S.armors[p.id]!==undefined&&bOK(p.set.build)).sort((a,b)=>(S.eq[sl.k]===b.id)-(S.eq[sl.k]===a.id));
+        const list=ARMORS.filter(p=>p.slot===sl.k&&S.armors[p.id]!==undefined&&bOK(p.set.build)).sort(byDef).sort((a,b)=>(S.eq[sl.k]===b.id)-(S.eq[sl.k]===a.id));
         for(const it of list){const lv=S.armors[it.id],eq=S.eq[sl.k]===it.id,st=aStat(it,lv);
           h+=`<div class="card prow ${eq?'equipped':''}"><div class="ico"><img src="${armorIcon(it)}"></div><div class="body">
             <div class="pn"><b>${it.name} +${lv}</b>  ${buildTag(it.set.build)} <span class="pst">防御 ${st.def} / 体力 +${st.hp}</span>${it.perk?` <span class="tag perk" style="opacity:.85">✦ ${perkText(it.perk)}</span>`:''}</div>
