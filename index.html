@@ -907,7 +907,7 @@ function renderHub(){
     if(!uraTierOpen(uraTier))uraTier=1;
     h+=`<div class="subtabs">${[1,2,3,4,5].map(k=>`<button class="${uraTier===k?'on':''}" data-act="utab" data-v="${k}" ${uraTierOpen(k)?'':'disabled'}>${uraTierOpen(k)?'':'🔒'}裏${k}</button>`).join('')}</div>`;
     if(!uraTierOpen(1))h+=`<div class="card locked"><p>🔒 ボスラッシュを1巡クリアすると「裏1」が解放される。</p></div>`;
-    else{const k=uraTier;h+=`<p style="font-size:12px;color:#c8a8e8;margin:2px 4px 8px">裏${k}：ボスラッシュ${k+1}巡目より少し強い敵が出る。素材とレア素材が出やすい。</p>`;
+    else{const k=uraTier;h+=`<p style="font-size:12px;color:#c8a8e8;margin:2px 4px 8px">裏${k}：ボスラッシュ${k+1}巡目より少し強い敵が出る。素材とレア素材が${k+1}倍出やすい。</p>`;
       DUNGEONS.forEach((D,i)=>{const lock=!uraOpen(k,i),done=uraDone(k,i);
         h+=`<div class="card ${lock?'locked':''}" style="border-color:#7a40b0;box-shadow:0 0 12px rgba(160,64,255,.2)"><h3>裏${k} ${uraStars(D.stars)} ${lock?'???':`${D.name}（全${D.floors.length}階）`} ${done?'<span class="tag ok">踏破済</span>':''}</h3>
         <p>${lock?'🔒 ひとつ前の裏ダンジョンを踏破すると解放':D.desc}</p>${lock?'':`<p style="font-size:12px;color:#bba78a;margin-top:2px">↩ 帰還できる階：${returnFloors(D).map(f=>f+'F').join('・')} のあと</p>`}
@@ -1187,7 +1187,8 @@ function startRush(lap){sfx('start');for(const D of DUNGEONS)prepArt(D.floors.sl
   RUN={loot:{},php:pmax,pmax,rush:{lap,idx:0,start:lap}};rushFloor();rushReach(lap);startFloor()}
 const runName=()=>RUN.rush?'ボスラッシュ':RUN.ura?`裏${RUN.ura.tier}・${RUN.D.name}`:RUN.D.name;
 // ===== 裏ダンジョン（ボスラッシュ n巡目クリアで「裏★n」が解放。強さはボスラッシュ n+1巡目と同じ。素材2倍・レア確率2倍） =====
-const URA_DROP=2,URA_RARE=2,URA_EXTRA=1.1;   // URA_EXTRA：同じ巡目のボスラッシュより体力・攻撃力（寒さも）を1割強く
+const URA_EXTRA=1.1;
+const uraMul=()=>RUN&&RUN.ura?1+RUN.ura.tier:1;   // 裏kは 素材の数・レア素材の確率が (1+k)倍（裏1＝2倍 … 裏5＝6倍）   // URA_EXTRA：同じ巡目のボスラッシュより体力・攻撃力（寒さも）を1割強く
 // 裏k（k＝1〜5）：ボスラッシュ k巡目をはじめてクリアすると解放。中の★1〜★5は、ひとつ前を踏破すると次が開く
 const URA_TIERS=5;
 const uraTierOpen=k=>k<=URA_TIERS&&(S.rushClear||0)>=k;
@@ -1490,14 +1491,14 @@ function breakPart(p){
   p.broken=true;p.hp=0;const bonus=atkStat()*2;B.hp-=bonus;guardPhase();
   const t=B.tf,pt=toScreen(p.x*t.u,p.y*t.u);
   burst(pt.x,pt.y,'#ffe08a',40,520,true);B.shake=16;
-  if(!RUN.rush)p.mat.forEach(([k,q0],i)=>{const q=q0*(RUN.ura?URA_DROP:1);B.loot[k]=(B.loot[k]||0)+q;for(let j=0;j<Math.min(q,3);j++)dropIcon(k,pt.x,pt.y,i*0.1+j*0.06)});
+  if(!RUN.rush)p.mat.forEach(([k,q0],i)=>{const q=q0*uraMul();B.loot[k]=(B.loot[k]||0)+q;for(let j=0;j<Math.min(q,3);j++)dropIcon(k,pt.x,pt.y,i*0.1+j*0.06)});
   sfx('partBreak');float(`${p.name} 破壊！`,pt.x,pt.y-30,'#ffd04a',34,1.4);
   float(p.mat.map(([k,q])=>`${MATS[k].n}×${q}`).join('  ')+' 獲得',pt.x,pt.y+10,'#bdf0a8',20,1.6);
 }
 function victory(){
   B.over=true;B.hp=0;B.dying=true;bgm(null);sfx('kill');const drops={},rares={};
   // ボスラッシュでは素材・レア・討伐の証は落とさない（報酬は1巡クリアのボスラッシュの証だけ）
-  const dm=RUN.ura?URA_DROP:1,rm=RUN.ura?URA_RARE:1;   // 裏ダンジョン：素材2倍・レア確率2倍
+  const dm=uraMul(),rm=uraMul();   // 裏ダンジョン：裏kは素材・レア確率が (1+k)倍
   if(!RUN.rush)B.E.drops.forEach(([k,a,b])=>{const n=ri(a,b)*dm;if(n>0){drops[k]=n;B.loot[k]=(B.loot[k]||0)+n}});
   if(!RUN.rush)B.E.rares.forEach(([k,p])=>{if(Math.random()<p*rm){rares[k]=1;B.loot[k]=(B.loot[k]||0)+1}});
   const t=B.tf;burst(t.x,t.y,B.E.glow,70,650,true);
