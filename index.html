@@ -528,7 +528,10 @@ let forgeTab='w';
 const GACHA_ODDS={r1:0.5,r2:0.3,top:0.2};   // レア／激レア／大当たり（超激レア素材＋ボス武器の両方）
 const gachaRares=b=>{const o={};for(const[k]of b.rares)o[MATS[k].rare]=k;return o};
 // ガチャを回す前に、使う証を選ぶ（そのボスの討伐の証 か ボスラッシュの証）
-function chooseGacha(bid){const b=ENEMIES.find(e=>e.id===bid),pk='proof_'+bid,n=S.mats[pk]||0,m=S.mats.proof_rush||0;if(!b||n+m<1)return;sfx('click');
+function chooseGacha(bid){const b=ENEMIES.find(e=>e.id===bid),pk='proof_'+bid,n=S.mats[pk]||0,m=S.mats.proof_rush||0;if(!b||n+m<1)return;
+  // ボスラッシュの証を一度も手に入れていないうちは選ぶ画面を出さず、討伐の証ですぐ回す
+  if(!('proof_rush' in S.mats)){rollGacha(bid,false);return}
+  sfx('click');
   $('#gachaBox').innerHTML=`<h2 style="margin:0 0 8px;color:#ffd58a">${b.name}のガチャ</h2><p style="margin:0 0 10px">どの証を使う？</p>
     <div class="row" style="justify-content:center">${chip(pk,`${MATS[pk].full} ×${n}`)}${chip('proof_rush',`ボスラッシュの証 ×${m}`)}</div>
     <div class="row" style="justify-content:center;margin-top:10px"><button class="btn" id="gUseB" ${n>0?'':'disabled'}>討伐の証を使う</button><button class="btn" id="gUseR" ${m>0?'':'disabled'}>ボスラッシュの証を使う</button></div>
