@@ -896,7 +896,7 @@ function renderHub(){
     // 裏ダンジョン：ボスラッシュ n巡目をクリアすると裏★n が出る（それまでは出さない）
     DUNGEONS.forEach((D,i)=>{if(!uraUnlocked(i))return;const done=S.uraCleared&&S.uraCleared[D.id];
       h+=`<div class="card" style="border-color:#7a40b0;box-shadow:0 0 12px rgba(160,64,255,.25)"><h3>${uraStars(D.stars)} 裏・${D.name}（全${D.floors.length}階） ${done?'<span class="tag ok">踏破済</span>':''}</h3>
-      <p>${D.name}の敵がボスラッシュ${i+2}巡目と同じくらい強くなった裏ダンジョン。素材とレア素材が出やすい。</p>
+      <p>${D.name}の敵がボスラッシュ${i+2}巡目より少し強くなった裏ダンジョン。素材とレア素材が出やすい。</p>
       <p style="font-size:12px;color:#bba78a;margin-top:2px">↩ 帰還できる階：${returnFloors(D).map(f=>f+'F').join('・')} のあと</p>
       <div class="row" style="justify-content:flex-end"><button class="btn" data-act="ura" data-i="${i}">潜入する</button></div></div>`});
     // ボスラッシュ：★5を踏破するまでは「???」も出さない
@@ -1176,7 +1176,7 @@ function startRush(lap){sfx('start');for(const D of DUNGEONS)prepArt(D.floors.sl
   RUN={loot:{},php:pmax,pmax,rush:{lap,idx:0,start:lap}};rushFloor();rushReach(lap);startFloor()}
 const runName=()=>RUN.rush?'ボスラッシュ':RUN.ura?'裏・'+RUN.D.name:RUN.D.name;
 // ===== 裏ダンジョン（ボスラッシュ n巡目クリアで「裏★n」が解放。強さはボスラッシュ n+1巡目と同じ。素材2倍・レア確率2倍） =====
-const URA_DROP=2,URA_RARE=2;
+const URA_DROP=2,URA_RARE=2,URA_EXTRA=1.1;   // URA_EXTRA：同じ巡目のボスラッシュより体力・攻撃力（寒さも）を1割強く
 const uraUnlocked=i=>(S.rushClear||0)>=i+1;
 const uraStars=n=>`<span style="color:#c070ff;text-shadow:0 0 6px #a040ff">${'★'.repeat(n)}</span>`;
 // 強さの巡目（ボスラッシュ・裏ダンジョンで使う。ふつうは1）
@@ -1185,7 +1185,7 @@ const runFloorText=()=>RUN.rush?`${RUN.rush.lap}巡目 ${RUN.rush.idx+1}/${DUNGE
 function startDungeon(i,ura){sfx('start');const D=DUNGEONS[i];prepArt(D.floors[D.floors.length-1]);const pmax=100+armStat().hp;RUN={i,D,floor:0,loot:{},php:pmax,pmax,ura:ura?{lap:i+2}:null};startFloor()}
 function floorEnemy(){const id=RUN.D.floors[RUN.floor],E=EN(id);
   // ボスラッシュ・裏ダンジョン：巡目に合わせて 体力×(1+RUSH_HP×(巡目-1))・攻撃力×rushDmgMul（雑魚は階の補正のうえに同じ倍率）
-  const L=scaleLap(),lm=1+RUSH_HP*(L-1),ld=L>1?rushDmgMul(L):1;
+  const L=scaleLap(),ux=RUN.ura?URA_EXTRA:1,lm=(1+RUSH_HP*(L-1))*ux,ld=(L>1?rushDmgMul(L):1)*ux;
   const m=(E.minion?1+0.12*RUN.floor:1)*lm,dm=(E.minion?1+0.06*RUN.floor:1)*ld;
   if(m===1&&dm===1)return E;
   return {...E,hp:Math.round(E.hp*m),dmg:Math.round(E.dmg*dm),parts:E.parts.map(p=>p.hp?{...p,hp:Math.round(p.hp*m)}:p)}}
@@ -1317,7 +1317,7 @@ const dodgeWin=()=>DODGEWIN*perk('dodge');
 const COLD_EVERY=3,COLD_DMG=1,BLIZZARD_DMG=3;
 // ボスラッシュでは、巡ごとに寒さのダメージも上げる（防御では減らないので、基準の装備の最大HPに対する割合が「倒すのにかかる回数の倍率」と同じだけ増えるように）
 const rushColdMul=lap=>lap>1?rushRef(lap).hp/rushRef(1).hp*rushKillMul(lap):1;
-const coldDmg=()=>(B.g.blizzard?BLIZZARD_DMG:COLD_DMG)*rushColdMul(scaleLap());
+const coldDmg=()=>(B.g.blizzard?BLIZZARD_DMG:COLD_DMG)*rushColdMul(scaleLap())*(RUN&&RUN.ura?URA_EXTRA:1);
 const CURSE_RATE=0.5;   // 反転の呪いの間、攻撃が反転攻撃（紫の輪）になる確率
 const needDir=a=>a.cursed?a.dir:OPP[a.dir];   // 攻撃が来た方向へはじき返す（呪い中は逆）
 function enterBroken(extra=0){
@@ -1450,7 +1450,7 @@ const G_FREEZE_SEC=1;                                      // 凍結：この武
 const G_FREEZE_CH=1/12,G_FREEZE_PCT=0.07;                  // 氷撃：1/12で最大HPの7%（v17で8%から下げた）
 const cutMul=()=>1-Math.min(0.8,perk('dmgCut'));          // 被ダメージの倍率（岩王剣で0.5）
 // ボス武器の割合ダメージの基準になる体力。ボスラッシュでは1巡目の体力を基準にする（巡で増えた体力ぶんは割合で削れない）
-const pctHp=()=>B.maxHp/(1+RUSH_HP*(scaleLap()-1));
+const pctHp=()=>B.maxHp/((1+RUSH_HP*(scaleLap()-1))*(RUN&&RUN.ura?URA_EXTRA:1));
 function specialHit(frac,type){if(!B||B.over)return;const t=B.tf;
   const dmg=Math.max(1,Math.round(pctHp()*frac*(B.g.armor>0?0.2:1)));B.hp-=dmg;guardPhase();
   fx.special.push({type,x:t.x,y:t.y,life:type==='bolt'?0.4:0.6,max:type==='bolt'?0.4:0.6});
