@@ -1155,7 +1155,7 @@ function drawTut(){if(!TUT||B.walk>0)return;const st=tutCur();if(!st)return;
 // ===== ボスラッシュ（★5踏破で解放。★1〜★5のボスと連続で戦う。5体で1巡、巡ごとに敵が強くなり、無限に続く） =====
 const RUSH_HP=0.2,RUSH_DMG=0.08;   // 1巡ごとに 敵の体力+20%・攻撃力+8%
 const rushUnlocked=()=>!!S.cleared.d3;
-const rushStarts=()=>(S.rushBest||0)>=3?[1,S.rushBest]:[1];   // 3n巡目に到達すると、次から「3n巡目から」で始められる（いちばん高い3の倍数の巡目）
+const rushStarts=()=>{const a=[1];for(let l=3;l<=(S.rushBest||0);l+=3)a.push(l);return a};   // 3n巡目に到達すると、次から 3・6・9…（到達したところまで全部）から始められる
 function rushFloor(){const r=RUN.rush;RUN.i=r.idx;RUN.D=DUNGEONS[r.idx];RUN.floor=RUN.D.floors.length-1}
 function rushReach(lap){if(lap%3===0&&lap>(S.rushBest||0)){S.rushBest=lap;save();toast(`${lap}巡目に到達！ 次からは${lap}巡目から始められる`)}}
 function startRush(lap){sfx('start');for(const D of DUNGEONS)prepArt(D.floors.slice(-1)[0]);const pmax=100+armStat().hp;
