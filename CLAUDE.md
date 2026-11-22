@@ -23,7 +23,7 @@
 - ボスのギミックは `gimmicks()`、`enterBroken()`、`guardPhase()` あたり。鱗粉の玉は `spawnOrbs()`/`updateOrbs()`（毒は `POISON_*`）、ダンジョンごとの落下物は `HAZARDS` と `spawnHazard()`/`updateHazards()`、★4の寒さ（3秒ごとの自分へのダメージ）は `COLD_*`/`BLIZZARD_DMG` と `gimmicks()` の中。回避は左右（`doDodge('L'|'R')`、ブレスは `safeSide()` の側へ）。
 - 音は `sfx('名前')`（効果音）と `bgm('曲名')`（BGM）。音の中身は `SFX` と `SONGS` にまとまっている。新しい場面を足したら、合う効果音も鳴らす。
 - ボス5体の見た目は `BOSS_ART`（絵のコード）と `ART_CFG`（絵の置き方と部位の当たり判定の位置）。絵は「奥／画面左の腕・翼／画面右の腕・翼／手前」の4枚に分けて作り（`prepArt()`、ダンジョンに入ったときに先に作る）、`drawArtEnemy()` で重ねて描く。腕・翼の部位は `partOff()` で振りかぶる。1枚の完成図は `BOSS_ART.draw(id,ctx,null)` で描ける。雑魚は今までどおり `drawPart()` で描く。`ART_USE` からボスのidを消すと、そのボスは前の見た目に戻る。腕・翼は `ART_CFG` の `piv`（肩）を軸に回して振りかぶる（`swing()`）。絵の枚数と重ねる順番はボスごとに `ART_CFG` の `layers` で変えられる（ヴォルガは `wingS`/`wingE` の翼→体→`limbS`/`limbE` の手の順で、手が振りかぶる）
-- ボスラッシュ（★5踏破で解放）は `RUN.rush`（巡目 `lap`・何体目 `idx`）。`startRush()` で始め、`rushFloor()` が `RUN.D`／`RUN.floor` をそのボスのダンジョンの最奥の階に切り替える（背景・BGM・落下物・ギミックはそのまま使える）。強さは `floorEnemy()` で `RUSH_HP`／`rushDmgMul()`（巡目は `scaleLap()`）、ボスを倒したあとは `rushCleared()`。裏ダンジョン（ボスラッシュ n巡目クリアで裏★n）は `startDungeon(i,true)` で `RUN.ura={lap:i+2}`。素材・レア確率は `URA_DROP`/`URA_RARE`
+- ボスラッシュ（★5踏破で解放）は `RUN.rush`（巡目 `lap`・何体目 `idx`）。`startRush()` で始め、`rushFloor()` が `RUN.D`／`RUN.floor` をそのボスのダンジョンの最奥の階に切り替える（背景・BGM・落下物・ギミックはそのまま使える）。強さは `floorEnemy()` で `RUSH_HP`／`rushDmgMul()`（巡目は `scaleLap()`）、ボスを倒したあとは `rushCleared()`。裏ダンジョン（ボスラッシュ k巡目クリアで「裏k」の★1〜★5）は `startDungeon(i,k)` で `RUN.ura={tier:k,lap:k+1}`（解放は `uraTierOpen()`/`uraOpen()`）。素材・レア確率は `URA_DROP`/`URA_RARE`
 - 背景は `drawBG()`（ダンジョンごとに `bgCave` / `bgForest` / `bgCanyon` / `bgIce` / `bgUnder`、動く部分は `drawBGAnim()`）。
 
 ## 守ること
