@@ -31,6 +31,7 @@ h1{font-weight:900;font-size:30px;letter-spacing:.06em;text-align:center;color:#
 .stt td.k{color:#d8c6aa;overflow-wrap:anywhere}.stt{table-layout:auto}.stt td.v{width:1%}.stt td.v{text-align:right;font-weight:900;color:#ffe2ad;white-space:nowrap;font-size:15px}.stt small{display:block;font-size:12px;font-weight:400;color:#a89478;margin-top:2px}
 .stt .up{color:#8fe08a}.stt .dn{color:#ff9a7a}.eqline{display:flex;flex-wrap:wrap;gap:6px}.eqline span{display:inline-flex;align-items:center;gap:4px;background:#1c140d;border:1px solid #3c2b1c;border-radius:8px;padding:2px 8px 2px 3px;font-size:13px}.eqline img{width:28px;height:28px}
 .subtabs{display:flex;gap:6px;margin:0 0 10px}.subtabs button{flex:1;padding:8px 0;font:700 14px 'M PLUS 1p';color:#c9b597;background:#1c140d;border:1px solid #47331f;border-radius:20px;cursor:pointer}
+.subtabs.small{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin:-4px 0 10px}.subtabs.small button{min-width:0;padding:5px 4px;font-size:12px;border-radius:999px}
 .subtabs button.on{background:#5a3a18;color:#fff0d0;border-color:#c98a3a}.hint{font-size:13px;color:#bba78a;text-align:center;margin:6px 0 14px}
 .tabs button.on{background:linear-gradient(#b9772a,#8a4f15);color:#fff6e0;border-color:#e0a050}
 .card{background:linear-gradient(#2b1f15,#211710);border:1px solid #4a3522;border-radius:14px;padding:14px 16px;margin-bottom:12px}
@@ -398,6 +399,8 @@ const upgRecipe=(d,m,k)=>({[m]:Math.max(1,Math.round(YIELD[d][m]*k))});
 const MAXLV=5;   // 強化の上限（基本）。ボスラッシュを n巡クリアすると +n×5（maxLv()）
 const maxLv=()=>MAXLV+5*((typeof S!=='undefined'&&S&&S.rushClear)||0);
 const WP=(d,mats)=>({cost:recipe(d,mats,WEAPON_CLEARS),upg:upgRecipe(d,TOPMAT(d),0.08)});
+// ほかのダンジョンの素材も組み合わせる武器：parts＝[[ダンジョン,素材,割合],…]。強化素材は最初のダンジョンのもの
+const WPX=parts=>{const cost={};for(const[d,mats,r]of parts)for(const[m,q]of Object.entries(recipe(d,mats,WEAPON_CLEARS,r)))cost[m]=(cost[m]||0)+q;return {cost,upg:upgRecipe(parts[0][0],TOPMAT(parts[0][0]),0.08)}};
 const WEAPONS=[
   {id:'w0',name:'木の剣',atk:15,...WP('d1',[]),cost:{},shape:'wood',blade:'#b9844a',glow:'#ffd08a'},
   {id:'w1',name:'骨砕きの大剣',atk:19,build:'balance',...WP('d1',['bone','claw']),shape:'great',blade:'#efe4c8',glow:'#fff0d0'},
@@ -405,7 +408,7 @@ const WEAPONS=[
   {id:'r1',name:'琥珀剣アンバー',atk:21,build:'crit',...WP('d1',['hornG']),shape:'amber',blade:'#ffb840',glow:'#ffcf60',perk:{crit:0.15,critDmg:0.25,parryPts:0.7},rareCost:{amber:1,heartstone:1}},
   {id:'f1',name:'蛾翅の双刃',atk:22,build:'dodge',...WP('f1',['mothwing','dust']),shape:'katana',blade:'#e6c8ff',glow:'#c8ff70',perk:{dodgePts:14,dodge:0.93}},
   {id:'f2',name:'毒針レイピア',atk:23,build:'crit',...WP('f1',['antenna','silk']),shape:'spear',blade:'#d8ff90',glow:'#a0ff60',perk:{crit:0.12,critDmg:0.15,parryPts:0.75}},
-  {id:'r5w',name:'月蛾の宝剣',atk:25,build:'dodge',...WP('f1',['dust']),shape:'royal',blade:'#f4f0ff',glow:'#b8a0ff',perk:{dodgePts:14,dodge:0.95,crit:0.1},rareCost:{lunarcrown:1,moonsilk:1}},
+  {id:'r5w',name:'月蛾の宝剣',atk:25,build:'dodge',...WP('f1',['dust']),shape:'royal',blade:'#f4f0ff',glow:'#b8a0ff',perk:{dodgePts:14,dodge:0.95,crit:0.1},rareCost:{fairyeye:1,moonsilk:1}},
   {id:'w3',name:'雷鳴刀',atk:27,build:'balance',...WP('d2',['scale','horn','crystal']),shape:'katana',blade:'#fff6b8',glow:'#7ad0ff'},
   {id:'r2',name:'天雷槍ヴァジュラ',atk:26,build:'parry',...WP('d2',['horn']),shape:'vajra',blade:'#fff27a',glow:'#9fe8ff',perk:{parryPts:1.35,part:1.2},rareCost:{thunderorb:1,gekirin:1}},
   {id:'f3',name:'迅雷の短剣',atk:26,build:'dodge',...WP('d2',['crystal','wing']),shape:'katana',blade:'#fffbd0',glow:'#ffe060',perk:{dodgePts:16,dodge:0.93}},
@@ -414,6 +417,17 @@ const WEAPONS=[
   {id:'r6w',name:'時止めの氷刃',atk:33,build:'parry',...WP('g1',['icecrys']),shape:'amber',blade:'#cfe8ff',glow:'#6aa0ff',perk:{parryPts:1.3,parry:1.2,crit:0.08},rareCost:{timeice:1,permafrost:1}},
   {id:'w4',name:'冥刃ネクロ',atk:35,build:'balance',...WP('d3',['shade','crown','core']),shape:'dark',blade:'#a874e8',glow:'#d080ff'},
   {id:'f5',name:'魂喰らいの鎌',atk:33,build:'dodge',...WP('d3',['shade','soul']),shape:'dark',blade:'#70e0d0',glow:'#a0fff0',perk:{dodgePts:20,dodge:0.92}},
+  // v18：ほかのダンジョンの素材やレア素材を組み合わせた武器
+  {id:'x1',name:'霧影の双刃',atk:30,build:'dodge',...WPX([['g1',['icecrys','frost'],0.7],['f1',['mothwing'],0.3]]),shape:'katana',blade:'#d8f0ff',glow:'#c0a0ff',perk:{dodgePts:18,dodge:0.94}},
+  {id:'x3',name:'蒼氷雷槍ブリザード',atk:33,build:'parry',...WPX([['g1',['icefang','mstone'],0.7],['d2',['horn','crystal'],0.3]]),shape:'vajra',blade:'#cfefff',glow:'#7ad0ff',perk:{parryPts:1.45,part:1.15},rareCost:{thunderorb:1,iceheart:1}},
+  {id:'x2',name:'月影刀ルナシャドウ',atk:37,build:'dodge',...WPX([['d3',['shade','soul'],0.7],['f1',['dust'],0.3]]),shape:'katana',blade:'#e8e0ff',glow:'#9070ff',perk:{dodgePts:22,dodge:0.96,crit:0.1},rareCost:{fairyeye:1,voidcrystal:1,moonsilk:2}},
+  {id:'x4',name:'三宝剣トライアド',atk:40,build:'balance',...WPX([['d3',['shade','crown'],0.6],['d1',['bone'],0.2],['d2',['scale'],0.2]]),shape:'royal',blade:'#fff0c0',glow:'#ffd060',perk:{part:1.25,crit:0.08,parryPts:1.1},rareCost:{goldhorn:1,dragoneye:1,timeice:1}},
+  // v18：各ビルドの武器が6本くらいになるように追加（ほかのダンジョンの素材を組み合わせる）
+  {id:'x8',name:'森月の剣',atk:20,build:'balance',...WPX([['f1',['dust','silk'],0.7],['d1',['bone'],0.3]]),shape:'katana',blade:'#e8f0d8',glow:'#b0e080'},
+  {id:'x7',name:'雷光の細剣',atk:27,build:'crit',...WPX([['d2',['scale','crystal'],0.7],['f1',['antenna'],0.3]]),shape:'spear',blade:'#fff8c0',glow:'#ffe060',perk:{crit:0.15,critDmg:0.25,parryPts:0.72}},
+  {id:'x5',name:'霜雷の太刀',atk:31,build:'balance',...WPX([['g1',['frost','icecrys'],0.7],['d2',['scale'],0.3]]),shape:'katana',blade:'#e0f4ff',glow:'#a0d8ff'},
+  {id:'x6',name:'冥哭の大剣',atk:34,build:'parry',...WPX([['d3',['shade','crown'],0.7],['g1',['icefang'],0.3]]),shape:'great',blade:'#c8b8e8',glow:'#a080ff',perk:{parryPts:1.55}},
+  {id:'x9',name:'冥星の刺剣',atk:35,build:'crit',...WPX([['d3',['shade','core'],0.7],['g1',['icecrys'],0.3]]),shape:'spear',blade:'#f0e8ff',glow:'#c0a0ff',perk:{crit:0.2,critDmg:0.35,parryPts:0.7}},
   {id:'r3',name:'王笏剣ルクスフェル',atk:38,build:'crit',...WP('d3',['soul']),shape:'royal',blade:'#fff6dc',glow:'#ffe070',perk:{crit:0.2,critDmg:0.45,parryPts:0.75},rareCost:{scepter:1,soulstone:2,voidcrystal:1}},
   // ボスの特殊武器：ガチャ限定（工房では作れない。手に入れたら強化はできる）
   {id:'gw_golm',name:'岩王剣ゴルムガルド',atk:20,build:'special',gacha:'golm',...WP('d1',[]),cost:{},shape:'great',blade:'#cbb48e',glow:'#ffb040',perk:{dmgCut:0.5}},
@@ -449,6 +463,18 @@ const ARMOR_SETS=[
   {id:'a3',title:'冥王',build:'balance',names:['冥王の冠帽','冥王の外套','冥王の手甲','冥王の長靴'],def:35,hp:28,d:'d3',mats:['shade','soul','core'],
     // v17：4部位それぞれに別の効果（前の★までの同じ種類の部位効果より上の数値。弱点なし）
     slotPerks:{head:{crit:0.15,critDmg:0.05},body:{dmgCut:0.10},hands:{parryPts:1.12},legs:{dodgePts:10}},style:'cloak',color:'#5e3a82',trim:'#c060ff'},
+  // v18：ほかのダンジョンの素材やレア素材を組み合わせた防具（x：組み合わせるダンジョンと素材）
+  {id:'xa',title:'霧影',build:'dodge',names:['霧影の頭巾','霧影の衣','霧影の手袋','霧影の足袋'],def:28,hp:22,d:'g1',mats:['frost','mstone'],x:['f1',['mothwing']],setPerk:{dodgePts:16,dodge:0.96},style:'cloth',color:'#5a7a9a',trim:'#d0c0ff'},
+  {id:'xb',title:'冥翼',build:'dodge',names:['冥翼の仮面','冥翼の羽衣','冥翼の手甲','冥翼の靴'],def:39,hp:33,d:'d3',mats:['shade','soul'],x:['d2',['wing']],rare:{moonsilk:1,soulstone:1},perkSlot:'legs',perk:{dodgePts:8},perkCost:{voidcrystal:1,fairyeye:1},setPerk:{dodgePts:20,dodge:0.97},style:'cloak',color:'#3a2a5a',trim:'#a0e0ff'},
+  {id:'xc',title:'星冠',build:'crit',names:['星冠の冠','星冠の衣','星冠の腕輪','星冠の靴'],def:34,hp:27,d:'d3',mats:['shade','core'],x:['g1',['icecrys']],rare:{amber:1},perkSlot:'head',perk:{critDmg:0.2},perkCost:{lunarcrown:1,scepter:1},setPerk:{crit:0.6,critDmg:0.25,parryPts:0.65},style:'gold',color:'#2a3a6a',trim:'#ffe080'},
+  // v18：各ビルドの防具が6つくらいになるように追加
+  {id:'xi',title:'琥珀',build:'crit',names:['琥珀の額冠','琥珀の胸当て','琥珀の腕輪','琥珀の脛当て'],def:13,hp:10,d:'d1',mats:['shell','claw'],rare:{heartstone:1},perkSlot:'head',perk:{crit:0.05},perkCost:{amber:1},setPerk:{crit:0.35,critDmg:0.1,parryPts:0.85},style:'gold',color:'#8a5a20',trim:'#ffc060'},
+  {id:'xg',title:'森守',build:'parry',names:['森守の兜','森守の鎧','森守の籠手','森守の脚甲'],def:15,hp:11,d:'f1',mats:['silk','antenna'],x:['d1',['shell']],setPerk:{parryPts:1.2,atk:0.95},style:'plate',color:'#4a6a3a',trim:'#c0e080'},
+  {id:'xf',title:'雷蛾',build:'crit',names:['雷蛾の冠','雷蛾の衣','雷蛾の手袋','雷蛾の靴'],def:19,hp:14,d:'d2',mats:['scale','crystal'],x:['f1',['mothwing']],setPerk:{crit:0.6,critDmg:0.2,parryPts:0.72},style:'scale',color:'#5a5a2a',trim:'#fff080'},
+  {id:'xj',title:'雷影',build:'dodge',names:['雷影の頭巾','雷影の衣','雷影の手袋','雷影の足袋'],def:19,hp:15,d:'d2',mats:['wing','scale'],x:['f1',['dust']],setPerk:{dodgePts:14,dodge:0.94},style:'cloth',color:'#2a3a5a',trim:'#fff27a'},
+  {id:'xd',title:'霜雷',build:'balance',names:['霜雷の兜','霜雷の鎧','霜雷の籠手','霜雷の脚甲'],def:27,hp:21,d:'g1',mats:['frost','mstone'],x:['d2',['scale']],style:'plate',color:'#4a6a8a',trim:'#e0f0ff'},
+  {id:'xh',title:'冥星',build:'crit',names:['冥星の冠','冥星の衣','冥星の腕輪','冥星の靴'],def:32,hp:24,d:'d3',mats:['shade','core'],x:['g1',['frost']],setPerk:{crit:0.7,critDmg:0.25,parryPts:0.62},style:'scale',color:'#3a2a6a',trim:'#e0c0ff'},
+  {id:'xe',title:'守護竜',build:'parry',names:['守護竜の兜','守護竜の鎧','守護竜の籠手','守護竜の脚甲'],def:40,hp:30,d:'d3',mats:['shade','crown'],x:['d2',['scale']],rare:{soulstone:1},perkSlot:'hands',perk:{parryPts:1.1,heal:2},perkCost:{iceheart:1,gekirin:1},setPerk:{parryPts:1.35},style:'gold',color:'#2a4a7a',trim:'#a0e0ff'},
   {id:'r8',title:'魂石',build:'balance',names:['魂石の頭巾','魂石の衣','魂石の手甲','魂石の長靴'],def:38,hp:32,d:'d3',mats:['shade','soul'],rare:{soulstone:1},perkSlot:'body',perk:{heal:3},perkCost:{soulstone:2},style:'cloak',color:'#3a1a5a',trim:'#e0a0ff'},
 ];
 const MULPERK=['parry','part','dodge','parryPts','atk'];   // 掛け算で効く効果（それ以外は足し算）
@@ -457,7 +483,8 @@ const ARMORS=[];
 const ARMOR_DEF_MUL=1.05;   // 防具の防御力（一式）に一律でかける倍率（v16で5%上げた）
 for(const st of ARMOR_SETS){st.def=Math.round(st.def*ARMOR_DEF_MUL);let dl=st.def,hl=st.hp;
   const ps=SLOTS.map((sl,i)=>{const d=sl.k==='body'?0:Math.floor(st.def*sl.r),h=sl.k==='body'?0:Math.floor(st.hp*sl.r);dl-=d;hl-=h;
-    const cost=recipe(st.d,st.mats,ARMOR_SET_CLEARS,sl.r);
+    const cost=recipe(st.d,st.mats,ARMOR_SET_CLEARS,sl.r*(st.x?0.65:1));
+    if(st.x)for(const[m,q]of Object.entries(recipe(st.x[0],st.x[1],ARMOR_SET_CLEARS,sl.r*0.35)))cost[m]=(cost[m]||0)+q;   // ほかのダンジョンの素材も使う防具
     const isPerk=st.perkSlot===sl.k;Object.assign(cost,isPerk?st.perkCost:(st.rare||{}));
     let pk=null;if(st.setPerk){pk={};for(const[k,v]of Object.entries(st.setPerk))pk[k]=MULPERK.includes(k)?Math.pow(v,sl.r):v*sl.r}
     if(isPerk)pk=mergePerk(pk,st.perk);
@@ -876,6 +903,13 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b||
 const $=s=>document.querySelector(s);
 let tab='hunt';
 let huntTab='n',uraTier=1;   // ダンジョンの小タブ：n=通常 / u=裏（ボスラッシュと裏ダンジョン）
+// 武器は強さ順（攻撃力の低い順。同じならもとの並び）に並べる
+const byAtk=(a,b)=>a.atk-b.atk||WEAPONS.indexOf(a)-WEAPONS.indexOf(b);
+// 防具も強さ順（シリーズの防御→体力の低い順。部位は部位の防御→体力）
+const byDef=(a,b)=>a.def-b.def||a.hp-b.hp||ARMOR_SETS.indexOf(a.set||a)-ARMOR_SETS.indexOf(b.set||b);
+let buildTab='all';   // 工房・持ち物の武器／防具の小タブ：all=すべて／balance／parry／crit／dodge／special（ボス武器）
+const bOK=b=>buildTab==='all'||b===buildTab;
+const buildTabs=kind=>{if(kind==='a'&&buildTab==='special')buildTab='all';return `<div class="subtabs small">${[['all','すべて'],['balance','バランス'],['parry','パリィ'],['crit','クリティカル'],['dodge','回避'],...(kind==='w'?[['special','ボス武器']]:[])].map(([k,n])=>`<button class="${buildTab===k?'on':''}" data-act="btab" data-v="${k}">${n}</button>`).join('')}</div>`};
 let invTab='w';   // 持ち物の小タブ：w=武器 / a=防具 / m=素材
 function toast(t){const el=$('#toast');el.textContent=t;el.style.opacity=1;clearTimeout(toast.h);toast.h=setTimeout(()=>el.style.opacity=0,1600)}
 const chip=(k,txt,cls='')=>`<span class="chip ${cls} ${MATS[k].rare?'r'+MATS[k].rare:''}"><img src="${ICON[k]}">${txt}</span>`;
@@ -913,7 +947,7 @@ function renderHub(){
     if(!uraTierOpen(uraTier))uraTier=1;
     h+=`<div class="subtabs">${[1,2,3,4,5].map(k=>`<button class="${uraTier===k?'on':''}" data-act="utab" data-v="${k}" ${uraTierOpen(k)?'':'disabled'}>${uraTierOpen(k)?'':'🔒'}裏${k}</button>`).join('')}</div>`;
     if(!uraTierOpen(1))h+=`<div class="card locked"><p>🔒 ボスラッシュを1巡クリアすると「裏1」が解放される。</p></div>`;
-    else{const k=uraTier;h+=`<p style="font-size:12px;color:#c8a8e8;margin:2px 4px 8px">裏${k}：ボスラッシュ${k+1}巡目より少し強い敵が出る。素材とレア素材が${k+1}倍出やすい。</p>`;
+    else{const k=uraTier;h+=`<p style="font-size:12px;color:#c8a8e8;margin:2px 4px 8px">裏${k}：ボスラッシュ${k+1}巡目より少し強い敵が出る。素材とレア素材が${1+0.5*k}倍出やすい。</p>`;
       DUNGEONS.forEach((D,i)=>{const lock=!uraOpen(k,i),done=uraDone(k,i);
         h+=`<div class="card ${lock?'locked':''}" style="border-color:#7a40b0;box-shadow:0 0 12px rgba(160,64,255,.2)"><h3>裏${k} ${uraStars(D.stars)} ${lock?'???':`${D.name}（全${D.floors.length}階）`} ${done?'<span class="tag ok">踏破済</span>':''}</h3>
         <p>${lock?'🔒 ひとつ前の裏ダンジョンを踏破すると解放':D.desc}</p>${lock?'':`<p style="font-size:12px;color:#bba78a;margin-top:2px">↩ 帰還できる階：${returnFloors(D).map(f=>f+'F').join('・')} のあと</p>`}
@@ -936,12 +970,14 @@ function renderHub(){
     h+=`<div class="buildbox"><b>いまのビルド</b>　攻撃 ${atkStat()}　／　パリィ1回で体勢 +${parryGain(false)}pt（強撃 +${parryGain(true)}）　／　回避で体勢 ${dodgeGain()>0?'+'+dodgeGain()+'pt':'なし'}<br>
       会心率 ${Math.round(critRate()*100)}%（×${critMul().toFixed(1)}）　／　パリィ受付 ×${perk('parry').toFixed(2)}　／　回避受付 ×${perk('dodge').toFixed(2)}${perk('heal')?`　／　パリィでHP+${+perk('heal').toFixed(1)}`:''}</div>`;
     h+=`<div class="subtabs"><button class="${forgeTab==='w'?'on':''}" data-act="ftab" data-v="w">武器</button><button class="${forgeTab==='a'?'on':''}" data-act="ftab" data-v="a">防具</button></div>`;
-    if(forgeTab==='w'){
-      const ws=WEAPONS.filter(w=>S.weapons[w.id]!==undefined||(!w.gacha&&hasAnyMat(w.cost)));
+    if(forgeTab==='w'){h+=buildTabs('w');
+      const ws0=WEAPONS.filter(w=>S.weapons[w.id]!==undefined||(!w.gacha&&hasAnyMat(w.cost))),ws=ws0.filter(w=>bOK(w.build)).sort(byAtk);
       sec(`— 武器 —`,ws,'w');
-      if(ws.length<WEAPONS.length)h+=`<p class="hint">ほかにも武器がある。素材を1つでも手に入れると表示される（ボス武器はガチャ限定）。</p>`;
+      if(!ws.length)h+=`<p class="hint">この系統の武器はまだない。</p>`;
+      if(ws0.length<WEAPONS.length)h+=`<p class="hint">ほかにも武器がある。素材を1つでも手に入れると表示される（ボス武器はガチャ限定）。</p>`;
     }else{
-    const sets=ARMOR_SETS.filter(st=>ARMORS.some(p=>p.set===st&&(S.armors[p.id]!==undefined||hasAnyMat(p.cost))));
+    h+=buildTabs('a');
+    const sets0=ARMOR_SETS.filter(st=>ARMORS.some(p=>p.set===st&&(S.armors[p.id]!==undefined||hasAnyMat(p.cost)))),sets=sets0.filter(st=>bOK(st.build)).sort(byDef);
     h+=`<div class="sect">— 防具（頭・胴・手・足） —</div><p style="font-size:12px;color:#a89478;margin:-4px 0 10px">シリーズの部位を全部そろえると合計：防御／体力。強化は1段ごとに 防御+1・体力+1。</p>`;
     sets.forEach(st=>{const ps=ARMORS.filter(p=>p.set===st);const rare=!!st.rare||Object.keys(st.perkCost||{}).length>0;
       h+=`<div class="card ${rare?'rare':''}"><h3>${st.title}シリーズ <span style="font-size:12px;color:#bba78a;font-weight:700">一式 防御${st.def} / 体力+${st.hp}</span> ${buildTag(st.build)}${st.setPerk?` <span class="tag perk">✦ 一式：${perkText(st.setPerk)}</span>`:''}${st.perk?` <span class="tag perk">✦ ${SLOTS.find(x=>x.k===st.perkSlot).n}：${perkText(st.perk)}</span>`:''}</h3>`;
@@ -953,7 +989,8 @@ function renderHub(){
         else{const c=upgCost(it,lv);h+=`<div class="row">${eq?'':`<button class="btn sub2 mini" data-act="equip" data-k="a" data-id="${it.id}">装備</button>`}${lv<maxLv()?costChips(c)+`<button class="btn mini" data-act="upg" data-k="a" data-id="${it.id}" ${has(c)?'':'disabled'}>強化 +${lv+1}</button>`:'<span class="chip" style="padding:3px 8px">強化MAX</span>'}</div>`}
         h+='</div></div>'});
       h+='</div></div>'});
-    if(sets.length<ARMOR_SETS.length)h+=`<p class="hint">ほかにも防具がある。素材を1つでも手に入れると表示される。</p>`;
+    if(!sets.length)h+=`<p class="hint">この系統の防具はまだない。</p>`;
+    if(sets0.length<ARMOR_SETS.length)h+=`<p class="hint">ほかにも防具がある。素材を1つでも手に入れると表示される。</p>`;
     }
   }else if(tab==='gacha'){
     h+=`<div class="card"><p style="margin:0">ボスを倒すと <b>${PROOF_RATE*100}%</b> で「討伐の証」が手に入る。証1つでそのボスのガチャを1回まわせる。<b style="color:#ffe070">ボスラッシュの証</b>なら、どのボスのガチャにも使える。</p>
@@ -1005,7 +1042,8 @@ function renderHub(){
     h+=`<div class="subtabs">${[['w','武器'],['a','防具'],['m','素材']].map(([k,n])=>`<button class="${invTab===k?'on':''}" data-act="itab" data-v="${k}">${n}</button>`).join('')}</div>`;
     if(invTab==='w'){
       h+=`<div class="buildbox"><b>いまのビルド</b>　攻撃 ${atkStat()}　／　パリィ1回で体勢 +${parryGain(false)}pt　／　回避で体勢 ${dodgeGain()>0?'+'+dodgeGain()+'pt':'なし'}　／　会心率 ${Math.round(critRate()*100)}%</div>`;
-      for(const w of [...WEAPONS].sort((a,b)=>(b.id===S.eqW)-(a.id===S.eqW))){const lv=S.weapons[w.id];if(lv===undefined)continue;const eq=S.eqW===w.id;
+      h+=buildTabs('w');
+      for(const w of [...WEAPONS].sort(byAtk).sort((a,b)=>(b.id===S.eqW)-(a.id===S.eqW))){const lv=S.weapons[w.id];if(lv===undefined||!bOK(w.build))continue;const eq=S.eqW===w.id;
         h+=`<div class="card ${eq?'equipped':''}"><div class="item"><div class="ico"><img src="${weaponIcon(w)}"></div><div class="body">
           <h3>${w.name} +${lv} </h3>
           <p>${buildTag(w.build)} 攻撃 ${wStat(w,lv)} ${w.perk?`<span class="tag perk">✦ ${perkText(w.perk)}</span>`:''}</p>
@@ -1013,11 +1051,12 @@ function renderHub(){
     }else if(invTab==='a'){
       const as=armStat();h+=`<div class="buildbox"><b>いまの防具</b>　防御 ${as.def}　／　体力 +${as.hp}</div>`;
       // シリーズでまとめて装備（持っている部位だけ。持っていない部位はそのまま）
-      const sets=ARMOR_SETS.map(st=>{const own=ARMORS.filter(p=>p.set===st&&S.armors[p.id]!==undefined);return {st,own,on:own.length>0&&own.every(p=>S.eq[p.slot]===p.id)}}).filter(o=>o.own.length);
+      const sets=[...ARMOR_SETS].sort(byDef).map(st=>{const own=ARMORS.filter(p=>p.set===st&&S.armors[p.id]!==undefined);return {st,own,on:own.length>0&&own.every(p=>S.eq[p.slot]===p.id)}}).filter(o=>o.own.length);
       h+=`<div class="sect">— シリーズでまとめて装備 —</div><div class="eqsets">${sets.map(o=>`<button class="btn ${o.on?'on':'sub2'} mini bb-${o.st.build||'none'}" data-act="eqset" data-id="${o.st.id}" ${o.on?'disabled style="opacity:1"':''}><img src="${armorIcon(o.own.find(p=>p.slot==='body')||o.own[0])}">${o.st.title}（${o.own.length}/4）${o.st.build?buildTag(o.st.build):'<span class="tag">なし</span>'}${o.on?' ✔':''}</button>`).join('')}</div>
         <div class="hint" style="text-align:left;margin:0 0 4px">持っている部位をまとめて装備します（持っていない部位はいまのまま）</div>`;
+      h+=buildTabs('a');
       for(const sl of SLOTS){h+=`<div class="sect">— ${sl.n} —</div><div class="inv2">`;
-        const list=ARMORS.filter(p=>p.slot===sl.k&&S.armors[p.id]!==undefined).sort((a,b)=>(S.eq[sl.k]===b.id)-(S.eq[sl.k]===a.id));
+        const list=ARMORS.filter(p=>p.slot===sl.k&&S.armors[p.id]!==undefined&&bOK(p.set.build)).sort(byDef).sort((a,b)=>(S.eq[sl.k]===b.id)-(S.eq[sl.k]===a.id));
         for(const it of list){const lv=S.armors[it.id],eq=S.eq[sl.k]===it.id,st=aStat(it,lv);
           h+=`<div class="card prow ${eq?'equipped':''}"><div class="ico"><img src="${armorIcon(it)}"></div><div class="body">
             <div class="pn"><b>${it.name} +${lv}</b>  ${buildTag(it.set.build)} <span class="pst">防御 ${st.def} / 体力 +${st.hp}</span>${it.perk?` <span class="tag perk" style="opacity:.85">✦ ${perkText(it.perk)}</span>`:''}</div>
@@ -1069,6 +1108,7 @@ $('#panel').addEventListener('click',e=>{const b=e.target.closest('button');if(!
   else if(act==='bossrush'){const i=+b.dataset.i;sfx('start');const D=DUNGEONS[i],pmax=100+armStat().hp;RUN={i,D,floor:D.floors.length-1,loot:{},php:pmax,pmax,test:true};startFloor()}
   else if(act==='gacha'){chooseGacha(b.dataset.b)}
   else if(act==='itab'){invTab=b.dataset.v;renderHub()}
+  else if(act==='btab'){buildTab=b.dataset.v;sfx('click');renderHub()}
   else if(act==='htab'){huntTab=b.dataset.v;sfx('click');renderHub()}
   else if(act==='eqset'){const st=ARMOR_SETS.find(x=>x.id===b.dataset.id);let n=0;for(const p of ARMORS)if(p.set===st&&S.armors[p.id]!==undefined){S.eq[p.slot]=p.id;n++}sfx('equip');save();renderHub();toast(`${st.title}シリーズを${n}部位まとめて装備した`)}
   else if(act==='ftab'){forgeTab=b.dataset.v;renderHub()}
@@ -1194,7 +1234,9 @@ function startRush(lap){sfx('start');for(const D of DUNGEONS)prepArt(D.floors.sl
 const runName=()=>RUN.rush?'ボスラッシュ':RUN.ura?`裏${RUN.ura.tier}・${RUN.D.name}`:RUN.D.name;
 // ===== 裏ダンジョン（ボスラッシュ n巡目クリアで「裏★n」が解放。強さはボスラッシュ n+1巡目と同じ。素材2倍・レア確率2倍） =====
 const URA_EXTRA=1.1;
-const uraMul=()=>RUN&&RUN.ura?1+RUN.ura.tier:1;   // 裏kは 素材の数・レア素材の確率が (1+k)倍（裏1＝2倍 … 裏5＝6倍）   // URA_EXTRA：同じ巡目のボスラッシュより体力・攻撃力（寒さも）を1割強く
+const uraMul=()=>RUN&&RUN.ura?1+0.5*RUN.ura.tier:1;   // 裏kは 素材の数・レア素材の確率が (1+0.5k)倍（裏1＝1.5倍／裏2＝2倍 … 裏5＝3.5倍）
+// 素材の数に倍率をかける。半端（1.5個など）は、平均で倍率どおりになるようにランダムで切り上げ／切り捨て
+const uraQty=q=>{const x=q*uraMul(),f=Math.floor(x);return f+(Math.random()<x-f?1:0)};   // URA_EXTRA：同じ巡目のボスラッシュより体力・攻撃力（寒さも）を1割強く
 // 裏k（k＝1〜5）：ボスラッシュ k巡目をはじめてクリアすると解放。中の★1〜★5は、ひとつ前を踏破すると次が開く
 const URA_TIERS=5;
 const uraTierOpen=k=>k<=URA_TIERS&&(S.rushClear||0)>=k;
@@ -1499,15 +1541,17 @@ function breakPart(p){
   p.broken=true;p.hp=0;const bonus=atkStat()*2;B.hp-=bonus;guardPhase();
   const t=B.tf,pt=toScreen(p.x*t.u,p.y*t.u);
   burst(pt.x,pt.y,'#ffe08a',40,520,true);B.shake=16;
-  if(!RUN.rush)p.mat.forEach(([k,q0],i)=>{const q=q0*uraMul();B.loot[k]=(B.loot[k]||0)+q;for(let j=0;j<Math.min(q,3);j++)dropIcon(k,pt.x,pt.y,i*0.1+j*0.06)});
+  // ボスラッシュでは素材を落とさない（「獲得」も出さない）。裏ダンジョンは実際にもらえる数を出す
+  const got=RUN.rush?[]:p.mat.map(([k,q0])=>[k,uraQty(q0)]).filter(([k,q])=>q>0);
+  got.forEach(([k,q],i)=>{B.loot[k]=(B.loot[k]||0)+q;for(let j=0;j<Math.min(q,3);j++)dropIcon(k,pt.x,pt.y,i*0.1+j*0.06)});
   sfx('partBreak');float(`${p.name} 破壊！`,pt.x,pt.y-30,'#ffd04a',34,1.4);
-  float(p.mat.map(([k,q])=>`${MATS[k].n}×${q}`).join('  ')+' 獲得',pt.x,pt.y+10,'#bdf0a8',20,1.6);
+  if(got.length)float(got.map(([k,q])=>`${MATS[k].n}×${q}`).join('  ')+' 獲得',pt.x,pt.y+10,'#bdf0a8',20,1.6);
 }
 function victory(){
   B.over=true;B.hp=0;B.dying=true;bgm(null);sfx('kill');const drops={},rares={};
   // ボスラッシュでは素材・レア・討伐の証は落とさない（報酬は1巡クリアのボスラッシュの証だけ）
-  const dm=uraMul(),rm=uraMul();   // 裏ダンジョン：裏kは素材・レア確率が (1+k)倍
-  if(!RUN.rush)B.E.drops.forEach(([k,a,b])=>{const n=ri(a,b)*dm;if(n>0){drops[k]=n;B.loot[k]=(B.loot[k]||0)+n}});
+  const rm=uraMul();   // 裏ダンジョン：裏kは素材の数（uraQty）・レア確率が (1+0.5k)倍
+  if(!RUN.rush)B.E.drops.forEach(([k,a,b])=>{const n=uraQty(ri(a,b));if(n>0){drops[k]=n;B.loot[k]=(B.loot[k]||0)+n}});
   if(!RUN.rush)B.E.rares.forEach(([k,p])=>{if(Math.random()<p*rm){rares[k]=1;B.loot[k]=(B.loot[k]||0)+1}});
   const t=B.tf;burst(t.x,t.y,B.E.glow,70,650,true);
   // ボスは25%で「討伐の証」（ガチャ1回ぶん）
