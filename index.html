@@ -893,6 +893,12 @@ function renderHub(){
         <div class="rt">レア素材（1回踏破で出る確率）</div><div class="row">${Object.entries(rp).sort((a,b)=>b[1]-a[1]).map(([k,pr])=>chip(k,`${MATS[k].n}（${RARE_NAME[MATS[k].rare]} ${pct(pr)}）`)).join('')}</div>
         <p style="font-size:12px;color:#a89478">部位破壊を多くするほど素材は増える。</p>`}
       h+=`<div class="row" style="justify-content:flex-end">${lock?'':`<button class="btn sub2" data-act="detail" data-id="${D.id}">${open?'詳細を閉じる':'詳細を表示'}</button>`}<button class="btn" data-act="hunt" data-i="${i}" ${lock?'disabled':''}>潜入する</button></div></div>`});
+    // 裏ダンジョン：ボスラッシュ n巡目をクリアすると裏★n が出る（それまでは出さない）
+    DUNGEONS.forEach((D,i)=>{if(!uraUnlocked(i))return;const done=S.uraCleared&&S.uraCleared[D.id];
+      h+=`<div class="card" style="border-color:#7a40b0;box-shadow:0 0 12px rgba(160,64,255,.25)"><h3>${uraStars(D.stars)} 裏・${D.name}（全${D.floors.length}階） ${done?'<span class="tag ok">踏破済</span>':''}</h3>
+      <p>${D.name}の敵がボスラッシュ${i+2}巡目と同じくらい強くなった裏ダンジョン。素材とレア素材が出やすい。</p>
+      <p style="font-size:12px;color:#bba78a;margin-top:2px">↩ 帰還できる階：${returnFloors(D).map(f=>f+'F').join('・')} のあと</p>
+      <div class="row" style="justify-content:flex-end"><button class="btn" data-act="ura" data-i="${i}">潜入する</button></div></div>`});
     // ボスラッシュ：★5を踏破するまでは「???」も出さない
     if(rushUnlocked())h+=`<div class="card" style="border-color:#c8a030;box-shadow:0 0 14px rgba(255,200,60,.25)"><h3>∞ ボスラッシュ（無限） ${S.rushClear?`<span class="tag ok">最高 ${S.rushClear}巡クリア</span>`:''}</h3>
       <p>★1〜★5のボスと続けて戦う。5体倒すと1巡クリアで、巡が進むほど敵が強くなる。</p>
@@ -1042,6 +1048,7 @@ document.querySelector('.tabs').addEventListener('click',e=>{const b=e.target.cl
 $('#panel').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled)return;const act=b.dataset.act;
   if(act==='hunt')startDungeon(+b.dataset.i);
   else if(act==='rush')startRush(+b.dataset.l);
+  else if(act==='ura')startDungeon(+b.dataset.i,true);
   else if(act==='tutorial'){startTutorial()}
   else if(act==='bossrush'){const i=+b.dataset.i;sfx('start');const D=DUNGEONS[i],pmax=100+armStat().hp;RUN={i,D,floor:D.floors.length-1,loot:{},php:pmax,pmax,test:true};startFloor()}
   else if(act==='gacha'){chooseGacha(b.dataset.b)}
@@ -1167,14 +1174,21 @@ function rushFloor(){const r=RUN.rush;RUN.i=r.idx;RUN.D=DUNGEONS[r.idx];RUN.floo
 function rushReach(lap){if(lap%3===0&&lap>(S.rushBest||0)){S.rushBest=lap;save();toast(`${lap}巡目に到達！ 次からは${lap}巡目から始められる`)}}
 function startRush(lap){sfx('start');for(const D of DUNGEONS)prepArt(D.floors.slice(-1)[0]);const pmax=100+armStat().hp;
   RUN={loot:{},php:pmax,pmax,rush:{lap,idx:0,start:lap}};rushFloor();rushReach(lap);startFloor()}
-const runName=()=>RUN.rush?'ボスラッシュ':RUN.D.name;
+const runName=()=>RUN.rush?'ボスラッシュ':RUN.ura?'裏・'+RUN.D.name:RUN.D.name;
+// ===== 裏ダンジョン（ボスラッシュ n巡目クリアで「裏★n」が解放。強さはボスラッシュ n+1巡目と同じ。素材2倍・レア確率2倍） =====
+const URA_DROP=2,URA_RARE=2;
+const uraUnlocked=i=>(S.rushClear||0)>=i+1;
+const uraStars=n=>`<span style="color:#c070ff;text-shadow:0 0 6px #a040ff">${'★'.repeat(n)}</span>`;
+// 強さの巡目（ボスラッシュ・裏ダンジョンで使う。ふつうは1）
+const scaleLap=()=>RUN?(RUN.rush?RUN.rush.lap:RUN.ura?RUN.ura.lap:1):1;
 const runFloorText=()=>RUN.rush?`${RUN.rush.lap}巡目 ${RUN.rush.idx+1}/${DUNGEONS.length}`:`${RUN.floor+1}F / ${RUN.D.floors.length}F`;
-function startDungeon(i){sfx('start');const D=DUNGEONS[i];prepArt(D.floors[D.floors.length-1]);const pmax=100+armStat().hp;RUN={i,D,floor:0,loot:{},php:pmax,pmax};startFloor()}
+function startDungeon(i,ura){sfx('start');const D=DUNGEONS[i];prepArt(D.floors[D.floors.length-1]);const pmax=100+armStat().hp;RUN={i,D,floor:0,loot:{},php:pmax,pmax,ura:ura?{lap:i+2}:null};startFloor()}
 function floorEnemy(){const id=RUN.D.floors[RUN.floor],E=EN(id);
-  if(RUN.rush&&RUN.rush.lap>1){const l=RUN.rush.lap-1,m=1+RUSH_HP*l;return {...E,hp:Math.round(E.hp*m),dmg:Math.round(E.dmg*rushDmgMul(RUN.rush.lap)),parts:E.parts.map(p=>p.hp?{...p,hp:Math.round(p.hp*m)}:p)}}
-  if(!E.minion)return E;
-  const m=1+0.12*RUN.floor;
-  return {...E,hp:Math.round(E.hp*m),dmg:Math.round(E.dmg*(1+0.06*RUN.floor)),parts:E.parts.map(p=>p.hp?{...p,hp:Math.round(p.hp*m)}:p)}}
+  // ボスラッシュ・裏ダンジョン：巡目に合わせて 体力×(1+RUSH_HP×(巡目-1))・攻撃力×rushDmgMul（雑魚は階の補正のうえに同じ倍率）
+  const L=scaleLap(),lm=1+RUSH_HP*(L-1),ld=L>1?rushDmgMul(L):1;
+  const m=(E.minion?1+0.12*RUN.floor:1)*lm,dm=(E.minion?1+0.06*RUN.floor:1)*ld;
+  if(m===1&&dm===1)return E;
+  return {...E,hp:Math.round(E.hp*m),dmg:Math.round(E.dmg*dm),parts:E.parts.map(p=>p.hp?{...p,hp:Math.round(p.hp*m)}:p)}}
 const isBossFloor=()=>RUN.floor===RUN.D.floors.length-1;
 function startFloor(){
   const E=floorEnemy();
@@ -1303,7 +1317,7 @@ const dodgeWin=()=>DODGEWIN*perk('dodge');
 const COLD_EVERY=3,COLD_DMG=1,BLIZZARD_DMG=3;
 // ボスラッシュでは、巡ごとに寒さのダメージも上げる（防御では減らないので、基準の装備の最大HPに対する割合が「倒すのにかかる回数の倍率」と同じだけ増えるように）
 const rushColdMul=lap=>lap>1?rushRef(lap).hp/rushRef(1).hp*rushKillMul(lap):1;
-const coldDmg=()=>(B.g.blizzard?BLIZZARD_DMG:COLD_DMG)*(RUN&&RUN.rush?rushColdMul(RUN.rush.lap):1);
+const coldDmg=()=>(B.g.blizzard?BLIZZARD_DMG:COLD_DMG)*rushColdMul(scaleLap());
 const CURSE_RATE=0.5;   // 反転の呪いの間、攻撃が反転攻撃（紫の輪）になる確率
 const needDir=a=>a.cursed?a.dir:OPP[a.dir];   // 攻撃が来た方向へはじき返す（呪い中は逆）
 function enterBroken(extra=0){
@@ -1436,7 +1450,7 @@ const G_FREEZE_SEC=1;                                      // 凍結：この武
 const G_FREEZE_CH=1/12,G_FREEZE_PCT=0.07;                  // 氷撃：1/12で最大HPの7%（v17で8%から下げた）
 const cutMul=()=>1-Math.min(0.8,perk('dmgCut'));          // 被ダメージの倍率（岩王剣で0.5）
 // ボス武器の割合ダメージの基準になる体力。ボスラッシュでは1巡目の体力を基準にする（巡で増えた体力ぶんは割合で削れない）
-const pctHp=()=>RUN&&RUN.rush&&RUN.rush.lap>1?B.maxHp/(1+RUSH_HP*(RUN.rush.lap-1)):B.maxHp;
+const pctHp=()=>B.maxHp/(1+RUSH_HP*(scaleLap()-1));
 function specialHit(frac,type){if(!B||B.over)return;const t=B.tf;
   const dmg=Math.max(1,Math.round(pctHp()*frac*(B.g.armor>0?0.2:1)));B.hp-=dmg;guardPhase();
   fx.special.push({type,x:t.x,y:t.y,life:type==='bolt'?0.4:0.6,max:type==='bolt'?0.4:0.6});
@@ -1461,15 +1475,16 @@ function breakPart(p){
   p.broken=true;p.hp=0;const bonus=atkStat()*2;B.hp-=bonus;guardPhase();
   const t=B.tf,pt=toScreen(p.x*t.u,p.y*t.u);
   burst(pt.x,pt.y,'#ffe08a',40,520,true);B.shake=16;
-  if(!RUN.rush)p.mat.forEach(([k,q],i)=>{B.loot[k]=(B.loot[k]||0)+q;for(let j=0;j<Math.min(q,3);j++)dropIcon(k,pt.x,pt.y,i*0.1+j*0.06)});
+  if(!RUN.rush)p.mat.forEach(([k,q0],i)=>{const q=q0*(RUN.ura?URA_DROP:1);B.loot[k]=(B.loot[k]||0)+q;for(let j=0;j<Math.min(q,3);j++)dropIcon(k,pt.x,pt.y,i*0.1+j*0.06)});
   sfx('partBreak');float(`${p.name} 破壊！`,pt.x,pt.y-30,'#ffd04a',34,1.4);
   float(p.mat.map(([k,q])=>`${MATS[k].n}×${q}`).join('  ')+' 獲得',pt.x,pt.y+10,'#bdf0a8',20,1.6);
 }
 function victory(){
   B.over=true;B.hp=0;B.dying=true;bgm(null);sfx('kill');const drops={},rares={};
   // ボスラッシュでは素材・レア・討伐の証は落とさない（報酬は1巡クリアのボスラッシュの証だけ）
-  if(!RUN.rush)B.E.drops.forEach(([k,a,b])=>{const n=ri(a,b);if(n>0){drops[k]=n;B.loot[k]=(B.loot[k]||0)+n}});
-  if(!RUN.rush)B.E.rares.forEach(([k,p])=>{if(Math.random()<p){rares[k]=1;B.loot[k]=(B.loot[k]||0)+1}});
+  const dm=RUN.ura?URA_DROP:1,rm=RUN.ura?URA_RARE:1;   // 裏ダンジョン：素材2倍・レア確率2倍
+  if(!RUN.rush)B.E.drops.forEach(([k,a,b])=>{const n=ri(a,b)*dm;if(n>0){drops[k]=n;B.loot[k]=(B.loot[k]||0)+n}});
+  if(!RUN.rush)B.E.rares.forEach(([k,p])=>{if(Math.random()<p*rm){rares[k]=1;B.loot[k]=(B.loot[k]||0)+1}});
   const t=B.tf;burst(t.x,t.y,B.E.glow,70,650,true);
   // ボスは25%で「討伐の証」（ガチャ1回ぶん）
   B.gotProof=false;const pk='proof_'+B.E.id;
@@ -1494,9 +1509,10 @@ function floorCleared(rares){
   const rareHtml=rk.length?`<div class="rarebanner">✦ レアドロップ ✦</div><div class="row">${rk.map(k=>chip(k,`${MATS[k].n}（${RARE_NAME[MATS[k].rare]}）`)).join('')}</div>`:'';
   if(isBossFloor()){
     const pk='proof_'+B.E.id;const proofHtml=B.gotProof?`<div class="rarebanner" style="color:#ffc8ff">✦ ${MATS[pk].full} ✦</div><p style="font-size:13px;color:#e8c8ff;margin:0 0 8px">拠点の「ガチャ」で1回まわせる！</p>`:'';
-    sfx('fanfare');bankRun();const D=RUN.D,first=!S.cleared[D.id];S.cleared[D.id]=true;save();
+    sfx('fanfare');bankRun();const D=RUN.D;let first;
+    if(RUN.ura){S.uraCleared=S.uraCleared||{};first=false;S.uraCleared[D.id]=true}else{first=!S.cleared[D.id];S.cleared[D.id]=true}save();
     const next=DUNGEONS[RUN.i+1];
-    showBox(`<h2 style="color:#ffd58a">ダンジョン踏破！</h2>${proofHtml}${rareHtml}
+    showBox(`<h2 style="color:#ffd58a">${RUN.ura?'裏ダンジョン踏破！':'ダンジョン踏破！'}</h2>${proofHtml}${rareHtml}
       <div style="font-size:13px;color:#bba78a">持ち帰った戦利品</div><div class="row">${lootChips(RUN.loot)}</div>
       ${first&&next?`<p style="color:#bdf0a8;font-weight:700;margin-bottom:14px">新ダンジョン「${next.name}」が解放された！</p>`:''}
       <div class="row"><button class="btn" id="home">拠点へ戻る</button></div>`);
@@ -1530,7 +1546,7 @@ function rushCleared(){const r=RUN.rush,heal=Math.round(RUN.pmax*FLOOR_HEAL),nb=
   const lv0=maxLv(),newRec=n>(S.rushClear||0);S.rushClear=Math.max(S.rushClear||0,n);const lv1=maxLv();rushReach(n+1);save();
   const upHtml=newRec&&lv1>lv0?`<div style="margin:6px 0 10px;padding:10px 12px;border:2px solid #7fe0a0;border-radius:12px;background:rgba(60,140,80,.25);box-shadow:0 0 16px rgba(120,255,160,.35)">
       <div style="font-size:17px;font-weight:900;color:#bdf0a8">⬆ ボスラッシュ ${n}巡目をクリアしたことで、さらなる強化が解放された！</div>
-      <div style="font-size:14px;color:#e8ffe8;margin-top:4px">強化の上限 <b>+${lv0} → +${lv1}</b>（工房で強化できる）</div></div>`:'';
+      <div style="font-size:14px;color:#e8ffe8;margin-top:4px">強化の上限 <b>+${lv0} → +${lv1}</b>（工房で強化できる）</div>${DUNGEONS[n-1]?`<div style="font-size:15px;font-weight:900;color:#e0b0ff;margin-top:6px">${uraStars(DUNGEONS[n-1].stars)} 裏ダンジョン「裏・${DUNGEONS[n-1].name}」が解放された！</div>`:''}</div>`:'';
   if(upHtml){setTimeout(()=>{sfx('upgrade');float('さらなる強化が解放された！',W/2,H*0.3,'#bdf0a8',28,2)},400)}
   showBox(`<h2 style="color:#ffd58a">${n}巡目 クリア！</h2><div class="rarebanner" style="color:#ffe070">✦ ボスラッシュの証 ×${n} ✦</div>${upHtml}
     <div style="font-size:13px;color:#ffb0a0">未確定の戦利品（倒れると失う）</div><div class="row">${lootChips(RUN.loot)}</div>
