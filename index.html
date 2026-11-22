@@ -1723,11 +1723,11 @@ function gesture(dx,dy){
 }
 const dodgeBtns={L:$('#dodgeL'),R:$('#dodgeR')},stamEls=[$('#stamL'),$('#stamR')];
 for(const d of['L','R'])dodgeBtns[d].addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();doDodge(d)});
-// 隠しコマンド（テスト用）：拠点の「遊び方」画面で Q を1.5秒以内に5回 → 全ダンジョン解放＋全素材を1000個追加＋全武器・全防具（ボス武器も）を入手
+// 隠しコマンド（テスト用）：拠点の「遊び方」画面で Q を1.5秒以内に5回 → 全ダンジョン解放＋全素材を1000個追加＋全武器・全防具（ボス武器も）を入手＋ボスラッシュ10巡目クリア扱い
 let qTimes=[];
 addEventListener('keydown',e=>{if(B||tab!=='how'||e.repeat||e.key.toLowerCase()!=='q')return;
   const now=performance.now();qTimes=[...qTimes.filter(t=>now-t<1500),now];
-  if(qTimes.length>=5){qTimes=[];for(const D of DUNGEONS)S.cleared[D.id]=true;for(const k in MATS)addMat(k,1000);for(const w of WEAPONS)if(S.weapons[w.id]===undefined)S.weapons[w.id]=0;for(const a of ARMORS)if(S.armors[a.id]===undefined)S.armors[a.id]=0;S.debug=true;save();sfx('rare');toast('隠しコマンド：全ダンジョン解放＆全素材 +1000個＆全装備を入手！');renderHub()}});
+  if(qTimes.length>=5){qTimes=[];for(const D of DUNGEONS)S.cleared[D.id]=true;for(const k in MATS)addMat(k,1000);for(const w of WEAPONS)if(S.weapons[w.id]===undefined)S.weapons[w.id]=0;for(const a of ARMORS)if(S.armors[a.id]===undefined)S.armors[a.id]=0;S.rushClear=Math.max(S.rushClear||0,10);S.rushBest=Math.max(S.rushBest||0,9);S.debug=true;save();sfx('rare');toast('隠しコマンド：全ダンジョン解放＆全素材 +1000個＆全装備を入手＆ボスラッシュ10巡クリア！');renderHub()}});
 // PCキー：A＝左へ回避、D＝右へ回避（パリィはマウス／タッチのスワイプだけ）
 const DODGEKEY={a:'L',d:'R'};
 addEventListener('keydown',e=>{if(!B||B.over||PAUSED)return;
