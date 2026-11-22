@@ -589,6 +589,7 @@ function matSVG(k){const m=MATS[k],id='g'+k;
 }
 // 討伐の証（ガチャ1回ぶん）：ボスごとに1種類。素材として持つ
 for(const b of ENEMIES)MATS['proof_'+b.id]={n:`${b.name.replace(/^.*?([ァ-ヶー]+)$/,'$1')}討伐の証`,full:`${b.name}討伐の証`,c:b.glow,c2:shade(b.glow,-0.5).replace(/rgb\((\d+),(\d+),(\d+)\)/,(m,r,g,bb)=>'#'+[r,g,bb].map(v=>(+v).toString(16).padStart(2,'0')).join('')),sh:'medal',proof:b.id};
+MATS.proof_rush={n:'ボスラッシュの証',full:'ボスラッシュの証',c:'#ffd040',c2:'#7a4a10',sh:'medal'};   // ボスラッシュで1巡クリアするともらえる（n巡目でn個）
 const ICON={},IMG={};
 for(const k in MATS){ICON[k]='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(matSVG(k));const im=new Image();im.src=ICON[k];IMG[k]=im}
 
@@ -880,6 +881,11 @@ function renderHub(){
         <div class="rt">レア素材（1回踏破で出る確率）</div><div class="row">${Object.entries(rp).sort((a,b)=>b[1]-a[1]).map(([k,pr])=>chip(k,`${MATS[k].n}（${RARE_NAME[MATS[k].rare]} ${pct(pr)}）`)).join('')}</div>
         <p style="font-size:12px;color:#a89478">部位破壊を多くするほど素材は増える。</p>`}
       h+=`<div class="row" style="justify-content:flex-end">${lock?'':`<button class="btn sub2" data-act="detail" data-id="${D.id}">${open?'詳細を閉じる':'詳細を表示'}</button>`}<button class="btn" data-act="hunt" data-i="${i}" ${lock?'disabled':''}>潜入する</button></div></div>`});
+    // ボスラッシュ：★5を踏破するまでは「???」も出さない
+    if(rushUnlocked())h+=`<div class="card" style="border-color:#c8a030;box-shadow:0 0 14px rgba(255,200,60,.25)"><h3>∞ ボスラッシュ（無限） ${S.rushClear?`<span class="tag ok">最高 ${S.rushClear}巡クリア</span>`:''}</h3>
+      <p>★1〜★5のボスと続けて戦う。5体倒すと1巡。巡が進むごとに敵が強くなり、どこまでも続く。</p>
+      <p style="font-size:12px;color:#bba78a;margin-top:2px">🏅 n巡目をクリアすると「ボスラッシュの証」がn個（素材は落とさない）／↩ 帰還できるのは1巡クリアしたときだけ／3・6・9…巡目に到達すると、次からその巡目から始められる</p>
+      <div class="row" style="justify-content:flex-end">${rushStarts().map(l=>`<button class="btn" data-act="rush" data-l="${l}">${l===1?'挑戦する（1巡目から）':`${l}巡目から`}</button>`).join('')}</div></div>`;
   }else if(tab==='forge'){
     const sec=(title,list,kind)=>{h+=`<div class="sect">${title}</div><div class="grid2">`;
       list.forEach(it=>{const own=kind==='w'?S.weapons:S.armors;const lv=own[it.id];const owned=lv!==undefined;
@@ -1023,6 +1029,7 @@ function renderHub(){
 document.querySelector('.tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b){tab=b.dataset.tab;renderHub()}});
 $('#panel').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled)return;const act=b.dataset.act;
   if(act==='hunt')startDungeon(+b.dataset.i);
+  else if(act==='rush')startRush(+b.dataset.l);
   else if(act==='tutorial'){startTutorial()}
   else if(act==='bossrush'){const i=+b.dataset.i;sfx('start');const D=DUNGEONS[i],pmax=100+armStat().hp;RUN={i,D,floor:D.floors.length-1,loot:{},php:pmax,pmax,test:true};startFloor()}
   else if(act==='gacha'){rollGacha(b.dataset.b)}
@@ -1133,8 +1140,20 @@ function drawTut(){if(!TUT||B.walk>0)return;const st=tutCur();if(!st)return;
   ctx.beginPath();ctx.moveTo(-L*0.6,-L*0.12);ctx.lineTo(L*0.25,-L*0.12);ctx.lineTo(L*0.25,-L*0.3);ctx.lineTo(L*0.7,0);ctx.lineTo(L*0.25,L*0.3);ctx.lineTo(L*0.25,L*0.12);ctx.lineTo(-L*0.6,L*0.12);ctx.closePath();ctx.stroke();ctx.fill();ctx.restore();
   hudText(ready?'いま！ スワイプ！':`${DNAME[needDir(a)]}へスワイプする準備`,W/2,cy+L*1.0,"900 18px 'M PLUS 1p'",ready?'#fff27a':'#bfe8ff');
 }
+// ===== ボスラッシュ（★5踏破で解放。★1〜★5のボスと連続で戦う。5体で1巡、巡ごとに敵が強くなり、無限に続く） =====
+const RUSH_HP=0.2,RUSH_DMG=0.08;   // 1巡ごとに 敵の体力+20%・攻撃力+8%
+const rushUnlocked=()=>!!S.cleared.d3;
+const rushStarts=()=>{const a=[1];for(let l=3;l<=(S.rushBest||0);l+=3)a.push(l);return a};   // 3の倍数の巡目に到達すると、次からそこから始められる
+function rushFloor(){const r=RUN.rush;RUN.i=r.idx;RUN.D=DUNGEONS[r.idx];RUN.floor=RUN.D.floors.length-1}
+function rushReach(lap){if(lap%3===0&&lap>(S.rushBest||0)){S.rushBest=lap;save();toast(`${lap}巡目に到達！ 次からは${lap}巡目から始められる`)}}
+function startRush(lap){sfx('start');for(const D of DUNGEONS)prepArt(D.floors.slice(-1)[0]);const pmax=100+armStat().hp;
+  RUN={loot:{},php:pmax,pmax,rush:{lap,idx:0,start:lap}};rushFloor();rushReach(lap);startFloor()}
+const runName=()=>RUN.rush?'ボスラッシュ':RUN.D.name;
+const runFloorText=()=>RUN.rush?`${RUN.rush.lap}巡目 ${RUN.rush.idx+1}/${DUNGEONS.length}`:`${RUN.floor+1}F / ${RUN.D.floors.length}F`;
 function startDungeon(i){sfx('start');const D=DUNGEONS[i];prepArt(D.floors[D.floors.length-1]);const pmax=100+armStat().hp;RUN={i,D,floor:0,loot:{},php:pmax,pmax};startFloor()}
-function floorEnemy(){const id=RUN.D.floors[RUN.floor],E=EN(id);if(!E.minion)return E;
+function floorEnemy(){const id=RUN.D.floors[RUN.floor],E=EN(id);
+  if(RUN.rush&&RUN.rush.lap>1){const l=RUN.rush.lap-1,m=1+RUSH_HP*l;return {...E,hp:Math.round(E.hp*m),dmg:Math.round(E.dmg*(1+RUSH_DMG*l)),parts:E.parts.map(p=>p.hp?{...p,hp:Math.round(p.hp*m)}:p)}}
+  if(!E.minion)return E;
   const m=1+0.12*RUN.floor;
   return {...E,hp:Math.round(E.hp*m),dmg:Math.round(E.dmg*(1+0.06*RUN.floor)),parts:E.parts.map(p=>p.hp?{...p,hp:Math.round(p.hp*m)}:p)}}
 const isBossFloor=()=>RUN.floor===RUN.D.floors.length-1;
@@ -1418,18 +1437,19 @@ function breakPart(p){
   p.broken=true;p.hp=0;const bonus=atkStat()*2;B.hp-=bonus;guardPhase();
   const t=B.tf,pt=toScreen(p.x*t.u,p.y*t.u);
   burst(pt.x,pt.y,'#ffe08a',40,520,true);B.shake=16;
-  p.mat.forEach(([k,q],i)=>{B.loot[k]=(B.loot[k]||0)+q;for(let j=0;j<Math.min(q,3);j++)dropIcon(k,pt.x,pt.y,i*0.1+j*0.06)});
+  if(!RUN.rush)p.mat.forEach(([k,q],i)=>{B.loot[k]=(B.loot[k]||0)+q;for(let j=0;j<Math.min(q,3);j++)dropIcon(k,pt.x,pt.y,i*0.1+j*0.06)});
   sfx('partBreak');float(`${p.name} 破壊！`,pt.x,pt.y-30,'#ffd04a',34,1.4);
   float(p.mat.map(([k,q])=>`${MATS[k].n}×${q}`).join('  ')+' 獲得',pt.x,pt.y+10,'#bdf0a8',20,1.6);
 }
 function victory(){
   B.over=true;B.hp=0;B.dying=true;bgm(null);sfx('kill');const drops={},rares={};
-  B.E.drops.forEach(([k,a,b])=>{const n=ri(a,b);if(n>0){drops[k]=n;B.loot[k]=(B.loot[k]||0)+n}});
-  B.E.rares.forEach(([k,p])=>{if(Math.random()<p){rares[k]=1;B.loot[k]=(B.loot[k]||0)+1}});
+  // ボスラッシュでは素材・レア・討伐の証は落とさない（報酬は1巡クリアのボスラッシュの証だけ）
+  if(!RUN.rush)B.E.drops.forEach(([k,a,b])=>{const n=ri(a,b);if(n>0){drops[k]=n;B.loot[k]=(B.loot[k]||0)+n}});
+  if(!RUN.rush)B.E.rares.forEach(([k,p])=>{if(Math.random()<p){rares[k]=1;B.loot[k]=(B.loot[k]||0)+1}});
   const t=B.tf;burst(t.x,t.y,B.E.glow,70,650,true);
   // ボスは25%で「討伐の証」（ガチャ1回ぶん）
   B.gotProof=false;const pk='proof_'+B.E.id;
-  if(!B.E.minion&&MATS[pk]&&Math.random()<PROOF_RATE){B.gotProof=true;B.loot[pk]=(B.loot[pk]||0)+1;dropIcon(pk,t.x,t.y,0.7);
+  if(!RUN.rush&&!B.E.minion&&MATS[pk]&&Math.random()<PROOF_RATE){B.gotProof=true;B.loot[pk]=(B.loot[pk]||0)+1;dropIcon(pk,t.x,t.y,0.7);
     setTimeout(()=>{sfx('fanfare');float(`${MATS[pk].full}を手に入れた！`,W/2,H*0.38,'#ffd8ff',26,1.8)},700)}
   // 金色の雑魚：そのダンジョンのボスの討伐の証を必ず落とす
   if(B.golden){const gk='proof_'+RUN.D.floors[RUN.D.floors.length-1];if(MATS[gk]){B.goldProof=gk;B.loot[gk]=(B.loot[gk]||0)+1;dropIcon(gk,t.x,t.y,0.7);
@@ -1445,6 +1465,7 @@ function bankRun(){for(const k in RUN.loot)addMat(k,RUN.loot[k]);save()}
 function showBox(html){$('#resultBox').innerHTML=html;$('#result').classList.remove('hidden')}
 function floorCleared(rares){
   addLoot(RUN.loot,B.loot);RUN.php=B.php;
+  if(RUN.rush){rushCleared();return}
   const rk=Object.keys(rares);
   const rareHtml=rk.length?`<div class="rarebanner">✦ レアドロップ ✦</div><div class="row">${rk.map(k=>chip(k,`${MATS[k].n}（${RARE_NAME[MATS[k].rare]}）`)).join('')}</div>`:'';
   if(isBossFloor()){
@@ -1468,6 +1489,26 @@ function floorCleared(rares){
     <div class="row">${canRet?'<button class="btn sub2" id="goHome">帰還する（持ち帰る）</button>':''}<button class="btn" id="goNext">次の階へ（HP+${heal}）</button></div>`);
   if(canRet)$('#goHome').onclick=()=>{bankRun();showBox(`<h2 style="color:#bdf0a8">無事に帰還した</h2><div style="font-size:13px;color:#bba78a">持ち帰った戦利品</div><div class="row">${lootChips(RUN.loot)}</div><div class="row"><button class="btn" id="home">拠点へ戻る</button></div>`);$('#home').onclick=endToHub};
   $('#goNext').onclick=()=>{RUN.php=Math.min(RUN.pmax,RUN.php+heal);RUN.floor++;startFloor()};
+}
+// ボスラッシュ：ボスを倒したとき。1巡（5体）が終わるまでは帰還できない
+function rushCleared(){const r=RUN.rush,heal=Math.round(RUN.pmax*FLOOR_HEAL),nb=DUNGEONS.length;
+  const goNext=()=>{RUN.php=Math.min(RUN.pmax,RUN.php+heal);rushFloor();startFloor()};
+  if(r.idx<nb-1){sfx('clear');const nx=EN(DUNGEONS[r.idx+1].floors.slice(-1)[0]);
+    showBox(`<h2 style="color:#ffd58a">${B.E.name} 撃破！</h2><p style="margin:0 0 8px">ボスラッシュ ${r.lap}巡目　${r.idx+1} / ${nb}</p>
+      <div style="font-size:13px;color:#ffb0a0">未確定の戦利品（倒れると失う）</div><div class="row">${lootChips(RUN.loot)}</div>
+      <p style="font-size:14px;margin-bottom:6px">HP ${Math.ceil(RUN.php)} / ${RUN.pmax}　次は <b>${'★'.repeat(DUNGEONS[r.idx+1].stars)} ${nx.name}</b></p>
+      <p style="font-size:13px;color:#ffb0a0;margin:4px 0">🚫 1巡（${nb}体）を倒しきるまで帰還できない</p>
+      <div class="row"><button class="btn" id="goNext">次のボスへ（HP+${heal}）</button></div>`);
+    $('#goNext').onclick=()=>{r.idx++;goNext()};return}
+  // 1巡クリア：n巡目ならボスラッシュの証をn個
+  sfx('fanfare');const n=r.lap;RUN.loot.proof_rush=(RUN.loot.proof_rush||0)+n;S.rushClear=Math.max(S.rushClear||0,n);save();
+  showBox(`<h2 style="color:#ffd58a">${n}巡目 クリア！</h2><div class="rarebanner" style="color:#ffe070">✦ ボスラッシュの証 ×${n} ✦</div>
+    <div style="font-size:13px;color:#ffb0a0">未確定の戦利品（倒れると失う）</div><div class="row">${lootChips(RUN.loot)}</div>
+    <p style="font-size:14px;margin-bottom:4px">HP ${Math.ceil(RUN.php)} / ${RUN.pmax}　次は <b>${n+1}巡目</b>（敵の体力 +${Math.round(RUSH_HP*n*100)}%・攻撃力 +${Math.round(RUSH_DMG*n*100)}%）</p>
+    <p style="font-size:13px;color:#e8d4b4;margin:0 0 8px">${n+1}巡目をクリアすると証が${n+1}個。ここで帰還すれば戦利品は確定する</p>
+    <div class="row"><button class="btn sub2" id="goHome">帰還する（持ち帰る）</button><button class="btn" id="goNext">${n+1}巡目へ（HP+${heal}）</button></div>`);
+  $('#goHome').onclick=()=>{bankRun();showBox(`<h2 style="color:#bdf0a8">無事に帰還した</h2><p>ボスラッシュ ${n}巡目までクリア</p><div style="font-size:13px;color:#bba78a">持ち帰った戦利品</div><div class="row">${lootChips(RUN.loot)}</div><div class="row"><button class="btn" id="home">拠点へ戻る</button></div>`);$('#home').onclick=endToHub};
+  $('#goNext').onclick=()=>{r.lap++;r.idx=0;rushReach(r.lap);goNext()};
 }
 // 帰還できる階：全5階なら2F・4Fをクリアしたあと、全6階なら3F・5Fをクリアしたあとだけ（それ以外は次の階へ進むしかない）
 const RETURN_FLOORS={5:[2,4],6:[3,5]};
@@ -1497,7 +1538,7 @@ let PAUSED=false;
 const canPause=()=>B&&!B.over&&$('#result').classList.contains('hidden');
 function pauseGame(){if(PAUSED||!canPause())return;PAUSED=true;ptr=null;sfx('click');pauseMenu()}
 function pauseMenu(){
-  $('#pauseBox').innerHTML=`<h2>ポーズ中</h2><p>${TUT?'チュートリアル':`${RUN.D.name}　${RUN.floor+1}F / ${RUN.D.floors.length}F`}</p>
+  $('#pauseBox').innerHTML=`<h2>ポーズ中</h2><p>${TUT?'チュートリアル':`${runName()}　${runFloorText()}`}</p>
     <div class="audio"><button class="sbtn" id="pzSfx"></button><button class="sbtn" id="pzBgm"></button></div>
     <div class="pbtns"><button class="btn" id="pzResume">戦闘に戻る</button><button class="btn sub2" id="pzQuit">${TUT?'チュートリアルをやめる':'あきらめて帰る（敗北扱い）'}</button></div>`;
   $('#pauseOv').classList.remove('hidden');
@@ -1522,7 +1563,7 @@ function died(){
   const lost={};addLoot(lost,RUN.loot);addLoot(lost,B.loot);
   // ボスに直接挑む（テスト用）で負けたときは装備を失わない
   const {n,out:eq}=RUN.test?{n:0,out:[]}:loseEquipment();
-  showBox(`<h2 style="color:#ff8f7a">力尽きた…</h2><p style="color:#ffb0a0;font-weight:700">${RUN.D.name} ${RUN.floor+1}F で倒れ、${RUN.test?'戦利品を失った':`戦利品と装備${n}つを失った`}</p>
+  showBox(`<h2 style="color:#ff8f7a">力尽きた…</h2><p style="color:#ffb0a0;font-weight:700">${runName()} ${runFloorText()} で倒れ、${RUN.test?'戦利品を失った':`戦利品と装備${n}つを失った`}</p>
     ${RUN.test?'<p style="font-size:13px;color:#bdf0a8">🔧 テスト挑戦なので装備は失わない</p>':''}<div style="font-size:13px;color:#bba78a;${RUN.test?'display:none':''}">失った装備（装備中の5つからランダムに${n}つ）</div><div class="row" style="opacity:.6;filter:grayscale(.6);${RUN.test?'display:none':''}">${eq.length?eq.map(o=>`<span class="chip"><img src="${o.i}">${o.t}</span>`).join(''):'<span class="chip" style="padding:3px 8px">なし</span>'}</div>
     <div style="font-size:13px;color:#bba78a">失った戦利品</div><div class="row" style="opacity:.6;filter:grayscale(.6)">${lootChips(lost)}</div>
     <div class="row"><button class="btn" id="home">拠点へ戻る</button></div>`);
@@ -2782,8 +2823,8 @@ function drawHUD(){
   ctx.save();
   // いちばん上：ダンジョン名・階・未確定の戦利品（左右のボタンのあいだ）
   if(RUN){const n=Object.values(RUN.loot).reduce((a,b)=>a+b,0)+Object.values(B.loot).reduce((a,b)=>a+b,0);
-    const fl=TUT?`${Math.min(TUT.step+1,TUT_STEPS.length)} / ${TUT_STEPS.length}`:`${RUN.floor+1}F / ${RUN.D.floors.length}F${isBossFloor()?' BOSS':''}`,lt=TUT?'':`戦利品 ${n}`;
-    const dn=TUT?'チュートリアル':RUN.D.name;let fs=14;const meas=()=>{ctx.font=`700 ${fs}px 'M PLUS 1p'`;const a=ctx.measureText(dn+'　').width;ctx.font=`900 ${fs+1}px 'M PLUS 1p'`;const b2=ctx.measureText(fl+'　').width;ctx.font=`700 ${fs}px 'M PLUS 1p'`;return a+b2+ctx.measureText(lt).width};
+    const fl=TUT?`${Math.min(TUT.step+1,TUT_STEPS.length)} / ${TUT_STEPS.length}`:`${runFloorText()}${isBossFloor()?' BOSS':''}`,lt=TUT?'':`戦利品 ${n}`;
+    const dn=TUT?'チュートリアル':runName();let fs=14;const meas=()=>{ctx.font=`700 ${fs}px 'M PLUS 1p'`;const a=ctx.measureText(dn+'　').width;ctx.font=`900 ${fs+1}px 'M PLUS 1p'`;const b2=ctx.measureText(fl+'　').width;ctx.font=`700 ${fs}px 'M PLUS 1p'`;return a+b2+ctx.measureText(lt).width};
     // ♪ボタンの右から ❚❚ボタンの左までのあいだに収める
     const L0=($('#pause').offsetWidth||44)+18,R0=W-L0,room=R0-L0-24;fs=14;while(fs>10&&meas()>room)fs--;const tw=meas(),x0=Math.max(L0+12,Math.min(W/2-tw/2,R0-12-tw));
     ctx.fillStyle='rgba(20,13,8,0.72)';ctx.strokeStyle='rgba(201,138,58,0.55)';ctx.lineWidth=1;ctx.beginPath();ctx.roundRect(x0-12,8,tw+24,34,10);ctx.fill();ctx.stroke();
