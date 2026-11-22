@@ -903,6 +903,8 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b||
 const $=s=>document.querySelector(s);
 let tab='hunt';
 let huntTab='n',uraTier=1;   // ダンジョンの小タブ：n=通常 / u=裏（ボスラッシュと裏ダンジョン）
+// 武器は強さ順（攻撃力の低い順。同じならもとの並び）に並べる
+const byAtk=(a,b)=>a.atk-b.atk||WEAPONS.indexOf(a)-WEAPONS.indexOf(b);
 let buildTab='all';   // 工房・持ち物の武器／防具の小タブ：all=すべて／balance／parry／crit／dodge／special（ボス武器）
 const bOK=b=>buildTab==='all'||b===buildTab;
 const buildTabs=kind=>{if(kind==='a'&&buildTab==='special')buildTab='all';return `<div class="subtabs small">${[['all','すべて'],['balance','バランス'],['parry','パリィ'],['crit','クリティカル'],['dodge','回避'],...(kind==='w'?[['special','ボス武器']]:[])].map(([k,n])=>`<button class="${buildTab===k?'on':''}" data-act="btab" data-v="${k}">${n}</button>`).join('')}</div>`};
@@ -967,7 +969,7 @@ function renderHub(){
       会心率 ${Math.round(critRate()*100)}%（×${critMul().toFixed(1)}）　／　パリィ受付 ×${perk('parry').toFixed(2)}　／　回避受付 ×${perk('dodge').toFixed(2)}${perk('heal')?`　／　パリィでHP+${+perk('heal').toFixed(1)}`:''}</div>`;
     h+=`<div class="subtabs"><button class="${forgeTab==='w'?'on':''}" data-act="ftab" data-v="w">武器</button><button class="${forgeTab==='a'?'on':''}" data-act="ftab" data-v="a">防具</button></div>`;
     if(forgeTab==='w'){h+=buildTabs('w');
-      const ws0=WEAPONS.filter(w=>S.weapons[w.id]!==undefined||(!w.gacha&&hasAnyMat(w.cost))),ws=ws0.filter(w=>bOK(w.build));
+      const ws0=WEAPONS.filter(w=>S.weapons[w.id]!==undefined||(!w.gacha&&hasAnyMat(w.cost))),ws=ws0.filter(w=>bOK(w.build)).sort(byAtk);
       sec(`— 武器 —`,ws,'w');
       if(!ws.length)h+=`<p class="hint">この系統の武器はまだない。</p>`;
       if(ws0.length<WEAPONS.length)h+=`<p class="hint">ほかにも武器がある。素材を1つでも手に入れると表示される（ボス武器はガチャ限定）。</p>`;
@@ -1039,7 +1041,7 @@ function renderHub(){
     if(invTab==='w'){
       h+=`<div class="buildbox"><b>いまのビルド</b>　攻撃 ${atkStat()}　／　パリィ1回で体勢 +${parryGain(false)}pt　／　回避で体勢 ${dodgeGain()>0?'+'+dodgeGain()+'pt':'なし'}　／　会心率 ${Math.round(critRate()*100)}%</div>`;
       h+=buildTabs('w');
-      for(const w of [...WEAPONS].sort((a,b)=>(b.id===S.eqW)-(a.id===S.eqW))){const lv=S.weapons[w.id];if(lv===undefined||!bOK(w.build))continue;const eq=S.eqW===w.id;
+      for(const w of [...WEAPONS].sort(byAtk).sort((a,b)=>(b.id===S.eqW)-(a.id===S.eqW))){const lv=S.weapons[w.id];if(lv===undefined||!bOK(w.build))continue;const eq=S.eqW===w.id;
         h+=`<div class="card ${eq?'equipped':''}"><div class="item"><div class="ico"><img src="${weaponIcon(w)}"></div><div class="body">
           <h3>${w.name} +${lv} </h3>
           <p>${buildTag(w.build)} 攻撃 ${wStat(w,lv)} ${w.perk?`<span class="tag perk">✦ ${perkText(w.perk)}</span>`:''}</p>
