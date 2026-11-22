@@ -395,7 +395,8 @@ const upgRecipe=(d,m,k)=>({[m]:Math.max(1,Math.round(YIELD[d][m]*k))});
 
 // ===================== 装備 =====================
 // build：バランス／パリィ（崩しやすいが攻撃力が低い）／クリティカル（会心が出やすいが崩しにくい）／回避（回避でも崩せるが回避がシビア）
-const MAXLV=5;   // 強化の上限
+const MAXLV=5;   // 強化の上限（基本）。ボスラッシュを n巡クリアすると +n×5（maxLv()）
+const maxLv=()=>MAXLV+5*((typeof S!=='undefined'&&S&&S.rushClear)||0);
 const WP=(d,mats)=>({cost:recipe(d,mats,WEAPON_CLEARS),upg:upgRecipe(d,TOPMAT(d),0.08)});
 const WEAPONS=[
   {id:'w0',name:'木の剣',atk:15,...WP('d1',[]),cost:{},shape:'wood',blade:'#b9844a',glow:'#ffd08a'},
@@ -514,7 +515,10 @@ const dodgeGain=()=>Math.round(perk('dodgePts'));
 const critRate=()=>Math.min(1,BASE_CRIT+perk('crit')),   // 会心率は最大100%
       critMul=()=>CRIT_MUL+perk('critDmg');
 const UPG_COST_MUL=2;   // 強化に使う素材の数の倍率（v16で2倍にした）
-function upgCost(it,lv){const c={};for(const[k,q]of Object.entries(it.upg))c[k]=q*(it.halfUpg?Math.ceil((lv+1)/2):(lv+1))*UPG_COST_MUL;return c}
+function upgCost(it,lv){const c={};for(const[k,q]of Object.entries(it.upg))c[k]=q*(it.halfUpg?Math.ceil((lv+1)/2):(lv+1))*UPG_COST_MUL;
+  // 限界突破：+5→+6、+10→+11…（5の倍数の次）は、作るときの素材も k回分いる（ボス武器は作成素材がないので、そのボスの討伐の証を k個）
+  if(lv>=MAXLV&&lv%5===0){const k=lv/5;if(it.gacha)c['proof_'+it.gacha]=(c['proof_'+it.gacha]||0)+k;else for(const[m,q]of Object.entries(it.cost||{}))c[m]=(c[m]||0)+q*k}
+  return c}
 const has=c=>Object.entries(c).every(([k,q])=>(S.mats[k]||0)>=q);
 function pay(c){for(const[k,q]of Object.entries(c))S.mats[k]-=q}
 function addMat(k,q){S.mats[k]=(S.mats[k]||0)+q}
@@ -523,7 +527,15 @@ let forgeTab='w';
 // ===== ガチャ =====
 const GACHA_ODDS={r1:0.5,r2:0.3,top:0.2};   // レア／激レア／大当たり（超激レア素材＋ボス武器の両方）
 const gachaRares=b=>{const o={};for(const[k]of b.rares)o[MATS[k].rare]=k;return o};
-function rollGacha(bid){const b=ENEMIES.find(e=>e.id===bid),pk='proof_'+bid;if(!b||(S.mats[pk]||0)<1)return;
+// ガチャを回す前に、使う証を選ぶ（そのボスの討伐の証 か ボスラッシュの証）
+function chooseGacha(bid){const b=ENEMIES.find(e=>e.id===bid),pk='proof_'+bid,n=S.mats[pk]||0,m=S.mats.proof_rush||0;if(!b||n+m<1)return;sfx('click');
+  $('#gachaBox').innerHTML=`<h2 style="margin:0 0 8px;color:#ffd58a">${b.name}のガチャ</h2><p style="margin:0 0 10px">どの証を使う？</p>
+    <div class="row" style="justify-content:center">${chip(pk,`${MATS[pk].full} ×${n}`)}${chip('proof_rush',`ボスラッシュの証 ×${m}`)}</div>
+    <div class="row" style="justify-content:center;margin-top:10px"><button class="btn" id="gUseB" ${n>0?'':'disabled'}>討伐の証を使う</button><button class="btn" id="gUseR" ${m>0?'':'disabled'}>ボスラッシュの証を使う</button></div>
+    <div class="row" style="justify-content:center"><button class="btn sub2" id="gClose">やめる</button></div>`;
+  $('#gacha').classList.remove('hidden');
+  $('#gUseB').onclick=()=>rollGacha(bid,false);$('#gUseR').onclick=()=>rollGacha(bid,true);$('#gClose').onclick=()=>{$('#gacha').classList.add('hidden');renderHub()}}
+function rollGacha(bid,useRush){const b=ENEMIES.find(e=>e.id===bid),pk=useRush?'proof_rush':'proof_'+bid;if(!b||(S.mats[pk]||0)<1)return;
   S.mats[pk]--;const r=gachaRares(b),w=WEAPONS.find(x=>x.gacha===bid);
   let x=Math.random(),res;
   if((x-=GACHA_ODDS.r1)<0)res={k:r[1],tier:1};else if((x-=GACHA_ODDS.r2)<0)res={k:r[2],tier:2};else res={k:r[3],w,tier:4};
@@ -531,7 +543,7 @@ function rollGacha(bid){const b=ENEMIES.find(e=>e.id===bid),pk='proof_'+bid;if(!
   if(res.w){ // 大当たり：超激レア素材（1〜2個）＋ボス武器
     const q=Math.random()<0.5?1:2;addMat(r[3],q);const lv=S.weapons[w.id];let wl;
     if(lv===undefined){S.weapons[w.id]=0;wl=`${perkText(w.perk)}<br><span style="font-size:12px;color:#bba78a">工房の武器タブで装備できる</span>`}
-    else if(lv<MAXLV){S.weapons[w.id]=lv+1;wl=`もう持っているので強化 +${lv}→+${lv+1}！`}
+    else if(lv<maxLv()){S.weapons[w.id]=lv+1;wl=`もう持っているので強化 +${lv}→+${lv+1}！`}
     else{addMat(r[3],1);wl=`強化MAXなので、かわりに ${MATS[r[3]].n} を+1個`}
     html=`<div class="gprize" style="color:#ffc0f0"><img src="${weaponIcon(w)}">${w.name}</div><p style="font-size:13px;color:#f0c8ff">${wl}</p>
       <div class="gprize" style="color:#fff3a0;font-size:17px"><img src="${ICON[r[3]]}" style="width:52px;height:52px">${MATS[r[3]].n} ×${q}</div>`}
@@ -548,7 +560,7 @@ function rollGacha(bid){const b=ENEMIES.find(e=>e.id===bid),pk='proof_'+bid;if(!
       <div class="row" style="justify-content:center;margin-top:12px">${left>0?`<button class="btn" id="gAgain">もう1回（残り${left}）</button>`:''}<button class="btn sub2" id="gClose">閉じる</button></div>`;
     sfx(res.tier>=3?'fanfare':res.tier===2?'rare':'clear');
     $('#gClose').onclick=()=>{$('#gacha').classList.add('hidden');renderHub()};
-    if(left>0)$('#gAgain').onclick=()=>rollGacha(bid)},900)}       // 工房の小タブ：w=武器 / a=防具
+    if(left>0)$('#gAgain').onclick=()=>rollGacha(bid,useRush)},900)}       // 工房の小タブ：w=武器 / a=防具
 // 作成に使う素材を1つでも持っているか（持っていない装備は工房に出さない）
 const hasAnyMat=c=>Object.keys(c).length===0||Object.keys(c).some(k=>(S.mats[k]||0)>0);   // 拠点の「詳細を表示」を開いているダンジョン
 const unlocked=i=>i===0||!!S.cleared[DUNGEONS[i].id]||!!S.cleared[DUNGEONS[i-1].id]||!!S.cleared[DUNGEONS[i-1].floors.slice(-1)[0]];
@@ -884,7 +896,7 @@ function renderHub(){
     // ボスラッシュ：★5を踏破するまでは「???」も出さない
     if(rushUnlocked())h+=`<div class="card" style="border-color:#c8a030;box-shadow:0 0 14px rgba(255,200,60,.25)"><h3>∞ ボスラッシュ（無限） ${S.rushClear?`<span class="tag ok">最高 ${S.rushClear}巡クリア</span>`:''}</h3>
       <p>★1〜★5のボスと続けて戦う。5体倒すと1巡。巡が進むごとに敵が強くなり、どこまでも続く。</p>
-      <p style="font-size:12px;color:#bba78a;margin-top:2px">🏅 n巡目をクリアすると「ボスラッシュの証」がn個（素材は落とさない）／↩ 帰還できるのは1巡クリアしたときだけ／3・6・9…巡目に到達すると、次からその巡目から始められる</p>
+      <p style="font-size:12px;color:#bba78a;margin-top:2px">🏅 n巡目をクリアすると「ボスラッシュの証」がn個（どのボスのガチャにも使える。素材は落とさない）／🛡 倒れても装備は失わない（戦利品は失う）／↩ 帰還できるのは1巡クリアしたときだけ／3・6・9…巡目に到達すると、次からその巡目から始められる／⬆ n巡クリアすると装備の強化の上限が +n×5（いま +${maxLv()}）</p>
       <div class="row" style="justify-content:flex-end">${rushStarts().map(l=>`<button class="btn" data-act="rush" data-l="${l}">${l===1?'挑戦する（1巡目から）':`${l}巡目から`}</button>`).join('')}</div></div>`;
   }else if(tab==='forge'){
     const sec=(title,list,kind)=>{h+=`<div class="sect">${title}</div><div class="grid2">`;
@@ -896,9 +908,9 @@ function renderHub(){
         <p>${buildTag(it.build)} ${st} ${it.perk?`<span class="tag perk">✦ ${perkText(it.perk)}</span>`:''}</p>`;
         if(!owned){h+=`<div class="row">${costChips(it.cost)}</div><div class="row"><button class="btn" data-act="craft" data-k="${kind}" data-id="${it.id}" ${has(it.cost)?'':'disabled'}>作成する</button></div>`}
         else{const c=upgCost(it,lv);
-          h+=`<div class="row">${lv<MAXLV?costChips(c):'<span class="chip" style="padding:3px 8px">強化MAX</span>'}</div><div class="row">
+          h+=`<div class="row">${lv<maxLv()?costChips(c):'<span class="chip" style="padding:3px 8px">強化MAX</span>'}</div><div class="row">
           ${eq?'':`<button class="btn sub2" data-act="equip" data-k="${kind}" data-id="${it.id}">装備する</button>`}
-          ${lv<MAXLV?`<button class="btn" data-act="upg" data-k="${kind}" data-id="${it.id}" ${has(c)?'':'disabled'}>強化 +${lv}→+${lv+1}（${kind==='w'?'攻撃 '+wStat(it,lv+1):'防御 '+aStat(it,lv+1).def}）</button>`:''}</div>`}
+          ${lv<maxLv()?`<button class="btn" data-act="upg" data-k="${kind}" data-id="${it.id}" ${has(c)?'':'disabled'}>強化 +${lv}→+${lv+1}（${kind==='w'?'攻撃 '+wStat(it,lv+1):'防御 '+aStat(it,lv+1).def}）</button>`:''}</div>`}
         h+='</div></div></div>'});h+='</div>'};
     h+=`<div class="buildbox"><b>いまのビルド</b>　攻撃 ${atkStat()}　／　パリィ1回で体勢 +${parryGain(false)}pt（強撃 +${parryGain(true)}）　／　回避で体勢 ${dodgeGain()>0?'+'+dodgeGain()+'pt':'なし'}<br>
       会心率 ${Math.round(critRate()*100)}%（×${critMul().toFixed(1)}）　／　パリィ受付 ×${perk('parry').toFixed(2)}　／　回避受付 ×${perk('dodge').toFixed(2)}${perk('heal')?`　／　パリィでHP+${+perk('heal').toFixed(1)}`:''}</div>`;
@@ -917,24 +929,24 @@ function renderHub(){
         h+=`<div class="card prow ${eq?'equipped':''}"><div class="ico"><img src="${armorIcon(it)}"></div><div class="body">
           <div class="pn"><span class="tag">${sn}</span> <b>${it.name}${owned?' +'+lv:''}</b>  <span class="pst">防御 ${stt.def} / 体力 +${stt.hp}</span>${it.perk?` <span class="tag perk" style="opacity:.85">✦ ${perkText(it.perk)}</span>`:''}</div>`;
         if(!owned)h+=`<div class="row">${costChips(it.cost)}<button class="btn mini" data-act="craft" data-k="a" data-id="${it.id}" ${has(it.cost)?'':'disabled'}>作成</button></div>`;
-        else{const c=upgCost(it,lv);h+=`<div class="row">${eq?'':`<button class="btn sub2 mini" data-act="equip" data-k="a" data-id="${it.id}">装備</button>`}${lv<MAXLV?costChips(c)+`<button class="btn mini" data-act="upg" data-k="a" data-id="${it.id}" ${has(c)?'':'disabled'}>強化 +${lv+1}</button>`:'<span class="chip" style="padding:3px 8px">強化MAX</span>'}</div>`}
+        else{const c=upgCost(it,lv);h+=`<div class="row">${eq?'':`<button class="btn sub2 mini" data-act="equip" data-k="a" data-id="${it.id}">装備</button>`}${lv<maxLv()?costChips(c)+`<button class="btn mini" data-act="upg" data-k="a" data-id="${it.id}" ${has(c)?'':'disabled'}>強化 +${lv+1}</button>`:'<span class="chip" style="padding:3px 8px">強化MAX</span>'}</div>`}
         h+='</div></div>'});
       h+='</div></div>'});
     if(sets.length<ARMOR_SETS.length)h+=`<p class="hint">ほかにも防具がある。素材を1つでも手に入れると表示される。</p>`;
     }
   }else if(tab==='gacha'){
-    h+=`<div class="card"><p style="margin:0">ボスを倒すと <b>${PROOF_RATE*100}%</b> で「討伐の証」が手に入る。証1つでそのボスのガチャを1回まわせる。</p>
+    h+=`<div class="card"><p style="margin:0">ボスを倒すと <b>${PROOF_RATE*100}%</b> で「討伐の証」が手に入る。証1つでそのボスのガチャを1回まわせる。<b style="color:#ffe070">ボスラッシュの証</b>なら、どのボスのガチャにも使える。</p>
       <p class="grate" style="margin:6px 0 0">排出率：レア ${GACHA_ODDS.r1*100}%（1〜2個）／激レア ${GACHA_ODDS.r2*100}%（1〜2個）／<b style="color:#ffc0f0">大当たり ${GACHA_ODDS.top*100}%：ボス武器＋超激レア（1〜2個）</b></p></div>`;
     // ★1から順に並べる。ボスを倒す（そのダンジョンを踏破する）までは「???」
     for(const D of DUNGEONS){const b=EN(D.floors.slice(-1)[0]),pk='proof_'+b.id,n=S.mats[pk]||0;
       if(!(n>0||S.cleared[D.id])){h+=`<div class="card locked"><h3>${'★'.repeat(D.stars)} ???</h3><p>🔒 ???</p></div>`;continue}
       const w=WEAPONS.find(x=>x.gacha===b.id),r=gachaRares(b);
       h+=`<div class="card"><h3>${'★'.repeat(D.stars)} ${b.name}のガチャ</h3>
-        <div class="row">${chip(pk,`${MATS[pk].full} ×${n}`)}</div>
+        <div class="row">${chip(pk,`${MATS[pk].full} ×${n}`)}${(S.mats.proof_rush||0)>0?chip('proof_rush',`ボスラッシュの証 ×${S.mats.proof_rush}`):''}</div>
         <div class="rt">当たり</div><div class="row">${[1,2,3].map(q=>r[q]?chip(r[q],`${RARE_NAME[q]}：${MATS[r[q]].n}`):'').join('')}
           <span class="chip"><img src="${weaponIcon(w)}">ボス武器：${w.name}${S.weapons[w.id]!==undefined?'（所持）':''}</span></div>
         <p class="grate">${w.name}：${perkText(w.perk)}（攻撃 ${w.atk}）</p>
-        <div class="row" style="justify-content:flex-end"><button class="btn" data-act="gacha" data-b="${b.id}" ${n>0?'':'disabled'}>ガチャを回す（証1つ）</button></div></div>`}
+        <div class="row" style="justify-content:flex-end"><button class="btn" data-act="gacha" data-b="${b.id}" ${n+(S.mats.proof_rush||0)>0?'':'disabled'}>ガチャを回す（証1つ）</button></div></div>`}
   }else if(tab==='stat'){
     // ステータス：いまの装備での数値まとめ
     const w=W_(S.eqW),wl=S.weapons[S.eqW]||0,as=armStat(),atk=atkStat(),cr=critRate(),cm=critMul(),avg=atk*(1+cr*(cm-1));
@@ -1032,7 +1044,7 @@ $('#panel').addEventListener('click',e=>{const b=e.target.closest('button');if(!
   else if(act==='rush')startRush(+b.dataset.l);
   else if(act==='tutorial'){startTutorial()}
   else if(act==='bossrush'){const i=+b.dataset.i;sfx('start');const D=DUNGEONS[i],pmax=100+armStat().hp;RUN={i,D,floor:D.floors.length-1,loot:{},php:pmax,pmax,test:true};startFloor()}
-  else if(act==='gacha'){rollGacha(b.dataset.b)}
+  else if(act==='gacha'){chooseGacha(b.dataset.b)}
   else if(act==='itab'){invTab=b.dataset.v;renderHub()}
   else if(act==='eqset'){const st=ARMOR_SETS.find(x=>x.id===b.dataset.id);let n=0;for(const p of ARMORS)if(p.set===st&&S.armors[p.id]!==undefined){S.eq[p.slot]=p.id;n++}sfx('equip');save();renderHub();toast(`${st.title}シリーズを${n}部位まとめて装備した`)}
   else if(act==='ftab'){forgeTab=b.dataset.v;renderHub()}
@@ -1545,7 +1557,7 @@ function pauseMenu(){
   $('#pzResume').onclick=resumeGame;updateAudioButtons();
   $('#pzSfx').onclick=()=>{setAudio('sfx',!SND.opt.sfx);sfx('click')};$('#pzBgm').onclick=()=>{setAudio('bgm',!SND.opt.bgm);sfx('click')};
   $('#pzQuit').onclick=()=>{sfx('click');if(TUT){endTutorial();return}
-    $('#pauseBox').innerHTML=`<h2 style="color:#ff9a7a">本当にあきらめる？</h2><p>倒れたときと同じ扱いになります。<br><b style="color:#ffb0a0">${RUN.test?'この探索の戦利品を失います（テスト挑戦なので装備は失わない）':'この探索の戦利品と、装備中の5つのうちランダムに1〜3つを失います'}</b></p>
+    $('#pauseBox').innerHTML=`<h2 style="color:#ff9a7a">本当にあきらめる？</h2><p>倒れたときと同じ扱いになります。<br><b style="color:#ffb0a0">${RUN.test?'この探索の戦利品を失います（テスト挑戦なので装備は失わない）':RUN.rush?'この探索の戦利品を失います（ボスラッシュなので装備は失わない）':'この探索の戦利品と、装備中の5つのうちランダムに1〜3つを失います'}</b></p>
       <div class="pbtns"><button class="btn danger" id="pzYes">あきらめる</button><button class="btn sub2" id="pzNo">やめる（ポーズに戻る）</button></div>`;
     $('#pzNo').onclick=()=>{sfx('click');pauseMenu()};
     $('#pzYes').onclick=giveUp}}
@@ -1562,9 +1574,10 @@ function died(){
   sfx('death');
   const lost={};addLoot(lost,RUN.loot);addLoot(lost,B.loot);
   // ボスに直接挑む（テスト用）で負けたときは装備を失わない
-  const {n,out:eq}=RUN.test?{n:0,out:[]}:loseEquipment();
-  showBox(`<h2 style="color:#ff8f7a">力尽きた…</h2><p style="color:#ffb0a0;font-weight:700">${runName()} ${runFloorText()} で倒れ、${RUN.test?'戦利品を失った':`戦利品と装備${n}つを失った`}</p>
-    ${RUN.test?'<p style="font-size:13px;color:#bdf0a8">🔧 テスト挑戦なので装備は失わない</p>':''}<div style="font-size:13px;color:#bba78a;${RUN.test?'display:none':''}">失った装備（装備中の5つからランダムに${n}つ）</div><div class="row" style="opacity:.6;filter:grayscale(.6);${RUN.test?'display:none':''}">${eq.length?eq.map(o=>`<span class="chip"><img src="${o.i}">${o.t}</span>`).join(''):'<span class="chip" style="padding:3px 8px">なし</span>'}</div>
+  const keep=RUN.test||!!RUN.rush;   // テスト挑戦とボスラッシュでは装備を失わない
+  const {n,out:eq}=keep?{n:0,out:[]}:loseEquipment();
+  showBox(`<h2 style="color:#ff8f7a">力尽きた…</h2><p style="color:#ffb0a0;font-weight:700">${runName()} ${runFloorText()} で倒れ、${keep?'戦利品を失った':`戦利品と装備${n}つを失った`}</p>
+    ${keep?`<p style="font-size:13px;color:#bdf0a8">${RUN.rush?'🛡 ボスラッシュなので装備は失わない':'🔧 テスト挑戦なので装備は失わない'}</p>`:''}<div style="font-size:13px;color:#bba78a;${keep?'display:none':''}">失った装備（装備中の5つからランダムに${n}つ）</div><div class="row" style="opacity:.6;filter:grayscale(.6);${keep?'display:none':''}">${eq.length?eq.map(o=>`<span class="chip"><img src="${o.i}">${o.t}</span>`).join(''):'<span class="chip" style="padding:3px 8px">なし</span>'}</div>
     <div style="font-size:13px;color:#bba78a">失った戦利品</div><div class="row" style="opacity:.6;filter:grayscale(.6)">${lootChips(lost)}</div>
     <div class="row"><button class="btn" id="home">拠点へ戻る</button></div>`);
   $('#home').onclick=endToHub;
