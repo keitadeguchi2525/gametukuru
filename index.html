@@ -1204,7 +1204,9 @@ const uraStars=n=>`<span style="color:#c070ff;text-shadow:0 0 6px #a040ff">${'�
 // 強さの巡目（ボスラッシュ・裏ダンジョンで使う。ふつうは1）
 const scaleLap=()=>RUN?(RUN.rush?RUN.rush.lap:RUN.ura?RUN.ura.lap:1):1;
 const runFloorText=()=>RUN.rush?`${RUN.rush.lap}巡目 ${RUN.rush.idx+1}/${DUNGEONS.length}`:`${RUN.floor+1}F / ${RUN.D.floors.length}F`;
-function startDungeon(i,ura){sfx('start');const D=DUNGEONS[i];prepArt(D.floors[D.floors.length-1]);const pmax=100+armStat().hp;RUN={i,D,floor:0,loot:{},php:pmax,pmax,ura:ura?{tier:ura,lap:ura+1}:null};startFloor()}
+function startDungeon(i,ura){sfx('start');const D=DUNGEONS[i];prepArt(D.floors[D.floors.length-1]);const pmax=100+armStat().hp;RUN={i,D,floor:0,loot:{},php:pmax,pmax,ura:ura?{tier:ura,lap:ura+1}:null};
+  S.inRun={name:runName()};save();   // 探索中の印（途中でゲームを閉じたら、次に開いたとき装備を失う）
+  startFloor()}
 function floorEnemy(){const id=RUN.D.floors[RUN.floor],E=EN(id);
   // ボスラッシュ・裏ダンジョン：巡目に合わせて 体力×(1+RUSH_HP×(巡目-1))・攻撃力×rushDmgMul（雑魚は階の補正のうえに同じ倍率）
   const L=scaleLap(),ux=RUN.ura?URA_EXTRA:1,lm=(1+RUSH_HP*(L-1))*ux,ld=(L>1?rushDmgMul(L):1)*ux;
@@ -1289,7 +1291,7 @@ function drawWarning(){
     ctx.strokeText(`BOSS ${B.E.name} 出現`,W/2,cy+gap+bh/2+f2*1.4);ctx.fillStyle='#ffd0a0';ctx.fillText(`BOSS ${B.E.name} 出現`,W/2,cy+gap+bh/2+f2*1.4)}
   ctx.restore();
 }
-function endToHub(){PAUSED=false;$('#pauseOv').classList.add('hidden');bgm('hub');B=null;RUN=null;$('#battle').classList.add('hidden');$('#hub').classList.remove('hidden');renderHub()}
+function endToHub(){if(S.inRun){delete S.inRun;save()}PAUSED=false;$('#pauseOv').classList.add('hidden');bgm('hub');B=null;RUN=null;$('#battle').classList.add('hidden');$('#hub').classList.remove('hidden');renderHub()}
 // 体勢ポイント：敵ごとに必要ポイントがあり（PT×段階）、時間で増える。パリィ=25pt、強撃=50pt、PERFECT=+5pt、被弾=-25pt
 const PT=25,PERFECT_PT=5,BASE_CRIT=0.1,CRIT_MUL=1.8;
 const needLv=()=>Math.min(B.E.need[1],B.E.need[0]+Math.floor(B.t/B.E.needEvery));
@@ -1522,7 +1524,7 @@ function victory(){
 }
 const lootChips=o=>{const e=Object.entries(o);return e.length?e.sort((a,b)=>(MATS[b[0]].rare||0)-(MATS[a[0]].rare||0)).map(([k,q])=>chip(k,`${MATS[k].n} ×${q}`)).join(''):'<span class="chip" style="padding:3px 8px">なし</span>'};
 function addLoot(dst,src){for(const k in src)dst[k]=(dst[k]||0)+src[k]}
-function bankRun(){for(const k in RUN.loot)addMat(k,RUN.loot[k]);save()}
+function bankRun(){for(const k in RUN.loot)addMat(k,RUN.loot[k]);delete S.inRun;save()}
 function showBox(html){$('#resultBox').innerHTML=html;$('#result').classList.remove('hidden')}
 function floorCleared(rares){
   addLoot(RUN.loot,B.loot);RUN.php=B.php;
@@ -1630,6 +1632,7 @@ function died(){
   sfx('death');
   const lost={};addLoot(lost,RUN.loot);addLoot(lost,B.loot);
   // ボスに直接挑む（テスト用）で負けたときは装備を失わない
+  delete S.inRun;save();
   const keep=RUN.test||!!RUN.rush;   // テスト挑戦とボスラッシュでは装備を失わない
   const {n,out:eq}=keep?{n:0,out:[]}:loseEquipment();
   showBox(`<h2 style="color:#ff8f7a">力尽きた…</h2><p style="color:#ffb0a0;font-weight:700">${runName()} ${runFloorText()} で倒れ、${keep?'戦利品を失った':`戦利品と装備${n}つを失った`}</p>
@@ -3184,6 +3187,12 @@ function loop(now){
   requestAnimationFrame(loop);
 }
 renderHub();requestAnimationFrame(loop);
+// 前回ダンジョンの途中でゲームを閉じていたら：倒れたときと同じく装備（装備中の5つから1〜3つ）を失う（ボスラッシュ・テスト挑戦は印を付けないので対象外）
+if(S.inRun){const nm=S.inRun.name||'ダンジョン';delete S.inRun;const {n,out:eq}=loseEquipment();renderHub();sfx('death');
+  $('#gacha').classList.remove('hidden');$('#gachaBox').innerHTML=(`<h2 style="color:#ff8f7a">探索を放棄した…</h2><p style="color:#ffb0a0;font-weight:700">前回「${nm}」の途中でゲームを終了したため、戦利品と装備${n}つを失った</p>
+    <div style="font-size:13px;color:#bba78a">失った装備（装備中の5つからランダムに${n}つ）</div><div class="row" style="opacity:.6;filter:grayscale(.6)">${eq.length?eq.map(o=>`<span class="chip"><img src="${o.i}">${o.t}</span>`).join(''):'<span class="chip" style="padding:3px 8px">なし</span>'}</div>
+    <div class="row"><button class="btn" id="lostOk">OK</button></div>`);
+  $('#lostOk').onclick=()=>{$('#gacha').classList.add('hidden');renderHub()}}
 </script>
 </body>
 </html>
