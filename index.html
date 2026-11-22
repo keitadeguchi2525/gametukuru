@@ -896,7 +896,7 @@ function renderHub(){
     // ボスラッシュ：★5を踏破するまでは「???」も出さない
     if(rushUnlocked())h+=`<div class="card" style="border-color:#c8a030;box-shadow:0 0 14px rgba(255,200,60,.25)"><h3>∞ ボスラッシュ（無限） ${S.rushClear?`<span class="tag ok">最高 ${S.rushClear}巡クリア</span>`:''}</h3>
       <p>★1〜★5のボスと続けて戦う。5体倒すと1巡。巡が進むごとに敵が強くなり、どこまでも続く。</p>
-      <p style="font-size:12px;color:#bba78a;margin-top:2px">🏅 n巡目をクリアすると「ボスラッシュの証」がn個（どのボスのガチャにも使える。素材は落とさない）／🛡 倒れても装備は失わない（戦利品は失う）／↩ 帰還できるのは1巡クリアしたときだけ／3n巡目（3・6・9…）に到達すると、次から「3n巡目から」で始められる／⬆ n巡クリアすると装備の強化の上限が +n×5（いま +${maxLv()}）</p>
+      <p style="font-size:12px;color:#bba78a;margin-top:2px">🏅 n巡目をクリアすると「ボスラッシュの証」がn個（どのボスのガチャにも使える。素材は落とさない）／🛡 倒れても装備は失わない（戦利品は失う）／↩ 帰還できるのは1巡クリアしたときだけ／3n巡目（3・6・9…）に到達すると、次から「3n巡目から」で始められる／⬆ n巡クリアすると装備の強化の上限が +n×5（いま +${maxLv()}）／ボス武器の割合ダメージは1巡目の体力が基準</p>
       <div class="row" style="justify-content:flex-end">${rushStarts().map(l=>`<button class="btn" data-act="rush" data-l="${l}">${l===1?'挑戦する（1巡目から）':`${l}巡目から`}</button>`).join('')}</div></div>`;
   }else if(tab==='forge'){
     const sec=(title,list,kind)=>{h+=`<div class="sect">${title}</div><div class="grid2">`;
@@ -1427,8 +1427,10 @@ const G_BEAM_CH=0.1,G_BEAM_PCT=0.10;                       // 闇の光線：1/1
 const G_FREEZE_SEC=1;                                      // 凍結：この武器で崩すと崩し時間+1秒
 const G_FREEZE_CH=1/12,G_FREEZE_PCT=0.07;                  // 氷撃：1/12で最大HPの7%（v17で8%から下げた）
 const cutMul=()=>1-Math.min(0.8,perk('dmgCut'));          // 被ダメージの倍率（岩王剣で0.5）
+// ボス武器の割合ダメージの基準になる体力。ボスラッシュでは1巡目の体力を基準にする（巡で増えた体力ぶんは割合で削れない）
+const pctHp=()=>RUN&&RUN.rush&&RUN.rush.lap>1?B.maxHp/(1+RUSH_HP*(RUN.rush.lap-1)):B.maxHp;
 function specialHit(frac,type){if(!B||B.over)return;const t=B.tf;
-  const dmg=Math.max(1,Math.round(B.maxHp*frac*(B.g.armor>0?0.2:1)));B.hp-=dmg;guardPhase();
+  const dmg=Math.max(1,Math.round(pctHp()*frac*(B.g.armor>0?0.2:1)));B.hp-=dmg;guardPhase();
   fx.special.push({type,x:t.x,y:t.y,life:type==='bolt'?0.4:0.6,max:type==='bolt'?0.4:0.6});
   if(type==='bolt'){sfx('thunder');fx.flash={c:'#fff8c0',life:0.25,max:0.25};burst(t.x,t.y,'#fff27a',40,600,true)}
   else if(type==='ice'){sfx('iceCrash');fx.flash={c:'#bff4ff',life:0.3,max:0.3};burst(t.x,t.y,'#dff8ff',44,600,true)}
@@ -3090,7 +3092,7 @@ function update(dt){
   const n=needNow();if(!TUT&&n>B.lastNeed){B.lastNeed=n;sfx('warn');float(`敵が警戒を強めた！ 必要ポイント +${PT}`,W/2,H*0.2,'#ff9a6a',20,1.6)}
   gimmicks(dt);if(B.over)return;
   if(B.epoison.length){ // ボス武器の毒：敵に1秒ごとダメージ
-    for(const p of B.epoison){p.next-=dt;if(p.next<=0&&p.ticks>0){p.next+=1;p.ticks--;const d=Math.max(1,Math.round(B.maxHp*G_POISON_PCT*(B.g.armor>0?0.2:1)));B.hp-=d;guardPhase();
+    for(const p of B.epoison){p.next-=dt;if(p.next<=0&&p.ticks>0){p.next+=1;p.ticks--;const d=Math.max(1,Math.round(pctHp()*G_POISON_PCT*(B.g.armor>0?0.2:1)));B.hp-=d;guardPhase();
       float('毒 '+d,B.tf.x+rand(-40,40),B.tf.y-B.tf.u*0.3,'#b0ff40',20,0.8)}}
     B.epoison=B.epoison.filter(p=>p.ticks>0);if(B.hp<=0&&!B.over){victory();return}}
   if(B.poison.length){ // 毒の継続ダメージ（防御では減らない）
