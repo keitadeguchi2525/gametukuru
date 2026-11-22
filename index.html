@@ -869,6 +869,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b||
 // ===================== 拠点UI =====================
 const $=s=>document.querySelector(s);
 let tab='hunt';
+let huntTab='n';   // ダンジョンの小タブ：n=通常 / u=裏（ボスラッシュと裏ダンジョン）
 let invTab='w';   // 持ち物の小タブ：w=武器 / a=防具 / m=素材
 function toast(t){const el=$('#toast');el.textContent=t;el.style.opacity=1;clearTimeout(toast.h);toast.h=setTimeout(()=>el.style.opacity=0,1600)}
 const chip=(k,txt,cls='')=>`<span class="chip ${cls} ${MATS[k].rare?'r'+MATS[k].rare:''}"><img src="${ICON[k]}">${txt}</span>`;
@@ -882,6 +883,10 @@ function renderHub(){
   let h='';
   if(tab==='hunt'){
     h+=`<div class="card" style="border-color:#7a2a20"><p style="color:#ffb0a0;margin:0">⚠ ダンジョンで手に入れた素材は<b>帰還するまで未確定</b>。倒れると<b>その探索の戦利品と、装備中の武器・防具（5つ）のうちランダムに1〜3つを失う</b>（初期装備は強化が+0に戻る）。帰還できるのは<b>決まった階をクリアしたときだけ</b>（全5階なら2F・4F、全6階なら3F・5F）。帰還すれば戦利品も装備も守れる（戦闘中に逃げることはできない）。</p></div>`;
+    // ダンジョンの小タブ：通常 / 裏（裏はボスラッシュが出てから。ボスラッシュと裏ダンジョン）
+    if(!rushUnlocked())huntTab='n';
+    if(rushUnlocked())h+=`<div class="subtabs">${[['n','通常'],['u','裏']].map(([k,n])=>`<button class="${huntTab===k?'on':''}" data-act="htab" data-v="${k}">${n}</button>`).join('')}</div>`;
+    if(huntTab==='n'){
     DUNGEONS.forEach((D,i)=>{const lock=!unlocked(i),open=OPEN_DETAIL[D.id]&&!lock;
       // 前のダンジョンを踏破していないうちは、星の数だけ見せて名前・説明は「???」
       h+=`<div class="card ${lock?'locked':''}"><h3>${'★'.repeat(D.stars)} ${lock?'???':`${D.name}（全${D.floors.length}階）`} ${S.cleared[D.id]?'<span class="tag ok">踏破済</span>':''}</h3>
@@ -893,17 +898,19 @@ function renderHub(){
         <div class="rt">レア素材（1回踏破で出る確率）</div><div class="row">${Object.entries(rp).sort((a,b)=>b[1]-a[1]).map(([k,pr])=>chip(k,`${MATS[k].n}（${RARE_NAME[MATS[k].rare]} ${pct(pr)}）`)).join('')}</div>
         <p style="font-size:12px;color:#a89478">部位破壊を多くするほど素材は増える。</p>`}
       h+=`<div class="row" style="justify-content:flex-end">${lock?'':`<button class="btn sub2" data-act="detail" data-id="${D.id}">${open?'詳細を閉じる':'詳細を表示'}</button>`}<button class="btn" data-act="hunt" data-i="${i}" ${lock?'disabled':''}>潜入する</button></div></div>`});
+    }else{
+    // ボスラッシュ：★5を踏破するまでは「???」も出さない
+    if(rushUnlocked())h+=`<div class="card" style="border-color:#c8a030;box-shadow:0 0 14px rgba(255,200,60,.25)"><h3>∞ ボスラッシュ（無限） ${S.rushClear?`<span class="tag ok">最高 ${S.rushClear}巡クリア</span>`:''}</h3>
+      <p>★1〜★5のボスと続けて戦う。5体倒すと1巡クリアで、巡が進むほど敵が強くなる。</p>
+      <p style="font-size:12px;color:#bba78a;margin-top:2px">クリアすると「ボスラッシュの証」がもらえて、好きなボスのガチャに使える。倒れても装備は失わない。</p>
+      <div class="row" style="justify-content:flex-end">${rushStarts().map(l=>`<button class="btn" data-act="rush" data-l="${l}">${l===1?'挑戦する（1巡目から）':`${l}巡目から`}</button>`).join('')}</div></div>`;
     // 裏ダンジョン：ボスラッシュ n巡目をクリアすると裏★n が出る（それまでは出さない）
     DUNGEONS.forEach((D,i)=>{if(!uraUnlocked(i))return;const done=S.uraCleared&&S.uraCleared[D.id];
       h+=`<div class="card" style="border-color:#7a40b0;box-shadow:0 0 12px rgba(160,64,255,.25)"><h3>${uraStars(D.stars)} 裏・${D.name}（全${D.floors.length}階） ${done?'<span class="tag ok">踏破済</span>':''}</h3>
       <p>${D.name}の敵がボスラッシュ${i+2}巡目より少し強くなった裏ダンジョン。素材とレア素材が出やすい。</p>
       <p style="font-size:12px;color:#bba78a;margin-top:2px">↩ 帰還できる階：${returnFloors(D).map(f=>f+'F').join('・')} のあと</p>
       <div class="row" style="justify-content:flex-end"><button class="btn" data-act="ura" data-i="${i}">潜入する</button></div></div>`});
-    // ボスラッシュ：★5を踏破するまでは「???」も出さない
-    if(rushUnlocked())h+=`<div class="card" style="border-color:#c8a030;box-shadow:0 0 14px rgba(255,200,60,.25)"><h3>∞ ボスラッシュ（無限） ${S.rushClear?`<span class="tag ok">最高 ${S.rushClear}巡クリア</span>`:''}</h3>
-      <p>★1〜★5のボスと続けて戦う。5体倒すと1巡クリアで、巡が進むほど敵が強くなる。</p>
-      <p style="font-size:12px;color:#bba78a;margin-top:2px">クリアすると「ボスラッシュの証」がもらえて、好きなボスのガチャに使える。倒れても装備は失わない。</p>
-      <div class="row" style="justify-content:flex-end">${rushStarts().map(l=>`<button class="btn" data-act="rush" data-l="${l}">${l===1?'挑戦する（1巡目から）':`${l}巡目から`}</button>`).join('')}</div></div>`;
+    }
   }else if(tab==='forge'){
     const sec=(title,list,kind)=>{h+=`<div class="sect">${title}</div><div class="grid2">`;
       list.forEach(it=>{const own=kind==='w'?S.weapons:S.armors;const lv=own[it.id];const owned=lv!==undefined;
@@ -1053,6 +1060,7 @@ $('#panel').addEventListener('click',e=>{const b=e.target.closest('button');if(!
   else if(act==='bossrush'){const i=+b.dataset.i;sfx('start');const D=DUNGEONS[i],pmax=100+armStat().hp;RUN={i,D,floor:D.floors.length-1,loot:{},php:pmax,pmax,test:true};startFloor()}
   else if(act==='gacha'){chooseGacha(b.dataset.b)}
   else if(act==='itab'){invTab=b.dataset.v;renderHub()}
+  else if(act==='htab'){huntTab=b.dataset.v;sfx('click');renderHub()}
   else if(act==='eqset'){const st=ARMOR_SETS.find(x=>x.id===b.dataset.id);let n=0;for(const p of ARMORS)if(p.set===st&&S.armors[p.id]!==undefined){S.eq[p.slot]=p.id;n++}sfx('equip');save();renderHub();toast(`${st.title}シリーズを${n}部位まとめて装備した`)}
   else if(act==='ftab'){forgeTab=b.dataset.v;renderHub()}
   else if(act==='detail'){OPEN_DETAIL[b.dataset.id]=!OPEN_DETAIL[b.dataset.id];sfx('click');renderHub()}
