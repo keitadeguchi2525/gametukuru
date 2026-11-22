@@ -234,7 +234,7 @@ const ENEMIES=[
     {id:'body',body:true,x:0,y:0.08,rx:0.45,ry:0.55,c:'#2f5288'},
     {id:'head',name:'雷角',x:0,y:-0.6,rx:0.22,ry:0.2,c:'#3b67a8',hp:380,mat:[['horn',2]],deco:'horn1',eyes:true},
    ]},
-  {id:'necros',name:'冥王ネクロス',stars:5,gimmick:'curse',gdesc:'【冥核再生／第二形態／反転の呪い】冥核が無事な間はHPが再生し続ける。HP50%で第二形態になり攻撃がさらに速くなる。第二形態では「反転の呪い」で、紫の輪の攻撃はいつもと逆方向にはじかないとパリィできない。',desc:'冥界の王。素早い3連撃と冥炎。胸の冥核が弱点。',
+  {id:'necros',name:'冥王ネクロス',stars:5,gimmick:'curse',gdesc:'【冥核再生／第二形態／反転の呪い】冥核が無事な間はHPが再生し続ける。HP50%で第二形態になり攻撃がさらに速くなる。第二形態では「反転の呪い」がずっと続き、攻撃の半分（連撃の1発ずつも）が紫の輪になる。紫の輪の攻撃はいつもと逆方向にはじかないとパリィできない。',desc:'冥界の王。素早い3連撃と冥炎。胸の冥核が弱点。',
    hp:5500,need:[5,9],needEvery:20,breakTime:3.3,windup:0.8,dmg:45,idle:[0.6,1.1],combo:3,
    moves:[['slash',5],['heavy',2],['delay',3],['breath',3]],breath:{type:'fire',name:'冥炎',c:'#d070ff'},
    bg:['#2c1a3a','#0b0612'],eye:'#ff4fd8',glow:'#c060ff',
@@ -1283,7 +1283,7 @@ function beginAttack(){
     if(kind==='combo'){const n=TUT?3:ri(E.flurry[0],E.flurry[1]);B.flurry={dirs:Array.from({length:n},(_,i)=>i>0&&!TUT&&Math.random()<BREATH_IN_FLURRY?(Math.random()<0.5?'BL':'BR'):DIRKEYS[ri(0,7)]),idx:1,ok:0,total:n};
       dir=B.flurry.dirs[0];kind='slash';fl=true;w*=1.15}
     else dir=DIRKEYS[ri(0,7)]}
-  const a={kind,dir,t:0,w,res:false,fail:false,lunged:false,holdAt:0,holdLeft:0,impactAt:null,fl,cursed:B.g.curse>0&&kind!=='breath'};
+  const a={kind,dir,t:0,w,res:false,fail:false,lunged:false,holdAt:0,holdLeft:0,impactAt:null,fl,cursed:B.g.curse>0&&kind!=='breath'&&Math.random()<CURSE_RATE};
   // ブレス／投擲は画面の左側か右側に飛んでくる。side＝着弾する側（よけるのは反対側）
   if(kind==='breath')a.side=fl&&B.flurry?B.flurry.dirs[B.flurry.idx-1][1]:(Math.random()<0.5?'L':'R');
   if(kind==='heavy')a.w*=1.4;
@@ -1304,6 +1304,7 @@ const COLD_EVERY=3,COLD_DMG=1,BLIZZARD_DMG=3;
 // ボスラッシュでは、巡ごとに寒さのダメージも上げる（防御では減らないので、基準の装備の最大HPに対する割合が「倒すのにかかる回数の倍率」と同じだけ増えるように）
 const rushColdMul=lap=>lap>1?rushRef(lap).hp/rushRef(1).hp*rushKillMul(lap):1;
 const coldDmg=()=>(B.g.blizzard?BLIZZARD_DMG:COLD_DMG)*(RUN&&RUN.rush?rushColdMul(RUN.rush.lap):1);
+const CURSE_RATE=0.5;   // 反転の呪いの間、攻撃が反転攻撃（紫の輪）になる確率
 const needDir=a=>a.cursed?a.dir:OPP[a.dir];   // 攻撃が来た方向へはじき返す（呪い中は逆）
 function enterBroken(extra=0){
   B.frozenBreak=perk('gFreeze')>0;if(B.frozenBreak){extra+=G_FREEZE_SEC;sfx('iceCrash');float(`凍結！ 崩し時間 +${G_FREEZE_SEC}秒`,W/2,H*0.38,'#bff4ff',24,1.4)}
@@ -2786,7 +2787,7 @@ function drawGimmickHUD(){
   if(E.gimmick==='orbs'){ctx.fillStyle='#e8ff90';gtxt(B.state==='orbs'?`鱗粉の玉 ${B.orbPop}/${ORB_N} 撃ち落とし`:'鱗粉の玉が出たら素早く撃ち落とせ',W/2,y)}
   if(E.gimmick==='cold'){ctx.fillStyle=B.g.blizzard?'#ffffff':'#bff4ff';gtxt(`${B.g.blizzard?'❄ 吹雪':'❄ 寒さ'} — ${COLD_EVERY}秒ごとに HP -${Math.round(coldDmg()*10)/10}（あと${Math.max(0,COLD_EVERY-(B.g.coldT||0)).toFixed(1)}秒）`,W/2,y)}
   {const hz=hazard();if(hz){ctx.fillStyle=hz.c;ctx.font="700 12px 'M PLUS 1p'";gtxt(`${hz.name}に注意（回避でのみ避けられる）`,W/2,y+24)}}
-  if(E.gimmick==='curse'){const core=B.parts.find(p=>p.id==='core');const t=[];if(!core.broken)t.push('冥核が再生中（破壊で停止）');if(g.phase2)t.push('第二形態');if(g.curse>0)t.push(`反転の呪い 残り${Math.ceil(g.curse)}秒`);
+  if(E.gimmick==='curse'){const core=B.parts.find(p=>p.id==='core');const t=[];if(!core.broken)t.push('冥核が再生中（破壊で停止）');if(g.phase2)t.push('第二形態');if(g.curse>0)t.push('反転の呪い（紫の輪は逆へ）');
     ctx.fillStyle=g.curse>0?'#e090ff':'#ff9ab0';gtxt(t.join('　'),W/2,y)}
   ctx.restore();
 }
@@ -3062,8 +3063,8 @@ function gimmicks(dt){
       if(g.regenAcc>=40){const t=B.tf,pt=toScreen(core.x*t.u,core.y*t.u);float('+'+Math.round(g.regenAcc)+' 再生',pt.x+40,pt.y,'#7aff9a',16,0.8);g.regenAcc=0}}
     if(!g.phase2&&(B.hp<=B.maxHp*0.5||g.trig)){g.phase2=true;g.trig=false;cancelBreak();B.E={...B.E,glow:'#ff3050',eye:'#ff2030',bg:['#3a1020','#100408']};
       sfx('roar');float('冥王が真の姿を現した！',W/2,H*0.28,'#ff6a8a',30,2);B.shake=22;burst(B.tf.x,B.tf.y,'#ff3050',60,600,true)}
-    if(g.phase2){if(g.curse>0){g.curse-=dt;if(g.curse<=0)float('呪いが解けた',W/2,H*0.25,'#cdb89a',20,1)}
-      else{g.curseCD-=dt;if(g.curseCD<=0){g.curse=8;g.curseCD=14;sfx('curse');float('反転の呪い！ 紫の輪は逆へはじけ！',W/2,H*0.25,'#d070ff',26,1.8);fx.flash={c:'#a040ff',life:0.4,max:0.4}}}}
+    // 第二形態（HP50%以下）では反転の呪いがずっと続く。攻撃1発ごと（連撃の1発ずつも）に CURSE_RATE の確率で反転攻撃（紫の輪）
+    if(g.phase2&&!(g.curse>0)){g.curse=1;g.curseShow=1.6;sfx('curse');float('反転の呪い！ 紫の輪は逆へはじけ！',W/2,H*0.36,'#d070ff',26,2);fx.flash={c:'#a040ff',life:0.4,max:0.4}}
   }
 }
 function update(dt){
@@ -3132,7 +3133,7 @@ function loop(now){
     ctx.save();if(B.shake>0)ctx.translate((Math.random()-0.5)*B.shake,(Math.random()-0.5)*B.shake);
     if(B.walk>0){drawWalk();ctx.restore();if(B.warn>0)drawWarning();requestAnimationFrame(loop);return}
     drawBG();drawEnemy();drawBreath();drawTelegraph();drawPlayer();if(B.flRow&&B.atk&&B.atk.fl)drawFlurryRow(W/2,B.flRow.y,B.flRow.col);drawHazards();drawFX(dt);drawSpecialFX(dt);ctx.restore();drawOrbs();drawCold();drawLowHP();drawHUD();if(!TUT)drawGimmickHUD();drawTut();if(B.warn>0)drawWarning();
-    if(B.g.curse>0){const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.3,W/2,H/2,Math.max(W,H)*0.7);g.addColorStop(0,'rgba(120,0,200,0)');g.addColorStop(1,'rgba(120,0,200,0.35)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
+    if(B.g.curse>0){const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.3,W/2,H/2,Math.max(W,H)*0.7);g.addColorStop(0,'rgba(120,0,200,0)');g.addColorStop(1,'rgba(120,0,200,0.22)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
     if(fx.flash){ctx.fillStyle=rgba(fx.flash.c,0.45*fx.flash.life/fx.flash.max);ctx.fillRect(0,0,W,H)}
     if(B.hurt>0){const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.3,W/2,H/2,Math.max(W,H)*0.7);g.addColorStop(0,'rgba(255,0,0,0)');g.addColorStop(1,`rgba(220,20,10,${B.hurt})`);ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
   }
