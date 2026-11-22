@@ -31,6 +31,7 @@ h1{font-weight:900;font-size:30px;letter-spacing:.06em;text-align:center;color:#
 .stt td.k{color:#d8c6aa;overflow-wrap:anywhere}.stt{table-layout:auto}.stt td.v{width:1%}.stt td.v{text-align:right;font-weight:900;color:#ffe2ad;white-space:nowrap;font-size:15px}.stt small{display:block;font-size:12px;font-weight:400;color:#a89478;margin-top:2px}
 .stt .up{color:#8fe08a}.stt .dn{color:#ff9a7a}.eqline{display:flex;flex-wrap:wrap;gap:6px}.eqline span{display:inline-flex;align-items:center;gap:4px;background:#1c140d;border:1px solid #3c2b1c;border-radius:8px;padding:2px 8px 2px 3px;font-size:13px}.eqline img{width:28px;height:28px}
 .subtabs{display:flex;gap:6px;margin:0 0 10px}.subtabs button{flex:1;padding:8px 0;font:700 14px 'M PLUS 1p';color:#c9b597;background:#1c140d;border:1px solid #47331f;border-radius:20px;cursor:pointer}
+.subtabs.small{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin:-4px 0 10px}.subtabs.small button{min-width:0;padding:5px 4px;font-size:12px;border-radius:999px}
 .subtabs button.on{background:#5a3a18;color:#fff0d0;border-color:#c98a3a}.hint{font-size:13px;color:#bba78a;text-align:center;margin:6px 0 14px}
 .tabs button.on{background:linear-gradient(#b9772a,#8a4f15);color:#fff6e0;border-color:#e0a050}
 .card{background:linear-gradient(#2b1f15,#211710);border:1px solid #4a3522;border-radius:14px;padding:14px 16px;margin-bottom:12px}
@@ -888,6 +889,9 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b||
 const $=s=>document.querySelector(s);
 let tab='hunt';
 let huntTab='n',uraTier=1;   // ダンジョンの小タブ：n=通常 / u=裏（ボスラッシュと裏ダンジョン）
+let buildTab='all';   // 工房・持ち物の武器／防具の小タブ：all=すべて／balance／parry／crit／dodge／special（ボス武器）
+const bOK=b=>buildTab==='all'||b===buildTab;
+const buildTabs=kind=>{if(kind==='a'&&buildTab==='special')buildTab='all';return `<div class="subtabs small">${[['all','すべて'],['balance','バランス'],['parry','パリィ'],['crit','クリティカル'],['dodge','回避'],...(kind==='w'?[['special','ボス武器']]:[])].map(([k,n])=>`<button class="${buildTab===k?'on':''}" data-act="btab" data-v="${k}">${n}</button>`).join('')}</div>`};
 let invTab='w';   // 持ち物の小タブ：w=武器 / a=防具 / m=素材
 function toast(t){const el=$('#toast');el.textContent=t;el.style.opacity=1;clearTimeout(toast.h);toast.h=setTimeout(()=>el.style.opacity=0,1600)}
 const chip=(k,txt,cls='')=>`<span class="chip ${cls} ${MATS[k].rare?'r'+MATS[k].rare:''}"><img src="${ICON[k]}">${txt}</span>`;
@@ -948,12 +952,14 @@ function renderHub(){
     h+=`<div class="buildbox"><b>いまのビルド</b>　攻撃 ${atkStat()}　／　パリィ1回で体勢 +${parryGain(false)}pt（強撃 +${parryGain(true)}）　／　回避で体勢 ${dodgeGain()>0?'+'+dodgeGain()+'pt':'なし'}<br>
       会心率 ${Math.round(critRate()*100)}%（×${critMul().toFixed(1)}）　／　パリィ受付 ×${perk('parry').toFixed(2)}　／　回避受付 ×${perk('dodge').toFixed(2)}${perk('heal')?`　／　パリィでHP+${+perk('heal').toFixed(1)}`:''}</div>`;
     h+=`<div class="subtabs"><button class="${forgeTab==='w'?'on':''}" data-act="ftab" data-v="w">武器</button><button class="${forgeTab==='a'?'on':''}" data-act="ftab" data-v="a">防具</button></div>`;
-    if(forgeTab==='w'){
-      const ws=WEAPONS.filter(w=>S.weapons[w.id]!==undefined||(!w.gacha&&hasAnyMat(w.cost)));
+    if(forgeTab==='w'){h+=buildTabs('w');
+      const ws0=WEAPONS.filter(w=>S.weapons[w.id]!==undefined||(!w.gacha&&hasAnyMat(w.cost))),ws=ws0.filter(w=>bOK(w.build));
       sec(`— 武器 —`,ws,'w');
-      if(ws.length<WEAPONS.length)h+=`<p class="hint">ほかにも武器がある。素材を1つでも手に入れると表示される（ボス武器はガチャ限定）。</p>`;
+      if(!ws.length)h+=`<p class="hint">この系統の武器はまだない。</p>`;
+      if(ws0.length<WEAPONS.length)h+=`<p class="hint">ほかにも武器がある。素材を1つでも手に入れると表示される（ボス武器はガチャ限定）。</p>`;
     }else{
-    const sets=ARMOR_SETS.filter(st=>ARMORS.some(p=>p.set===st&&(S.armors[p.id]!==undefined||hasAnyMat(p.cost))));
+    h+=buildTabs('a');
+    const sets0=ARMOR_SETS.filter(st=>ARMORS.some(p=>p.set===st&&(S.armors[p.id]!==undefined||hasAnyMat(p.cost)))),sets=sets0.filter(st=>bOK(st.build));
     h+=`<div class="sect">— 防具（頭・胴・手・足） —</div><p style="font-size:12px;color:#a89478;margin:-4px 0 10px">シリーズの部位を全部そろえると合計：防御／体力。強化は1段ごとに 防御+1・体力+1。</p>`;
     sets.forEach(st=>{const ps=ARMORS.filter(p=>p.set===st);const rare=!!st.rare||Object.keys(st.perkCost||{}).length>0;
       h+=`<div class="card ${rare?'rare':''}"><h3>${st.title}シリーズ <span style="font-size:12px;color:#bba78a;font-weight:700">一式 防御${st.def} / 体力+${st.hp}</span> ${buildTag(st.build)}${st.setPerk?` <span class="tag perk">✦ 一式：${perkText(st.setPerk)}</span>`:''}${st.perk?` <span class="tag perk">✦ ${SLOTS.find(x=>x.k===st.perkSlot).n}：${perkText(st.perk)}</span>`:''}</h3>`;
@@ -965,7 +971,8 @@ function renderHub(){
         else{const c=upgCost(it,lv);h+=`<div class="row">${eq?'':`<button class="btn sub2 mini" data-act="equip" data-k="a" data-id="${it.id}">装備</button>`}${lv<maxLv()?costChips(c)+`<button class="btn mini" data-act="upg" data-k="a" data-id="${it.id}" ${has(c)?'':'disabled'}>強化 +${lv+1}</button>`:'<span class="chip" style="padding:3px 8px">強化MAX</span>'}</div>`}
         h+='</div></div>'});
       h+='</div></div>'});
-    if(sets.length<ARMOR_SETS.length)h+=`<p class="hint">ほかにも防具がある。素材を1つでも手に入れると表示される。</p>`;
+    if(!sets.length)h+=`<p class="hint">この系統の防具はまだない。</p>`;
+    if(sets0.length<ARMOR_SETS.length)h+=`<p class="hint">ほかにも防具がある。素材を1つでも手に入れると表示される。</p>`;
     }
   }else if(tab==='gacha'){
     h+=`<div class="card"><p style="margin:0">ボスを倒すと <b>${PROOF_RATE*100}%</b> で「討伐の証」が手に入る。証1つでそのボスのガチャを1回まわせる。<b style="color:#ffe070">ボスラッシュの証</b>なら、どのボスのガチャにも使える。</p>
@@ -1017,7 +1024,8 @@ function renderHub(){
     h+=`<div class="subtabs">${[['w','武器'],['a','防具'],['m','素材']].map(([k,n])=>`<button class="${invTab===k?'on':''}" data-act="itab" data-v="${k}">${n}</button>`).join('')}</div>`;
     if(invTab==='w'){
       h+=`<div class="buildbox"><b>いまのビルド</b>　攻撃 ${atkStat()}　／　パリィ1回で体勢 +${parryGain(false)}pt　／　回避で体勢 ${dodgeGain()>0?'+'+dodgeGain()+'pt':'なし'}　／　会心率 ${Math.round(critRate()*100)}%</div>`;
-      for(const w of [...WEAPONS].sort((a,b)=>(b.id===S.eqW)-(a.id===S.eqW))){const lv=S.weapons[w.id];if(lv===undefined)continue;const eq=S.eqW===w.id;
+      h+=buildTabs('w');
+      for(const w of [...WEAPONS].sort((a,b)=>(b.id===S.eqW)-(a.id===S.eqW))){const lv=S.weapons[w.id];if(lv===undefined||!bOK(w.build))continue;const eq=S.eqW===w.id;
         h+=`<div class="card ${eq?'equipped':''}"><div class="item"><div class="ico"><img src="${weaponIcon(w)}"></div><div class="body">
           <h3>${w.name} +${lv} </h3>
           <p>${buildTag(w.build)} 攻撃 ${wStat(w,lv)} ${w.perk?`<span class="tag perk">✦ ${perkText(w.perk)}</span>`:''}</p>
@@ -1028,8 +1036,9 @@ function renderHub(){
       const sets=ARMOR_SETS.map(st=>{const own=ARMORS.filter(p=>p.set===st&&S.armors[p.id]!==undefined);return {st,own,on:own.length>0&&own.every(p=>S.eq[p.slot]===p.id)}}).filter(o=>o.own.length);
       h+=`<div class="sect">— シリーズでまとめて装備 —</div><div class="eqsets">${sets.map(o=>`<button class="btn ${o.on?'on':'sub2'} mini bb-${o.st.build||'none'}" data-act="eqset" data-id="${o.st.id}" ${o.on?'disabled style="opacity:1"':''}><img src="${armorIcon(o.own.find(p=>p.slot==='body')||o.own[0])}">${o.st.title}（${o.own.length}/4）${o.st.build?buildTag(o.st.build):'<span class="tag">なし</span>'}${o.on?' ✔':''}</button>`).join('')}</div>
         <div class="hint" style="text-align:left;margin:0 0 4px">持っている部位をまとめて装備します（持っていない部位はいまのまま）</div>`;
+      h+=buildTabs('a');
       for(const sl of SLOTS){h+=`<div class="sect">— ${sl.n} —</div><div class="inv2">`;
-        const list=ARMORS.filter(p=>p.slot===sl.k&&S.armors[p.id]!==undefined).sort((a,b)=>(S.eq[sl.k]===b.id)-(S.eq[sl.k]===a.id));
+        const list=ARMORS.filter(p=>p.slot===sl.k&&S.armors[p.id]!==undefined&&bOK(p.set.build)).sort((a,b)=>(S.eq[sl.k]===b.id)-(S.eq[sl.k]===a.id));
         for(const it of list){const lv=S.armors[it.id],eq=S.eq[sl.k]===it.id,st=aStat(it,lv);
           h+=`<div class="card prow ${eq?'equipped':''}"><div class="ico"><img src="${armorIcon(it)}"></div><div class="body">
             <div class="pn"><b>${it.name} +${lv}</b>  ${buildTag(it.set.build)} <span class="pst">防御 ${st.def} / 体力 +${st.hp}</span>${it.perk?` <span class="tag perk" style="opacity:.85">✦ ${perkText(it.perk)}</span>`:''}</div>
@@ -1081,6 +1090,7 @@ $('#panel').addEventListener('click',e=>{const b=e.target.closest('button');if(!
   else if(act==='bossrush'){const i=+b.dataset.i;sfx('start');const D=DUNGEONS[i],pmax=100+armStat().hp;RUN={i,D,floor:D.floors.length-1,loot:{},php:pmax,pmax,test:true};startFloor()}
   else if(act==='gacha'){chooseGacha(b.dataset.b)}
   else if(act==='itab'){invTab=b.dataset.v;renderHub()}
+  else if(act==='btab'){buildTab=b.dataset.v;sfx('click');renderHub()}
   else if(act==='htab'){huntTab=b.dataset.v;sfx('click');renderHub()}
   else if(act==='eqset'){const st=ARMOR_SETS.find(x=>x.id===b.dataset.id);let n=0;for(const p of ARMORS)if(p.set===st&&S.armors[p.id]!==undefined){S.eq[p.slot]=p.id;n++}sfx('equip');save();renderHub();toast(`${st.title}シリーズを${n}部位まとめて装備した`)}
   else if(act==='ftab'){forgeTab=b.dataset.v;renderHub()}
